@@ -1,11 +1,15 @@
 # LLM 推理笔记（网站 × 主题）
 
-个人学习库，**不是官方译本**。
+个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。
+
+从「那条评论在指什么」读起：[zh/GUIDE.md](zh/GUIDE.md)。
+
+**完整度请先看一句实话：** 评论里的官方 URL **几乎都有本地笔记**（NVIDIA 手册/博客/工具/TRT-LLM，以及 vLLM 文档页），但 **不是全文下载 + 完整翻译**。vLLM 100+ 篇博客只有机器目录 `en/vllm/blog/CATALOG.md` 和一篇 Anatomy 的中文解剖；`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
-- `zh/` 中文（全译或摘译；文件头 `source:` 是原文）
+- `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
 
-指标名、CLI、公式保留英文。网页里的图本地只留图注。
+网页里的图本地只留图注。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是。图仍在原网页。
 
 ## 目录
 
@@ -36,31 +40,33 @@
 | [nim-04-aiperf](zh/nvidia/benchmarking/nim-04-aiperf.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/quickstart.html | 全译 |
 | [nim-05-lora](zh/nvidia/benchmarking/nim-05-lora.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/benchmarking-lora.html | 全译 |
 | [nim-product-benchmarking](zh/nvidia/benchmarking/nim-product-benchmarking.md) | https://docs.nvidia.com/nim/large-language-models/latest/reference/benchmarking.html | 摘译 |
-| [blog-01-fundamental-concepts](zh/nvidia/benchmarking/blog-01-fundamental-concepts.md) | https://developer.nvidia.com/blog/llm-benchmarking-fundamental-concepts/ | 摘译 |
-| [blog-02-genai-perf-and-nim](zh/nvidia/benchmarking/blog-02-genai-perf-and-nim.md) | https://developer.nvidia.com/blog/llm-performance-benchmarking-measuring-nvidia-nim-performance-with-genai-perf/ | 导读 |
-| [blog-genai-perf-openai](zh/nvidia/benchmarking/blog-genai-perf-openai.md) | https://developer.nvidia.com/blog/measuring-generative-ai-model-performance-using-nvidia-genai-perf-and-an-openai-compatible-api/ | 导读 |
+| [blog-01-fundamental-concepts](zh/nvidia/benchmarking/blog-01-fundamental-concepts.md) | https://developer.nvidia.com/blog/llm-benchmarking-fundamental-concepts/ | 学习译文 |
+| [blog-02-genai-perf-and-nim](zh/nvidia/benchmarking/blog-02-genai-perf-and-nim.md) | https://developer.nvidia.com/blog/llm-performance-benchmarking-measuring-nvidia-nim-performance-with-genai-perf/ | 学习译文 |
+| [blog-genai-perf-openai](zh/nvidia/benchmarking/blog-genai-perf-openai.md) | https://developer.nvidia.com/blog/measuring-generative-ai-model-performance-using-nvidia-genai-perf-and-an-openai-compatible-api/ | 学习译文 |
 
 ## NVIDIA · performance-tuning
 
 | 本地 | 原文 | 完整度 |
 |---|---|---|
-| [mastering-llm-techniques](zh/nvidia/performance-tuning/mastering-llm-techniques.md) | https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/ | 导读 |
-| [blog-03-tensorrt-llm](zh/nvidia/performance-tuning/blog-03-tensorrt-llm.md) | https://developer.nvidia.com/blog/llm-inference-benchmarking-performance-tuning-with-tensorrt-llm/ | 导读 |
+| [mastering-llm-techniques](zh/nvidia/performance-tuning/mastering-llm-techniques.md) | https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/ | 学习译文 |
+| [blog-03-tensorrt-llm](zh/nvidia/performance-tuning/blog-03-tensorrt-llm.md) | https://developer.nvidia.com/blog/llm-inference-benchmarking-performance-tuning-with-tensorrt-llm/ | 学习译文 |
 | [trtllm-product](zh/nvidia/performance-tuning/trtllm-product.md) | https://developer.nvidia.com/tensorrt-llm | 入口 |
-| [trtllm-tuning-guide](zh/nvidia/performance-tuning/trtllm-tuning-guide.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/ | 摘译 |
-| [trtllm-build-flags](zh/nvidia/performance-tuning/trtllm-build-flags.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/useful-build-time-flags.html | 摘译 |
-| [trtllm-runtime-flags](zh/nvidia/performance-tuning/trtllm-runtime-flags.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/useful-runtime-flags.html | 摘译 |
-| [trtllm-max-batch](zh/nvidia/performance-tuning/trtllm-max-batch.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/tuning-max-batch-size-and-max-num-tokens.html | 摘译 |
-| [trtllm-fp8](zh/nvidia/performance-tuning/trtllm-fp8.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/fp8-quantization.html | 摘译 |
-| [trtllm-kvcache](zh/nvidia/performance-tuning/trtllm-kvcache.md) | https://nvidia.github.io/TensorRT-LLM/features/kvcache.html | 摘译 |
-| [trtllm-paged-attention-ifb](zh/nvidia/performance-tuning/trtllm-paged-attention-ifb.md) | https://nvidia.github.io/TensorRT-LLM/features/paged-attention-ifb-scheduler.html | 摘译 |
-| [trtllm-bench](zh/nvidia/performance-tuning/trtllm-bench.md) | https://nvidia.github.io/TensorRT-LLM/performance/perf-benchmarking.html | 英文全文 + 中文导读 |
+| [trtllm-tuning-guide](zh/nvidia/performance-tuning/trtllm-tuning-guide.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/ | 学习译文 |
+| [trtllm-baseline](zh/nvidia/performance-tuning/trtllm-baseline.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/benchmarking-default-performance.html | 学习译文 |
+| [trtllm-build-flags](zh/nvidia/performance-tuning/trtllm-build-flags.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/useful-build-time-flags.html | 学习译文 |
+| [trtllm-max-batch](zh/nvidia/performance-tuning/trtllm-max-batch.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/tuning-max-batch-size-and-max-num-tokens.html | 学习译文 |
+| [trtllm-sharding](zh/nvidia/performance-tuning/trtllm-sharding.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/deciding-model-sharding-strategy.html | 学习译文 |
+| [trtllm-fp8](zh/nvidia/performance-tuning/trtllm-fp8.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/fp8-quantization.html | 学习译文 |
+| [trtllm-runtime-flags](zh/nvidia/performance-tuning/trtllm-runtime-flags.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/useful-runtime-flags.html | 学习译文 |
+| [trtllm-kvcache](zh/nvidia/performance-tuning/trtllm-kvcache.md) | https://nvidia.github.io/TensorRT-LLM/features/kvcache.html | 学习译文 |
+| [trtllm-paged-attention-ifb](zh/nvidia/performance-tuning/trtllm-paged-attention-ifb.md) | https://nvidia.github.io/TensorRT-LLM/features/paged-attention-ifb-scheduler.html | 学习译文 |
+| [trtllm-bench](zh/nvidia/performance-tuning/trtllm-bench.md) | https://nvidia.github.io/TensorRT-LLM/performance/perf-benchmarking.html | 英文全文 + 中文学习译文 |
 
 ## NVIDIA · cost
 
 | 本地 | 原文 | 完整度 |
 |---|---|---|
-| [blog-04-tco](zh/nvidia/cost/blog-04-tco.md) | https://developer.nvidia.com/blog/llm-inference-benchmarking-how-much-does-your-llm-inference-cost/ | 导读 |
+| [blog-04-tco](zh/nvidia/cost/blog-04-tco.md) | https://developer.nvidia.com/blog/llm-inference-benchmarking-how-much-does-your-llm-inference-cost/ | 学习译文 |
 
 ## NVIDIA · tools
 
@@ -94,9 +100,9 @@
 
 ## 建议阅读顺序
 
-1. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
-2. `nim-02-metrics` → `nim-03-parameters` → `nim-04-aiperf`
-3. `zh/nvidia/tools/aiperf-load-generator.md`
+1. [zh/GUIDE.md](zh/GUIDE.md)
+2. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
+3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
 4. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
 5. `zh/vllm/blog/architecture/anatomy.md`
 

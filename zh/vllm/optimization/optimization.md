@@ -1,32 +1,33 @@
 ---
 source: https://docs.vllm.ai/en/stable/configuration/optimization/
 lang: zh
-fetched: 2026-08-30
+voice: literary-study
+fetched: 2026-08-31
 ---
 
 # 优化与调优 — vLLM V1
 
-英文原文：`en/vllm/docs/optimization.md`  
+英文对照：`en/vllm/optimization/optimization.md`  
 来源：https://docs.vllm.ai/en/stable/configuration/optimization/
 
-显存不够时，另见官方 memory conservation 指南。
+官方建议的顺序很像一套礼貌：先确认这座房子里的 **CPU 核够不够**（V1 是多进程，核不够时 GPU 会像一位等待端菜的厨师），再选优化等级 `-O0`～`-O3`（默认 `-O2`，cudagraph + fusion），再调 **`max_num_batched_tokens`**（小值更护 ITL，大值更护 TTFT；吞吐常要 >8192），然后才是 TP/PP/DP/EP 和 cache。显存不够时另见官方 memory conservation——那是另一本更瘦的手册。
 
 ## 优化等级
 
-vLLM 提供 4 档（启动时间 vs 性能）：
+四档，是启动时间和稳态速度之间的交易：
 
-- `-O0`：无优化，启动最快，性能最低
-- `-O1`：快优化。简单编译 + 快 fusion + PIECEWISE cudagraph
-- `-O2`：默认。更多编译范围、更多 fusion、FULL_AND_PIECEWISE cudagraph
-- `-O3`：激进。目前等于 `-O2`，以后可能加更耗时或实验性优化
+- `-O0`：不优化。门开得最快，跑得最慢。适合你只想确认模型还活着。
+- `-O1`：快优化。简单编译 + 快 fusion + PIECEWISE cudagraph。
+- `-O2`：默认。更大编译范围、更多 fusion、FULL_AND_PIECEWISE cudagraph。
+- `-O3`：名义上更激进。目前等于 `-O2`，以后可能塞进更耗时或实验性的魔法。
 
 ## 加快重复启动
 
-同一套（模型、配置、硬件）反复启动时：
+同一套模型、配置、硬件反复启动时，不要每次都从头烤蛋糕：
 
-- **复用 compile cache。** `torch.compile` 产物在 `VLLM_CACHE_ROOT`（默认 `~/.cache/vllm`），可在机器间拷贝或打进镜像。`VLLM_FORCE_AOT_LOAD=1` 在 cache miss 时直接失败而不是默默重编译。模型、配置、相关 `VLLM_*` 环境变量、torch 版本、GPU 型号变了都会让 cache 失效。
-- **`--kv-cache-memory` 跳过 memory profiling。** 启动日志会打出当前分配对应的精确值，下次原样传入可跳过 profiling 和 CUDA graph 显存估算。给小了会限制并发/吞吐；给大了会在分配时失败。只在同一块 GPU、相近空闲显存下有效。OOM 就去掉该参数重新 profile。
-- **`--enforce-eager` 不用 CUDA graph。** 跳过编译和 capture，启动最快，稳态 decode 更慢。适合开发循环，或测量启动时间里 compile/capture 占多少。
+- **复用 compile cache。** `torch.compile` 产物在 `VLLM_CACHE_ROOT`（默认 `~/.cache/vllm`），可在机器间拷贝或打进镜像。`VLLM_FORCE_AOT_LOAD=1` 在 cache miss 时直接失败，而不是默默重编译——失败比假装很快更诚实。模型、配置、相关 `VLLM_*`、torch 版本、GPU 型号变了，cache 都会失效。
+- **`--kv-cache-memory` 跳过 memory profiling。** 启动日志会打出当前分配的精确值，下次原样传入可跳过 profiling 和 CUDA graph 显存估算。给小了限制并发；给大了分配时失败。只在同一块 GPU、相近空闲显存下有效。OOM 就去掉该参数重新 profile。
+- **`--enforce-eager` 不用 CUDA graph。** 跳过编译和 capture，启动最快，稳态 decode 更慢。适合开发循环，或测量启动时间里 compile/capture 占多少。把烤箱关了，面包会更快进炉，也会更慢熟。
 
 ## Preemption（抢占）
 
@@ -36,7 +37,7 @@ Transformer 自回归导致 KV cache 不够同时扛住当前 batch 时，vLLM �
 Sequence group 0 is preempted by PreemptionMode.RECOMPUTE ... Increase gpu_memory_utilization or tensor_parallel_size
 ```
 
-抢占能保证不崩，但伤害端到端延迟。频繁抢占时：
+抢占能保证不崩，但伤害端到端延迟——被请出房间的请求，要重新把过去读一遍。频繁抢占时：
 
 - 提高 `gpu_memory_utilization`，给 KV 更多空间
 - 降低 `max_num_seqs` 或 `max_num_batched_tokens`，减小并发
@@ -47,14 +48,11 @@ Sequence group 0 is preempted by PreemptionMode.RECOMPUTE ... Increase gpu_memor
 
 ## Chunked Prefill
 
-把大 prefill 切成小块，和 decode 请求组在同一个 batch 里，平衡 compute-bound（prefill）和 memory-bound（decode）。
+把大 prefill 切成小块，和 decode 请求组在同一个 batch 里：compute-bound 的阅读，和 memory-bound 的说话，坐在同一张桌子上。
 
-V1 能开就默认开。调度策略：**先排所有 pending decode，再用 `max_num_batched_tokens` 预算去排 prefill**；单条 prefill 塞不下就自动切块。
+V1 能开就默认开。调度：**先排所有 pending decode，再用 `max_num_batched_tokens` 预算去排 prefill**；单条 prefill 塞不下就自动切块。已经开口的人，先把这句说完。
 
-好处：
-
-- decode 优先，ITL 更好
-- 同一 batch 里既有 prefill 又有 decode，GPU 利用率更好
+好处：decode 优先，ITL 更好；同一 batch 里既有 prefill 又有 decode，GPU 更不容易闲着发呆。
 
 ### 用 `max_num_batched_tokens` 调
 
@@ -147,7 +145,7 @@ vllm serve Qwen/Qwen2.5-VL-3B-Instruct --api-server-count 4 -dp 2
 
 ## GPU 部署的 CPU 资源
 
-V1 多进程。CPU 核不够是常见掉速原因，虚拟机里更明显。
+V1 是一座多进程的房子。CPU 核不够是最常见、也最容易被冤枉到 GPU 头上的掉速原因，虚拟机里更明显。
 
 N 张 GPU 至少：
 
@@ -167,7 +165,7 @@ DP 或多 API server：
 
 `A` 为 API server 数（默认等于 DP）。例如 `DP=4, TP=2` 共 8 GPU：4 API + 4 engine + 8 worker + 1 DP coordinator = 17 进程。
 
-CPU 不够时优先伤：输入处理吞吐、调度延迟、流式 detokenize/网络。GPU 利用率低于预期时，先查是不是 CPU 在抢。
+CPU 不够时优先伤：输入处理吞吐、调度延迟、流式 detokenize/网络。GPU 利用率低于预期时，先查是不是 CPU 在饿着——厨师在等端盘的人。
 
 ## Attention backend
 

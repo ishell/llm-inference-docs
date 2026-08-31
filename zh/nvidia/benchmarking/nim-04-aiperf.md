@@ -1,20 +1,21 @@
 ---
 source: https://docs.nvidia.com/nim/benchmarking/llm/latest/quickstart.html
 lang: zh
-fetched: 2026-08-30
+voice: literary-study
+fetched: 2026-08-31
 ---
 
 # 用 AIPerf 做基准测试
 
-NVIDIA AIPerf 是客户端生成式 AI 基准工具，报告 TTFT、ITL、TPS、RPS 等。任何 OpenAI 兼容推理服务都能打，包括 NVIDIA NIM。下面用 Llama-3 + AIPerf 走一遍。
+NVIDIA AIPerf 是客户端生成式基准工具，报告 TTFT、ITL、TPS、RPS。任何 OpenAI 兼容推理服务都能打，包括 NVIDIA NIM。下面用 Llama-3 走一遍——不是为了崇拜这只羊，而是因为官网上的性能数字，就是用类似仪式测出来的。
 
-指标定义见「指标」；参数见「参数与实践」。
+指标见「指标」；参数见「参数与实践」。
 
 ## 用 NIM 起一个 OpenAI 兼容的 Llama-3 服务
 
-NIM 是最快把 LLM 送上线的路径。硬件和 NGC key 见 NIM LLM getting started。
+NIM 是把 LLM 送上线较快的一条路。硬件和 NGC key 见 NIM LLM getting started。
 
-容器启动时会下载资源并开始 serving。成功日志类似：
+容器启动时会下载资源并开始 serving。成功时日志像一扇门被推开：
 
 ```
 (APIServer pid=74) INFO:     Started server process [74]
@@ -37,11 +38,13 @@ response = client.completions.create(
 print(response.choices[0].text)
 ```
 
-> NVIDIA 实测：额外 Docker 参数可能提升推理性能。`--security-opt seccomp=unconfined` 或 `--privileged`。NIM TensorRT-LLM v0.10.0 后端约 +5%；OSS vLLM v0.4.3 / NIM vLLM 1.0.0 约 +20%。在 DGX A100 和 H100 上验证过。这些参数会提高安全风险，用之前先过安全评审。
+「Once upon a time」是一个适合实验室的开头：短、干净、人人都认识。真实用户很少这么客气。
+
+> NVIDIA 实测：额外 Docker 参数可能提升推理性能。`--security-opt seccomp=unconfined` 或 `--privileged`。NIM TensorRT-LLM v0.10.0 后端约 +5%；OSS vLLM v0.4.3 / NIM vLLM 1.0.0 约 +20%。在 DGX A100 和 H100 上验证过。这些参数会提高安全风险，用之前先过安全评审。快和安全很少同时把最好的座位让给你。
 
 ## 安装 AIPerf 并做 warmup
 
-AIPerf 尽量和 NIM **跑在同一台机器**，除非你故意要把网络延迟算进去。
+AIPerf 尽量和 NIM **跑在同一台机器**，除非你故意要把网络延迟请进入场。远程打服务，测到的常常是网线的性格，不是模型的性格。
 
 ```bash
 export RELEASE="26.06"  # 建议最新 yy.mm
@@ -59,7 +62,7 @@ pip install huggingface_hub
 hf auth login   # Llama-3 tokenizer 是 gated 仓库
 ```
 
-Warmup 负载：
+Warmup 负载——让 GPU 先出汗，再记成绩：
 
 ```bash
 export INPUT_SEQUENCE_LENGTH=200
@@ -86,11 +89,11 @@ aiperf profile \
    --profile-export-file ${INPUT_SEQUENCE_LENGTH}_${OUTPUT_SEQUENCE_LENGTH}.json
 ```
 
-这里指定了 ISL、OSL、并发，并用 `ignore_eos` 让输出达到目标长度。
+这里指定了 ISL、OSL、并发，并用 `ignore_eos` 让输出达到目标长度。尺子公平的代价，是模型不能提前把话说完。
 
 ## 扫描多种场景
 
-扫描不同 ISL/OSL 组合和并发。先做上一节的 warmup。
+先 warmup，再扫不同 ISL/OSL 与并发。翻译、分类、摘要：三种不同长度的等待。
 
 ```bash
 declare -A useCases
@@ -133,7 +136,7 @@ for description in "${!useCases[@]}"; do
 done
 ```
 
-`--request-count` 设为 3× 并发，样本才稳。高并发 + 大模型 + 大 ISL/OSL 会非常耗时。
+`--request-count` 设为 3× 并发，样本才稳。高并发 + 大模型 + 大 ISL/OSL 会非常耗时。秒表也需要耐心。
 
 ## 分析结果
 
@@ -150,11 +153,11 @@ done
 
 主结果在 `profile_export_aiperf.json`。
 
-收集各并发的 TPS 和 TTFT，画 **延迟–吞吐曲线**：横轴 TTFT，纵轴系统吞吐，每个点标并发。
+收集各并发的 TPS 和 TTFT，画 **延迟–吞吐曲线**：横轴 TTFT，纵轴系统吞吐，每个点标并发。这张图是整本指南要你带回家的那张地图。
 
 ## 怎么读这张图
 
-- **有延迟预算**：在横轴取可接受的最大 TTFT，对应的纵轴和并发就是该预算下能拿到的最高吞吐。
-- **有目标并发**：找到那个点，横纵轴就是该负载下的延迟和吞吐。
+- **有延迟预算**：在横轴取可接受的最大 TTFT，对应的纵轴和并发就是该预算下能拿到的最高吞吐。用户愿意等这么久，你最多能卖这么快。
+- **有目标并发**：找到那个点，横纵轴就是该负载下的延迟和吞吐。今晚有这么多人进店，菜会慢成什么样。
 
-图上也能看到：延迟陡增、吞吐几乎不再涨的并发（NVIDIA 示例里 `concurrency=100`）。横轴也可以换成 ITL、e2e_latency 或 TPS_per_user。
+图上也能看到：延迟陡增、吞吐几乎不再涨的并发（NVIDIA 示例里 `concurrency=100`）。那是饱和。再往上加人，只是让队列变长，不会让 GPU 长出第二颗心脏。横轴也可以换成 ITL、e2e_latency 或 TPS_per_user——同一座山，不同的登山口。
