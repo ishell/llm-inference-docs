@@ -15,7 +15,7 @@ The optimization page is the polite order of knobs. The blogs are how those knob
 | `max_num_batched_tokens`, chunked prefill | Chunked Prefill | [vs DeepSpeed](architecture/vs-deepspeed.md), Anatomy | 2023 name: SplitFuse. Small value guards ITL; large guards TTFT; throughput often wants >8192. |
 | prefix cache | features | Anatomy, [production-stack](serving/production-stack.md), [Router](serving/router.md), [Mooncake](serving/mooncake.md), [KV offload](serving/kv-offload.md) | Local hit → sticky session; preempt → CPU; miss → pool. |
 | speculative decoding | features | [spec-decode](performance/spec-decode.md) | Draft/verify. “Not yet supported” is historical. |
-| FP8 KV / attention quant | memory / precision | [FP8 KV](performance/fp8-kvcache.md) | Hopper/Blackwell validation, not a free lunch. |
+| FP8 KV / attention quant | memory / precision | [FP8 KV](performance/fp8-kvcache.md), [TurboQuant](performance/turboquant.md) | Default FP8; 3–4-bit storage pays dequant. |
 | `gpu_memory_utilization`, preemption | Preemption | Anatomy, launch | V1 default RECOMPUTE. Frequent preempt → give KV rooms. |
 | TP / PP | parallelism | [distributed](serving/distributed-inference.md); TRT-LLM sharding chapter | TP in-node, PP between; do not naive-TP MLA. |
 | EP / DP / `--enable-expert-parallel` | Expert / Data Parallelism | [Wide-EP](serving/large-scale.md) | Dense → DP Attention; sparse → EP. |
@@ -23,7 +23,7 @@ The optimization page is the polite order of knobs. The blogs are how those knob
 | `--enable-elastic-ep` | (blog) | [Elastic EP](serving/elastic-ep.md) | Resize DP at runtime. Then: TP=1, no DBO, Ray only. |
 | Text P/D | deploy | [Router](serving/router.md), Wide-EP | One fat prefill can stall the EP combine. |
 | `mm_encoder_tp_mode="data"`, MM caches | encoder DP; multimodal cache | [EPD](serving/epd.md) | Single-node batch-split the ViT; cluster moves it to another building. |
-| KVConnector / external KV | (blog) | Mooncake, [KV offload](serving/kv-offload.md), [MORI-IO](serving/moriio.md), production-stack | Same door: DRAM, cluster pool, in-node RDMA P/D, NIXL. |
+| KVConnector / external KV | (blog) | Mooncake, [KV offload](serving/kv-offload.md), [MORI-IO](serving/moriio.md), [PegaFlow](serving/pegaflow.md), production-stack | Same door: DRAM, cluster pool, in-node RDMA, standalone Rust daemon. |
 | `--api-server-count`, CPU cores | API scale-out; CPU | v0.6, Anatomy | V1 is multiprocess; starved CPU looks like idle GPU. |
 | Ship quality | CI | [production CI](performance/production-quality.md) | Nightly benches, many accelerators, two-week trains. |
 | `--enable-sleep-mode` | (blog) | [Sleep Mode](architecture/sleep-mode.md) | Swap models without killing the process; L1→CPU, L2 drop weights. |
@@ -33,6 +33,12 @@ The optimization page is the polite order of knobs. The blogs are how those knob
 | Hybrid SSM P/D | (blog) | [Hybrid SSM](serving/hybrid-ssm.md) | Two NIXL descriptor views on one tensor. |
 | AFD / Attention-FFN split | (plugin) | [AFD](serving/afd.md) | Split MoE layer services; experimental; ratio decides. |
 | Single-node P/D | (blog) | [MORI-IO](serving/moriio.md) | Split inside one 8-GPU box; write mode wins TTFT. |
+| `mm_processor_cache_type="shm"` | multimodal cache | [SHM IPC](serving/shm-ipc.md) | Big images in shared memory, not recopied over IPC. |
+| Hardware / platform plugins | (blog) | [plugins](architecture/plugin-system.md), [hardware plugin](architecture/hardware-plugin.md) | Custom scheduler or a new accelerator without a fork. |
+| Attention backend | auto-select | [Triton attention](architecture/triton-attn.md) | ROCm default; portable fallback when FA is missing. |
+| `turboquant_*` | `--kv-cache-dtype` | [TurboQuant](performance/turboquant.md) | Read the bake-off; production default stays FP8. |
+| Weight sync / `pause keep` | (RL) | [Native RL](serving/native-rl.md) | Stop patching workers per framework; two-phase DPEP pause. |
+| `ray symmetric-run` | multi-node launch | [Ray symmetric-run](serving/ray-symmetric.md) | Same command on every SLURM / mpssh node. |
 | Routing / control plane | (not in optimization) | production-stack / [AIBrix](serving/aibrix.md) / Router | The rack on top of the engine can change; KV affinity cannot. |
 
 NVIDIA sibling map: TensorRT-LLM sharding chapter. Official CLI once wrote `--tp_size` twice; PP is `--pp_size`.

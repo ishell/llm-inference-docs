@@ -60,3 +60,18 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 | 单机 P/D（MORI-IO） | [moriio.md](serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector |
 | Hybrid SSM 分离 | [hybrid-ssm.md](serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg |
 | AFD Plugin | [afd.md](serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin |
+
+## 第三波（插件 / KV 池 / 量化 / RL）
+
+第二波之后。仍不是 day-0。顺序：插件 → 硬件插件 → Triton attention → SHM IPC → PegaFlow → TurboQuant → Native RL → Ray symmetric-run。
+
+| 文 | 本地 | URL |
+|---|---|---|
+| 插件系统 | [plugin-system.md](architecture/plugin-system.md) | https://vllm.ai/blog/2025-11-20-vllm-plugin-system |
+| Hardware plugin | [hardware-plugin.md](architecture/hardware-plugin.md) | https://vllm.ai/blog/2025-05-12-hardware-plugin |
+| Triton attention | [triton-attn.md](architecture/triton-attn.md) | https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive |
+| SHM IPC cache | [shm-ipc.md](serving/shm-ipc.md) | https://vllm.ai/blog/2025-11-13-shm-ipc-cache |
+| PegaFlow | [pegaflow.md](serving/pegaflow.md) | https://vllm.ai/blog/2026-05-18-pegaflow |
+| TurboQuant | [turboquant.md](performance/turboquant.md) | https://vllm.ai/blog/2026-05-11-turboquant |
+| Native RL APIs | [native-rl.md](serving/native-rl.md) | https://vllm.ai/blog/2026-05-28-native-rl-apis |
+| Ray symmetric-run | [ray-symmetric.md](serving/ray-symmetric.md) | https://vllm.ai/blog/2025-11-22-ray-symmetric-run |

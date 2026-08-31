@@ -122,6 +122,14 @@
 | blog / serving | [moriio](zh/vllm/blog/serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector | 学习译文 |
 | blog / serving | [hybrid-ssm](zh/vllm/blog/serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg | 学习译文 |
 | blog / serving | [afd](zh/vllm/blog/serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin | 学习译文 |
+| blog / architecture | [plugin-system](zh/vllm/blog/architecture/plugin-system.md) | https://vllm.ai/blog/2025-11-20-vllm-plugin-system | 学习译文 |
+| blog / architecture | [hardware-plugin](zh/vllm/blog/architecture/hardware-plugin.md) | https://vllm.ai/blog/2025-05-12-hardware-plugin | 学习译文 |
+| blog / architecture | [triton-attn](zh/vllm/blog/architecture/triton-attn.md) | https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive | 学习译文 |
+| blog / serving | [shm-ipc](zh/vllm/blog/serving/shm-ipc.md) | https://vllm.ai/blog/2025-11-13-shm-ipc-cache | 学习译文 |
+| blog / serving | [pegaflow](zh/vllm/blog/serving/pegaflow.md) | https://vllm.ai/blog/2026-05-18-pegaflow | 学习译文 |
+| blog / performance | [turboquant](zh/vllm/blog/performance/turboquant.md) | https://vllm.ai/blog/2026-05-11-turboquant | 学习译文 |
+| blog / serving | [native-rl](zh/vllm/blog/serving/native-rl.md) | https://vllm.ai/blog/2026-05-28-native-rl-apis | 学习译文 |
+| blog / serving | [ray-symmetric](zh/vllm/blog/serving/ray-symmetric.md) | https://vllm.ai/blog/2025-11-22-ray-symmetric-run | 学习译文 |
 
 ## 建议阅读顺序
 
@@ -129,11 +137,11 @@
 2. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
 3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
 4. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
-5. `zh/vllm/blog/MUST-READ.md`（主线走完再读第二波：torch.compile → Sleep → structured decoding → DCP → KV offload → MORI-IO → Hybrid SSM → AFD）
+5. `zh/vllm/blog/MUST-READ.md`（主线 → 第二波机制 → 第三波：插件 / Triton / PegaFlow / TurboQuant / Native RL）
 
 ## 刻意不做的
 
-- vLLM 博客 CATALOG 里第二波机制文以外的 day-0 / 单模型 / 活动文（URL 仍在 `CATALOG.md`）
+- vLLM 博客 CATALOG 里第三波机制文以外的 day-0 / 单模型 / 活动文（URL 仍在 `CATALOG.md`）
 - `vllm serve` 生成页里每一个旗标
 
-抓取：2026-08-30 / 2026-08-31。
+抓取：2026-08-30 / 2026-08-31 / 2026-09-01。

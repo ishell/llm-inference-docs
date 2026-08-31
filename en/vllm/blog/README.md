@@ -5,7 +5,7 @@
 - Full machine table: [CATALOG.md](CATALOG.md) from https://vllm.ai/llms.txt  
   Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
-MUST-READ plus the second-wave mechanics posts have local notes. Remaining CATALOG entries are day-0 / single-model / events.
+MUST-READ plus second- and third-wave mechanics posts have local notes. Remaining CATALOG entries are day-0 / single-model / events.
 
 | Folder | File | Source |
 |---|---|---|
@@ -34,4 +34,12 @@ MUST-READ plus the second-wave mechanics posts have local notes. Remaining CATAL
 | serving | [moriio.md](serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector |
 | serving | [hybrid-ssm.md](serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg |
 | serving | [afd.md](serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin |
+| architecture | [plugin-system.md](architecture/plugin-system.md) | https://vllm.ai/blog/2025-11-20-vllm-plugin-system |
+| architecture | [hardware-plugin.md](architecture/hardware-plugin.md) | https://vllm.ai/blog/2025-05-12-hardware-plugin |
+| architecture | [triton-attn.md](architecture/triton-attn.md) | https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive |
+| serving | [shm-ipc.md](serving/shm-ipc.md) | https://vllm.ai/blog/2025-11-13-shm-ipc-cache |
+| serving | [pegaflow.md](serving/pegaflow.md) | https://vllm.ai/blog/2026-05-18-pegaflow |
+| performance | [turboquant.md](performance/turboquant.md) | https://vllm.ai/blog/2026-05-11-turboquant |
+| serving | [native-rl.md](serving/native-rl.md) | https://vllm.ai/blog/2026-05-28-native-rl-apis |
+| serving | [ray-symmetric.md](serving/ray-symmetric.md) | https://vllm.ai/blog/2025-11-22-ray-symmetric-run |
 | map | [FLAG-MAP.md](FLAG-MAP.md) | optimization knobs → blogs |

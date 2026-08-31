@@ -48,4 +48,6 @@ fetched: 2026-08-31
 
 旋钮对照：[FLAG-MAP.md](vllm/blog/FLAG-MAP.md)。EPD 是视觉编码器拆出去；文本 Prefill/Decode 分离在 Router 与大规模两篇。Mooncake 是跨实例 KV 池；Elastic EP 是运行时改 DP 宽度。
 
-**第二波（机制）：** [torch.compile](vllm/blog/architecture/torch-compile.md) → [Sleep](vllm/blog/architecture/sleep-mode.md) → [structured decoding](vllm/blog/performance/struct-decode.md) → [DCP](vllm/blog/performance/dcp.md) → [KV offload](vllm/blog/serving/kv-offload.md) → [MORI-IO](vllm/blog/serving/moriio.md) → [Hybrid SSM](vllm/blog/serving/hybrid-ssm.md) → [AFD](vllm/blog/serving/afd.md)。CATALOG 里 day-0 / 活动文仍不是这条线。
+**第二波（机制）：** [torch.compile](vllm/blog/architecture/torch-compile.md) → [Sleep](vllm/blog/architecture/sleep-mode.md) → [structured decoding](vllm/blog/performance/struct-decode.md) → [DCP](vllm/blog/performance/dcp.md) → [KV offload](vllm/blog/serving/kv-offload.md) → [MORI-IO](vllm/blog/serving/moriio.md) → [Hybrid SSM](vllm/blog/serving/hybrid-ssm.md) → [AFD](vllm/blog/serving/afd.md)
+
+**第三波：** [插件](vllm/blog/architecture/plugin-system.md) → [硬件插件](vllm/blog/architecture/hardware-plugin.md) → [Triton attention](vllm/blog/architecture/triton-attn.md) → [SHM IPC](vllm/blog/serving/shm-ipc.md) → [PegaFlow](vllm/blog/serving/pegaflow.md) → [TurboQuant](vllm/blog/performance/turboquant.md) → [Native RL](vllm/blog/serving/native-rl.md) → [Ray symmetric-run](vllm/blog/serving/ray-symmetric.md)。CATALOG 里 day-0 / 活动文仍不是这条线。
