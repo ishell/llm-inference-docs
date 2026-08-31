@@ -5,7 +5,7 @@
 - 机器可读全表（英文）：[en/vllm/blog/CATALOG.md](../../../en/vllm/blog/CATALOG.md)  
   来源 https://vllm.ai/llms.txt · 索引 https://vllm.ai/blog · RSS https://vllm.ai/blog/rss.xml
 
-必读列表已全部落学习译文。CATALOG 其余篇是 day-0 / 单模型 / 活动，需要时指定 URL。
+必读线与第二波机制文已落学习译文。CATALOG 其余仍是 day-0 / 单模型 / 活动，需要时指定 URL。
 
 | 主题 | 文件 | 原文 |
 |---|---|---|
@@ -26,4 +26,12 @@
 | serving | [large-scale.md](serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving |
 | serving | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |
 | serving | [elastic-ep.md](serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism |
+| architecture | [torch-compile.md](architecture/torch-compile.md) | https://vllm.ai/blog/2025-08-20-torch-compile |
+| architecture | [sleep-mode.md](architecture/sleep-mode.md) | https://vllm.ai/blog/2025-10-26-sleep-mode |
+| performance | [struct-decode.md](performance/struct-decode.md) | https://vllm.ai/blog/2025-01-14-struct-decode-intro |
+| performance | [dcp.md](performance/dcp.md) | https://vllm.ai/blog/2026-08-07-decode-context-parallelism |
+| serving | [kv-offload.md](serving/kv-offload.md) | https://vllm.ai/blog/2026-01-08-kv-offloading-connector |
+| serving | [moriio.md](serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector |
+| serving | [hybrid-ssm.md](serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg |
+| serving | [afd.md](serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin |
 | map | [FLAG-MAP.md](FLAG-MAP.md) | `optimization.md` 旋钮 → 博客 |

@@ -90,10 +90,10 @@
 | benchmarking | [auto-tune](zh/vllm/benchmarking/auto-tune.md) | https://github.com/vllm-project/vllm/blob/main/benchmarks/auto_tune/README.md | 摘译 |
 | metrics | [production-metrics](zh/vllm/metrics/production-metrics.md) | https://docs.vllm.ai/en/stable/usage/metrics/ | 摘译 |
 | metrics | [design-metrics](zh/vllm/metrics/design-metrics.md) | https://docs.vllm.ai/en/stable/design/metrics/ | 摘译 |
-| features | [prefix-caching](zh/vllm/features/prefix-caching.md) | https://docs.vllm.ai/en/stable/features/automatic_prefix_caching/ | 摘译 |
-| features | [prefix-caching-design](zh/vllm/features/prefix-caching-design.md) | https://docs.vllm.ai/en/stable/design/prefix_caching/ | 摘译 |
-| features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 摘译 |
-| features | [v1-guide](zh/vllm/features/v1-guide.md) | https://docs.vllm.ai/en/stable/usage/v1_guide/ | 摘译 |
+| features | [prefix-caching](zh/vllm/features/prefix-caching.md) | https://docs.vllm.ai/en/stable/features/automatic_prefix_caching/ | 学习译文 |
+| features | [prefix-caching-design](zh/vllm/features/prefix-caching-design.md) | https://docs.vllm.ai/en/stable/design/prefix_caching/ | 学习译文 |
+| features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 学习译文 |
+| features | [v1-guide](zh/vllm/features/v1-guide.md) | https://docs.vllm.ai/en/stable/usage/v1_guide/ | 学习译文 |
 | blog | [MUST-READ](zh/vllm/blog/MUST-READ.md) | https://vllm.ai/blog · https://vllm.ai/blog/rss.xml | 必读 + 本地链接 |
 | blog | [FLAG-MAP](zh/vllm/blog/FLAG-MAP.md) | `optimization.md` 旋钮 → 博客 | 对照表 |
 | blog | [CATALOG](en/vllm/blog/CATALOG.md) | https://vllm.ai/llms.txt | 全表（英文） |
@@ -114,6 +114,14 @@
 | blog / serving | [large-scale](zh/vllm/blog/serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving | 学习译文 |
 | blog / serving | [mooncake](zh/vllm/blog/serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store | 学习译文 |
 | blog / serving | [elastic-ep](zh/vllm/blog/serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism | 学习译文 |
+| blog / architecture | [torch-compile](zh/vllm/blog/architecture/torch-compile.md) | https://vllm.ai/blog/2025-08-20-torch-compile | 学习译文 |
+| blog / architecture | [sleep-mode](zh/vllm/blog/architecture/sleep-mode.md) | https://vllm.ai/blog/2025-10-26-sleep-mode | 学习译文 |
+| blog / performance | [struct-decode](zh/vllm/blog/performance/struct-decode.md) | https://vllm.ai/blog/2025-01-14-struct-decode-intro | 学习译文 |
+| blog / performance | [dcp](zh/vllm/blog/performance/dcp.md) | https://vllm.ai/blog/2026-08-07-decode-context-parallelism | 学习译文 |
+| blog / serving | [kv-offload](zh/vllm/blog/serving/kv-offload.md) | https://vllm.ai/blog/2026-01-08-kv-offloading-connector | 学习译文 |
+| blog / serving | [moriio](zh/vllm/blog/serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector | 学习译文 |
+| blog / serving | [hybrid-ssm](zh/vllm/blog/serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg | 学习译文 |
+| blog / serving | [afd](zh/vllm/blog/serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin | 学习译文 |
 
 ## 建议阅读顺序
 
@@ -121,11 +129,11 @@
 2. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
 3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
 4. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
-5. `zh/vllm/blog/MUST-READ.md`（立项 → Anatomy → V1 → MRV2 → 性能 → 切卡 → 集群 → Router → EPD → Wide-EP → Mooncake → Elastic EP）
+5. `zh/vllm/blog/MUST-READ.md`（主线走完再读第二波：torch.compile → Sleep → structured decoding → DCP → KV offload → MORI-IO → Hybrid SSM → AFD）
 
 ## 刻意不做的
 
-- vLLM 博客 CATALOG 里必读以外的 day-0 / 单模型 / 活动文（URL 仍在 `CATALOG.md`）
+- vLLM 博客 CATALOG 里第二波机制文以外的 day-0 / 单模型 / 活动文（URL 仍在 `CATALOG.md`）
 - `vllm serve` 生成页里每一个旗标
 
 抓取：2026-08-30 / 2026-08-31。

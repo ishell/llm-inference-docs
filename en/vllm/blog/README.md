@@ -5,7 +5,7 @@
 - Full machine table: [CATALOG.md](CATALOG.md) from https://vllm.ai/llms.txt  
   Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
-MUST-READ posts all have local notes. Remaining CATALOG entries are day-0 / single-model / events.
+MUST-READ plus the second-wave mechanics posts have local notes. Remaining CATALOG entries are day-0 / single-model / events.
 
 | Folder | File | Source |
 |---|---|---|
@@ -26,4 +26,12 @@ MUST-READ posts all have local notes. Remaining CATALOG entries are day-0 / sing
 | serving | [large-scale.md](serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving |
 | serving | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |
 | serving | [elastic-ep.md](serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism |
+| architecture | [torch-compile.md](architecture/torch-compile.md) | https://vllm.ai/blog/2025-08-20-torch-compile |
+| architecture | [sleep-mode.md](architecture/sleep-mode.md) | https://vllm.ai/blog/2025-10-26-sleep-mode |
+| performance | [struct-decode.md](performance/struct-decode.md) | https://vllm.ai/blog/2025-01-14-struct-decode-intro |
+| performance | [dcp.md](performance/dcp.md) | https://vllm.ai/blog/2026-08-07-decode-context-parallelism |
+| serving | [kv-offload.md](serving/kv-offload.md) | https://vllm.ai/blog/2026-01-08-kv-offloading-connector |
+| serving | [moriio.md](serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector |
+| serving | [hybrid-ssm.md](serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg |
+| serving | [afd.md](serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin |
 | map | [FLAG-MAP.md](FLAG-MAP.md) | optimization knobs → blogs |

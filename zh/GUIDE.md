@@ -46,4 +46,6 @@ fetched: 2026-08-31
 
 **Serving：** [切卡](vllm/blog/serving/distributed-inference.md) → [production-stack](vllm/blog/serving/production-stack.md) / [AIBrix](vllm/blog/serving/aibrix.md) → [Router](vllm/blog/serving/router.md) → [Encoder 分离](vllm/blog/serving/epd.md) → [Wide-EP](vllm/blog/serving/large-scale.md) → [Mooncake](vllm/blog/serving/mooncake.md) → [Elastic EP](vllm/blog/serving/elastic-ep.md)
 
-旋钮对照：[FLAG-MAP.md](vllm/blog/FLAG-MAP.md)。EPD 是视觉编码器拆出去；文本 Prefill/Decode 分离在 Router 与大规模两篇。Mooncake 是跨实例 KV 池；Elastic EP 是运行时改 DP 宽度。CATALOG 其余不是这条主线。
+旋钮对照：[FLAG-MAP.md](vllm/blog/FLAG-MAP.md)。EPD 是视觉编码器拆出去；文本 Prefill/Decode 分离在 Router 与大规模两篇。Mooncake 是跨实例 KV 池；Elastic EP 是运行时改 DP 宽度。
+
+**第二波（机制）：** [torch.compile](vllm/blog/architecture/torch-compile.md) → [Sleep](vllm/blog/architecture/sleep-mode.md) → [structured decoding](vllm/blog/performance/struct-decode.md) → [DCP](vllm/blog/performance/dcp.md) → [KV offload](vllm/blog/serving/kv-offload.md) → [MORI-IO](vllm/blog/serving/moriio.md) → [Hybrid SSM](vllm/blog/serving/hybrid-ssm.md) → [AFD](vllm/blog/serving/afd.md)。CATALOG 里 day-0 / 活动文仍不是这条线。
