@@ -4,12 +4,12 @@
 
 从「那条评论在指什么」读起：[zh/GUIDE.md](zh/GUIDE.md)。
 
-**完整度请先看一句实话：** 评论里的官方 URL **几乎都有本地笔记**（NVIDIA 手册/博客/工具/TRT-LLM，以及 vLLM 文档页），但 **不是全文下载 + 完整翻译**。vLLM 100+ 篇博客只有机器目录 `en/vllm/blog/CATALOG.md` 和一篇 Anatomy 的中文解剖；`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
+**完整度请先看一句实话：** 评论里的官方 URL **几乎都有本地笔记**（NVIDIA 手册/博客/工具/TRT-LLM，以及 vLLM 文档页），但 **不是全文下载 + 完整翻译**。vLLM 博客全表仍在 `en/vllm/blog/CATALOG.md`；[必读列表](zh/vllm/blog/MUST-READ.md) 已全部写成学习译文，CATALOG 其余为 day-0 / 单模型 / 活动；`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
 
-网页里的图本地只留图注。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是。图仍在原网页。
+网页里的图本地只留图注。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；vLLM 必读博客同款。图仍在原网页。
 
 ## 目录
 
@@ -94,9 +94,23 @@
 | features | [prefix-caching-design](zh/vllm/features/prefix-caching-design.md) | https://docs.vllm.ai/en/stable/design/prefix_caching/ | 摘译 |
 | features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 摘译 |
 | features | [v1-guide](zh/vllm/features/v1-guide.md) | https://docs.vllm.ai/en/stable/usage/v1_guide/ | 摘译 |
-| blog | [MUST-READ](zh/vllm/blog/MUST-READ.md) | https://vllm.ai/blog · https://vllm.ai/blog/rss.xml | 必读 URL |
+| blog | [MUST-READ](zh/vllm/blog/MUST-READ.md) | https://vllm.ai/blog · https://vllm.ai/blog/rss.xml | 必读 + 本地链接 |
 | blog | [CATALOG](en/vllm/blog/CATALOG.md) | https://vllm.ai/llms.txt | 全表（英文） |
+| blog / architecture | [paged-attention](zh/vllm/blog/architecture/paged-attention.md) | https://vllm.ai/blog/2023-06-20-vllm | 学习译文 |
+| blog / architecture | [vs-deepspeed](zh/vllm/blog/architecture/vs-deepspeed.md) | https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed | 学习译文 |
+| blog / architecture | [v1-alpha](zh/vllm/blog/architecture/v1-alpha.md) | https://vllm.ai/blog/2025-01-27-v1-alpha-release | 学习译文 |
 | blog / architecture | [anatomy](zh/vllm/blog/architecture/anatomy.md) | https://vllm.ai/blog/2025-09-05-anatomy-of-vllm | 英文全文 + 中文导读 |
+| blog / architecture | [mrv2](zh/vllm/blog/architecture/mrv2.md) | https://vllm.ai/blog/2026-03-24-mrv2 | 学习译文 |
+| blog / performance | [v0.6-throughput](zh/vllm/blog/performance/v0.6-throughput.md) | https://vllm.ai/blog/2024-09-05-perf-update | 学习译文 |
+| blog / performance | [spec-decode](zh/vllm/blog/performance/spec-decode.md) | https://vllm.ai/blog/2024-10-17-spec-decode | 学习译文 |
+| blog / performance | [fp8-kvcache](zh/vllm/blog/performance/fp8-kvcache.md) | https://vllm.ai/blog/2026-04-22-fp8-kvcache | 学习译文 |
+| blog / performance | [production-quality](zh/vllm/blog/performance/production-quality.md) | https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality | 学习译文 |
+| blog / serving | [distributed-inference](zh/vllm/blog/serving/distributed-inference.md) | https://vllm.ai/blog/2025-02-17-distributed-inference | 学习译文 |
+| blog / serving | [production-stack](zh/vllm/blog/serving/production-stack.md) | https://vllm.ai/blog/2025-01-21-stack-release | 学习译文 |
+| blog / serving | [aibrix](zh/vllm/blog/serving/aibrix.md) | https://vllm.ai/blog/2025-02-21-aibrix-release | 学习译文 |
+| blog / serving | [router](zh/vllm/blog/serving/router.md) | https://vllm.ai/blog/2025-12-13-vllm-router-release | 学习译文 |
+| blog / serving | [epd](zh/vllm/blog/serving/epd.md) | https://vllm.ai/blog/2025-12-15-vllm-epd | 学习译文 |
+| blog / serving | [large-scale](zh/vllm/blog/serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving | 学习译文 |
 
 ## 建议阅读顺序
 
@@ -104,11 +118,11 @@
 2. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
 3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
 4. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
-5. `zh/vllm/blog/architecture/anatomy.md`
+5. `zh/vllm/blog/MUST-READ.md`（立项 → Anatomy → V1 → MRV2 → 性能 → 切卡 → 集群 → Router → EPD → Wide-EP）
 
 ## 刻意不做的
 
-- vLLM 博客 100+ 篇正文（URL 全在 `CATALOG.md`，必读在 `MUST-READ.md`）
+- vLLM 博客 CATALOG 里必读以外的 day-0 / 单模型 / 活动文（URL 仍在 `CATALOG.md`）
 - `vllm serve` 生成页里每一个旗标
 
 抓取：2026-08-30 / 2026-08-31。

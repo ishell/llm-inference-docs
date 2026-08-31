@@ -35,3 +35,15 @@ fetched: 2026-08-31
 ## TensorRT-LLM 调优手册
 
 评论里的 **performance improvement**，落到 NVIDIA 文档站，就是 [Performance Tuning Guide](nvidia/performance-tuning/trtllm-tuning-guide.md)。六章按官方目录排：先打基线，再拧编译旗标、max batch / max tokens、切卡、FP8、运行时调度。邻居页是 KV cache、IFB 调度、`trtllm-bench`。案例贯穿全书：Llama-3.3-70B、4×H100、2048/2048。数字是演示，质量每一步都要自己测。
+
+## vLLM 博客（必读线）
+
+文档页 `optimization.md` 告诉你旋钮顺序。博客告诉你这些旋钮是怎么长出来的。完整顺序在 [MUST-READ](vllm/blog/MUST-READ.md)。
+
+**架构：** [立项](vllm/blog/architecture/paged-attention.md) → [Anatomy](vllm/blog/architecture/anatomy.md) → [V1](vllm/blog/architecture/v1-alpha.md) → [MRV2](vllm/blog/architecture/mrv2.md)
+
+**性能：** [v0.6 CPU](vllm/blog/performance/v0.6-throughput.md) → [投机解码](vllm/blog/performance/spec-decode.md) → [FP8 KV](vllm/blog/performance/fp8-kvcache.md) → [生产级 CI](vllm/blog/performance/production-quality.md)
+
+**Serving：** [切卡](vllm/blog/serving/distributed-inference.md) → [production-stack](vllm/blog/serving/production-stack.md) / [AIBrix](vllm/blog/serving/aibrix.md) → [Router](vllm/blog/serving/router.md) → [Encoder 分离](vllm/blog/serving/epd.md) → [Wide-EP](vllm/blog/serving/large-scale.md)
+
+EPD 是视觉编码器拆出去；文本 Prefill/Decode 分离在 Router 与大规模两篇。CATALOG 其余不是这条主线。
