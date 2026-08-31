@@ -8,9 +8,11 @@ fetched: 2026-08-31
 
 Full machine list: [`CATALOG.md`](CATALOG.md). Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
-**Best order:** launch → Anatomy → V1 → MRV2 → (optional DeepSpeed notes) → v0.6 CPU → spec decode → FP8 KV → production CI → distributed sharding → production-stack → AIBrix → Router → encoder disagg → wide-EP.
+Knob map: [FLAG-MAP.md](FLAG-MAP.md) (`optimization.md` flags → these posts).
 
-“Not yet supported” in V1 / spec-decode is historical. The EPD post is **encoder** disaggregation; text P/D lives in Router + large-scale.
+**Best order:** launch → Anatomy → V1 → MRV2 → (optional DeepSpeed notes) → v0.6 CPU → spec decode → FP8 KV → production CI → distributed sharding → production-stack → AIBrix → Router → encoder disagg → wide-EP → Mooncake → Elastic EP.
+
+“Not yet supported” in V1 / spec-decode is historical. The EPD post is **encoder** disaggregation; text P/D lives in Router + large-scale. Mooncake is the cross-instance KV pool (agent prefixes). Elastic EP resizes DP at runtime.
 
 ## Architecture
 
@@ -41,3 +43,5 @@ Full machine list: [`CATALOG.md`](CATALOG.md). Hub: https://vllm.ai/blog · RSS:
 | Router | [router.md](serving/router.md) | https://vllm.ai/blog/2025-12-13-vllm-router-release |
 | Encoder disagg (EPD) | [epd.md](serving/epd.md) | https://vllm.ai/blog/2025-12-15-vllm-epd |
 | Large-scale serving | [large-scale.md](serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving |
+| Mooncake Store | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |
+| Elastic EP | [elastic-ep.md](serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism |

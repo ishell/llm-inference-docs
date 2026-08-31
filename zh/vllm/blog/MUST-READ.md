@@ -8,9 +8,11 @@ fetched: 2026-08-31
 
 完整机器表：英文 [`CATALOG.md`](../../en/vllm/blog/CATALOG.md)。入口 https://vllm.ai/blog ，RSS https://vllm.ai/blog/rss.xml
 
-**阅读顺序（最佳）：** 立项 → Anatomy → V1 → MRV2 →（可插 DeepSpeed 笔记）→ v0.6 CPU → 投机解码 → FP8 KV → 生产级 CI → 分布式切卡 → production-stack → AIBrix → Router → Encoder 分离 → 大规模 Wide-EP。
+旋钮对照：[FLAG-MAP.md](FLAG-MAP.md)（`optimization.md` 里的旗标 → 这篇博客）。
 
-V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 **视觉编码器分离**，文本 Prefill/Decode 分离在 Router 与大规模两篇。
+**阅读顺序（最佳）：** 立项 → Anatomy → V1 → MRV2 →（可插 DeepSpeed 笔记）→ v0.6 CPU → 投机解码 → FP8 KV → 生产级 CI → 分布式切卡 → production-stack → AIBrix → Router → Encoder 分离 → 大规模 Wide-EP → Mooncake → Elastic EP。
+
+V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 **视觉编码器分离**，文本 Prefill/Decode 分离在 Router 与大规模两篇。Mooncake 是跨实例 KV 池（agent 前缀）；Elastic EP 是运行时改 DP 宽度。
 
 ## architecture
 
@@ -41,3 +43,5 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 | Router | [router.md](serving/router.md) | https://vllm.ai/blog/2025-12-13-vllm-router-release |
 | Encoder 分离 (EPD) | [epd.md](serving/epd.md) | https://vllm.ai/blog/2025-12-15-vllm-epd |
 | 大规模 serving | [large-scale.md](serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving |
+| Mooncake Store | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |
+| Elastic EP | [elastic-ep.md](serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism |

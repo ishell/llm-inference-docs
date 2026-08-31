@@ -1,6 +1,7 @@
 # vLLM blog notes
 
 - Short list (best order): [MUST-READ.md](MUST-READ.md)
+- Knob map: [FLAG-MAP.md](FLAG-MAP.md)
 - Full machine table: [CATALOG.md](CATALOG.md) from https://vllm.ai/llms.txt  
   Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
@@ -23,3 +24,6 @@ MUST-READ posts all have local notes. Remaining CATALOG entries are day-0 / sing
 | serving | [router.md](serving/router.md) | https://vllm.ai/blog/2025-12-13-vllm-router-release |
 | serving | [epd.md](serving/epd.md) | https://vllm.ai/blog/2025-12-15-vllm-epd |
 | serving | [large-scale.md](serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving |
+| serving | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |
+| serving | [elastic-ep.md](serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism |
+| map | [FLAG-MAP.md](FLAG-MAP.md) | optimization knobs → blogs |

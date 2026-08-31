@@ -95,6 +95,7 @@
 | features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 摘译 |
 | features | [v1-guide](zh/vllm/features/v1-guide.md) | https://docs.vllm.ai/en/stable/usage/v1_guide/ | 摘译 |
 | blog | [MUST-READ](zh/vllm/blog/MUST-READ.md) | https://vllm.ai/blog · https://vllm.ai/blog/rss.xml | 必读 + 本地链接 |
+| blog | [FLAG-MAP](zh/vllm/blog/FLAG-MAP.md) | `optimization.md` 旋钮 → 博客 | 对照表 |
 | blog | [CATALOG](en/vllm/blog/CATALOG.md) | https://vllm.ai/llms.txt | 全表（英文） |
 | blog / architecture | [paged-attention](zh/vllm/blog/architecture/paged-attention.md) | https://vllm.ai/blog/2023-06-20-vllm | 学习译文 |
 | blog / architecture | [vs-deepspeed](zh/vllm/blog/architecture/vs-deepspeed.md) | https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed | 学习译文 |
@@ -111,6 +112,8 @@
 | blog / serving | [router](zh/vllm/blog/serving/router.md) | https://vllm.ai/blog/2025-12-13-vllm-router-release | 学习译文 |
 | blog / serving | [epd](zh/vllm/blog/serving/epd.md) | https://vllm.ai/blog/2025-12-15-vllm-epd | 学习译文 |
 | blog / serving | [large-scale](zh/vllm/blog/serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving | 学习译文 |
+| blog / serving | [mooncake](zh/vllm/blog/serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store | 学习译文 |
+| blog / serving | [elastic-ep](zh/vllm/blog/serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism | 学习译文 |
 
 ## 建议阅读顺序
 
@@ -118,7 +121,7 @@
 2. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
 3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
 4. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
-5. `zh/vllm/blog/MUST-READ.md`（立项 → Anatomy → V1 → MRV2 → 性能 → 切卡 → 集群 → Router → EPD → Wide-EP）
+5. `zh/vllm/blog/MUST-READ.md`（立项 → Anatomy → V1 → MRV2 → 性能 → 切卡 → 集群 → Router → EPD → Wide-EP → Mooncake → Elastic EP）
 
 ## 刻意不做的
 

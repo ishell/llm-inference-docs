@@ -10,7 +10,7 @@ fetched: 2026-08-31
 英文对照：`en/vllm/optimization/optimization.md`  
 来源：https://docs.vllm.ai/en/stable/configuration/optimization/
 
-官方建议的顺序很像一套礼貌：先确认这座房子里的 **CPU 核够不够**（V1 是多进程，核不够时 GPU 会像一位等待端菜的厨师），再选优化等级 `-O0`～`-O3`（默认 `-O2`，cudagraph + fusion），再调 **`max_num_batched_tokens`**（小值更护 ITL，大值更护 TTFT；吞吐常要 >8192），然后才是 TP/PP/DP/EP 和 cache。显存不够时另见官方 memory conservation——那是另一本更瘦的手册。
+官方建议的顺序很像一套礼貌：先确认这座房子里的 **CPU 核够不够**（V1 是多进程，核不够时 GPU 会像一位等待端菜的厨师），再选优化等级 `-O0`～`-O3`（默认 `-O2`，cudagraph + fusion），再调 **`max_num_batched_tokens`**（小值更护 ITL，大值更护 TTFT；吞吐常要 >8192），然后才是 TP/PP/DP/EP 和 cache。显存不够时另见官方 memory conservation——那是另一本更瘦的手册。 旋钮对应哪篇博客，见 [FLAG-MAP.md](../blog/FLAG-MAP.md)。
 
 ## 优化等级
 

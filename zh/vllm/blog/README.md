@@ -1,6 +1,7 @@
 # vLLM 博客
 
 - 必读短表（含最佳顺序）：[MUST-READ.md](MUST-READ.md)
+- 旋钮对照：[FLAG-MAP.md](FLAG-MAP.md)
 - 机器可读全表（英文）：[en/vllm/blog/CATALOG.md](../../../en/vllm/blog/CATALOG.md)  
   来源 https://vllm.ai/llms.txt · 索引 https://vllm.ai/blog · RSS https://vllm.ai/blog/rss.xml
 
@@ -23,3 +24,6 @@
 | serving | [router.md](serving/router.md) | https://vllm.ai/blog/2025-12-13-vllm-router-release |
 | serving | [epd.md](serving/epd.md) | https://vllm.ai/blog/2025-12-15-vllm-epd |
 | serving | [large-scale.md](serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving |
+| serving | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |
+| serving | [elastic-ep.md](serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism |
+| map | [FLAG-MAP.md](FLAG-MAP.md) | `optimization.md` 旋钮 → 博客 |
