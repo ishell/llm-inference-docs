@@ -39,7 +39,7 @@
 | [nim-03-parameters](zh/nvidia/benchmarking/nim-03-parameters.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/parameters.html | 全译 |
 | [nim-04-aiperf](zh/nvidia/benchmarking/nim-04-aiperf.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/quickstart.html | 全译 |
 | [nim-05-lora](zh/nvidia/benchmarking/nim-05-lora.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/benchmarking-lora.html | 全译 |
-| [nim-product-benchmarking](zh/nvidia/benchmarking/nim-product-benchmarking.md) | https://docs.nvidia.com/nim/large-language-models/latest/reference/benchmarking.html | 摘译 |
+| [nim-product-benchmarking](zh/nvidia/benchmarking/nim-product-benchmarking.md) | https://docs.nvidia.com/nim/large-language-models/latest/reference/benchmarking.html | 学习译文 |
 | [blog-01-fundamental-concepts](zh/nvidia/benchmarking/blog-01-fundamental-concepts.md) | https://developer.nvidia.com/blog/llm-benchmarking-fundamental-concepts/ | 学习译文 |
 | [blog-02-genai-perf-and-nim](zh/nvidia/benchmarking/blog-02-genai-perf-and-nim.md) | https://developer.nvidia.com/blog/llm-performance-benchmarking-measuring-nvidia-nim-performance-with-genai-perf/ | 学习译文 |
 | [blog-genai-perf-openai](zh/nvidia/benchmarking/blog-genai-perf-openai.md) | https://developer.nvidia.com/blog/measuring-generative-ai-model-performance-using-nvidia-genai-perf-and-an-openai-compatible-api/ | 学习译文 |
@@ -85,13 +85,13 @@
 | 主题 | 本地 | 原文 | 完整度 |
 |---|---|---|---|
 | getting-started | [index](zh/vllm/getting-started/index.md) | https://docs.vllm.ai/en/stable/ 与 https://docs.vllm.ai/en/latest/ | 入口 |
-| getting-started | [quickstart](zh/vllm/getting-started/quickstart.md) | https://docs.vllm.ai/en/stable/getting_started/quickstart/ | 摘译 |
+| getting-started | [quickstart](zh/vllm/getting-started/quickstart.md) | https://docs.vllm.ai/en/stable/getting_started/quickstart/ | 学习译文 |
 | getting-started | [serve](zh/vllm/getting-started/serve.md) | https://docs.vllm.ai/en/stable/cli/serve/ | 性能相关旗标（非整页 CLI） |
 | optimization | [optimization](zh/vllm/optimization/optimization.md) | https://docs.vllm.ai/en/stable/configuration/optimization/ | 全译 |
-| benchmarking | [cli](zh/vllm/benchmarking/cli.md) | https://docs.vllm.ai/en/stable/benchmarking/cli/ | 摘译 |
-| benchmarking | [auto-tune](zh/vllm/benchmarking/auto-tune.md) | https://github.com/vllm-project/vllm/blob/main/benchmarks/auto_tune/README.md | 摘译 |
-| metrics | [production-metrics](zh/vllm/metrics/production-metrics.md) | https://docs.vllm.ai/en/stable/usage/metrics/ | 摘译 |
-| metrics | [design-metrics](zh/vllm/metrics/design-metrics.md) | https://docs.vllm.ai/en/stable/design/metrics/ | 摘译 |
+| benchmarking | [cli](zh/vllm/benchmarking/cli.md) | https://docs.vllm.ai/en/stable/benchmarking/cli/ | 学习译文 |
+| benchmarking | [auto-tune](zh/vllm/benchmarking/auto-tune.md) | https://github.com/vllm-project/vllm/blob/main/benchmarks/auto_tune/README.md | 学习译文 |
+| metrics | [production-metrics](zh/vllm/metrics/production-metrics.md) | https://docs.vllm.ai/en/stable/usage/metrics/ | 学习译文 |
+| metrics | [design-metrics](zh/vllm/metrics/design-metrics.md) | https://docs.vllm.ai/en/stable/design/metrics/ | 学习译文 |
 | features | [prefix-caching](zh/vllm/features/prefix-caching.md) | https://docs.vllm.ai/en/stable/features/automatic_prefix_caching/ | 学习译文 |
 | features | [prefix-caching-design](zh/vllm/features/prefix-caching-design.md) | https://docs.vllm.ai/en/stable/design/prefix_caching/ | 学习译文 |
 | features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 学习译文 |
