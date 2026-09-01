@@ -53,5 +53,13 @@ fetched: 2026-08-31
 | `return_token_ids` | OpenAI API | [Agent Lightning](serving/agent-lightning.md) | Agent RL 禁止二次分词。 |
 | RDT / `sharded_rdt` | RL 权重同步 | [RDT](serving/rdt-weight-transfer.md) | 缓冲不计入 `gpu_memory_utilization`；当时无 EPLB。 |
 | 路由 / 控制面 | （不在 optimization 页） | production-stack / [AIBrix](serving/aibrix.md) / Router | 引擎上面的盘子可以换；记忆亲和不会消失。 |
+| `--async-scheduling`、`--stream-interval` | API / 调度 | [gpt-oss 优化](performance/gpt-oss-optimizations.md)、[Qwen3.5 25K](serving/qwen35-25k-tps.md) | 藏 CPU；stream-interval 缓冲后续 token，伤 ITL。hybrid P/D 要先修竞态。 |
+| `--gdn-prefill-backend`、`VLLM_SSM_CONV_STATE_LAYOUT=DS` | hybrid / P/D | [Qwen3.5 25K](serving/qwen35-25k-tps.md)、[Hybrid SSM](serving/hybrid-ssm.md) | GDN/Mamba 状态跟 KV 不是同一套搬运。 |
+| `--language-model-only` | 多模态 | Qwen3.5 25K | 纯文本负载关掉视觉，才能走 fused QK-norm+RoPE。 |
+| `--enable-distributed-layerwise-offload` | Omni | [DLO](serving/omni-layerwise-offload.md) | DiT 权重按层流；设备上只双缓冲两层。 |
+| `--omni`、`cache_backend` | Omni | [Omni](serving/vllm-omni.md)、[扩散 cache](serving/omni-diffusion-cache.md)、[TTS](serving/omni-tts.md) | 文本 TTFT ≠ 音频 TTFP；cache 吃时间冗余。 |
+| `--attention-backend HPC_ATTN`、`--moe-backend hpc` | backend | [HPC-Ops](performance/hpc-ops.md) | 当时 Hy3 / FP8 / Hopper，不是通用默认。 |
+| `VLLM_USE_V2_MODEL_RUNNER=1` | MoE 运行时 | [GLM-5.2 SLA](serving/glm52-b300.md)、[MRV2](architecture/mrv2.md) | dense 已默认 V2；MoE 要显式开。 |
+| `--block-size 128`（MSA） | 长上下文 | [MiniMax M3](serving/minimax-m3.md) | 对齐稀疏 attention 的 128-token 块，不是随便选。 |
 
 NVIDIA 侧同一张切卡地图：[trtllm-sharding](../../nvidia/performance-tuning/trtllm-sharding.md)。官方 sharding CLI 有一处把 `--tp_size` 写了两次、PP 应为 `--pp_size`，那章里注过。

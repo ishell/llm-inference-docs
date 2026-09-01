@@ -49,5 +49,13 @@ The optimization page is the polite order of knobs. The blogs are how those knob
 | `return_token_ids` | OpenAI API | [Agent Lightning](serving/agent-lightning.md) | Agent RL must not retokenize. |
 | RDT / `sharded_rdt` | RL weight sync | [RDT](serving/rdt-weight-transfer.md) | Buffers outside `gpu_memory_utilization`; no EPLB then. |
 | Routing / control plane | (not in optimization) | production-stack / [AIBrix](serving/aibrix.md) / Router | The rack on top of the engine can change; KV affinity cannot. |
+| `--async-scheduling`, `--stream-interval` | API / scheduler | [gpt-oss opts](performance/gpt-oss-optimizations.md), [Qwen3.5 25K](serving/qwen35-25k-tps.md) | Hide CPU; stream-interval buffers later tokens and hurts ITL. Hybrid P/D needs the race fixes first. |
+| `--gdn-prefill-backend`, `VLLM_SSM_CONV_STATE_LAYOUT=DS` | hybrid / P/D | [Qwen3.5 25K](serving/qwen35-25k-tps.md), [Hybrid SSM](serving/hybrid-ssm.md) | GDN/Mamba state is not the same transfer as KV. |
+| `--language-model-only` | multimodal | Qwen3.5 25K | Text-only unlocks fused QK-norm+RoPE. |
+| `--enable-distributed-layerwise-offload` | Omni | [DLO](serving/omni-layerwise-offload.md) | Stream DiT weights layerwise; two layers double-buffered on device. |
+| `--omni`, `cache_backend` | Omni | [Omni](serving/vllm-omni.md), [diffusion cache](serving/omni-diffusion-cache.md), [TTS](serving/omni-tts.md) | Text TTFT ≠ audio TTFP; cache eats timestep redundancy. |
+| `--attention-backend HPC_ATTN`, `--moe-backend hpc` | backend | [HPC-Ops](performance/hpc-ops.md) | Then Hy3 / FP8 / Hopper, not a universal default. |
+| `VLLM_USE_V2_MODEL_RUNNER=1` | MoE runtime | [GLM-5.2 SLA](serving/glm52-b300.md), [MRV2](architecture/mrv2.md) | Dense already defaults V2; MoE must opt in. |
+| `--block-size 128` (MSA) | long context | [MiniMax M3](serving/minimax-m3.md) | Matches sparse 128-token blocks; not an arbitrary cache size. |
 
 NVIDIA sibling map: TensorRT-LLM sharding chapter. Official CLI once wrote `--tp_size` twice; PP is `--pp_size`.

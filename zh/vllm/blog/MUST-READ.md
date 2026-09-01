@@ -116,3 +116,14 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 | Semantic Router | [semantic-router.md](serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router |
 | Iris v0.1 | [semantic-router-iris.md](serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris |
 | vLLM-Omni | [vllm-omni.md](serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni |
+
+## 其余 CATALOG（已齐，按需）
+
+带日期的博客 **128/128** 都有压缩学习译文。全表：[README.md](README.md)。不必按波次读完。下面几簇机制含量高，主线走完再抽：
+
+- Omni / TTS / 扩散 RL：`omni-tts`、`omni-diffusion-cache`、`omni-autoround`、`qwen3-omni`、`omni-layerwise-offload`、`verl-omni`、`verl-omni-v020`
+- RL 对齐：`vime`、`vime-rocm`、`openrlhf`（第四波已列）
+- Pareto / 硬件：`qwen35-25k-tps`、`glm52-b300`、`hpc-ops`、`gb300-deepseek`、`gpt-oss-optimizations`、`blackwell-inferencemax`、`artificial-analysis`、`eagle3-amd`
+- Day-0 / 社区：Nemotron 3 系、Gemma 4、Llama 3.1/4、gpt-oss 上手、meetup、playground、vllm.ai 网站
+
+Semantic Router 后续（signal / HaluGate / Athena / Themis / MoM / Fusion / session）在 `serving/semantic-router-*.md`。

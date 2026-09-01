@@ -5,12 +5,26 @@ voice: literary-study
 fetched: 2026-09-01
 ---
 
-# 文本之外：pooling 模型与 IO Processor
+# 文本之外：pooling 模型把图吐回来
 
 英文对照：`en/vllm/blog/architecture/beyond-text.md`  
 原文：https://vllm.ai/blog/2025-09-05-beyond-text-generation  
-图在原网页。和 [Omni](../serving/vllm-omni.md) 分清：这篇是 **非自回归、一次前向出多模态结果**（地学分割一类），不是 Thinker-Talker 流水线。
+2025-09-05。IBM / TerraTorch。图在原网页。后来的多模态流水线见 [vllm-omni](../serving/vllm-omni.md)；插件面见 [plugin-system](plugin-system.md)。
 
-vLLM 从纯文本 LLM 走到 LLaVA 式「多模态进、文本出」。再往后：卷积 / ViT 一次推理出图或结构，不需要 detokenize。他们把这类模型当 **pooling**（identity pooler 吐 hidden），TerraTorch 当 generic backend（NASA/ESA 地学模型）。为此：无 attention 模型、可跳过 tokenizer、原始张量进、扩展 serving API。
+vLLM 先会文本进文本出，再会 LLaVA 式多模态进、文本出。这篇走第三步：**非自回归、一次前向吐出多模态输出**——推理形态像 pooling，但输入输出要自己处理。落地是地理空间基础模型（多光谱 / 雷达 + 元数据），TerraTorch 整族经 generic backend 进 vLLM。
 
-张量进张量出还不够。Transformers processor 不懂 GeoTIFF。**IO Processor 插件**：进程外实现预/后处理，entry point 组 `vllm.io_processor_plugins`，启动 `--io-processor-plugin <name>`，作用在 `/pooling`。当时一只实例一只插件。Prithvi 洪水检测示例：`--model-impl terratorch --task embed --skip-tokenizer-init --io-processor-plugin prithvi_to_tiff`，URL 进 GeoTIFF、base64 出。这是 **输出形态** 的门，不是 PagedAttention 改写。
+为了让这些模型站住：无 attention 的模型、不需要 tokenizer、原始输入而不是默认 multimodal embedding、serving API 加长。Identity pooler 把 hidden 原样交出来。
+
+## IO Processor
+
+光 pooling 只做到 tensor↔tensor。GeoTIFF 一类 transformers processor 不会。**IO Processor 插件**：引擎外实现接口，`vllm.io_processor_plugins` entry point，`--io-processor-plugin <name>`。当时每个实例一只插件，挂在 `/pooling`。
+
+Prithvi 洪水检测示例：下载 GeoTIFF → 切成 512×512 补丁（6 波段 + GPS/日期）→ 多条 prompt → 推理 → 按元数据拼回 GeoTIFF。
+
+```bash
+vllm serve ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL-Sen1Floods11 \
+  --model-impl terratorch --task embed --skip-tokenizer-init --enforce-eager \
+  --io-processor-plugin prithvi_to_tiff
+```
+
+请求打 `http://localhost:8000/pooling`，`softmax: false` 才能拿到生输出。当时要装最新主干（尚未进 v0.10.1.1）。

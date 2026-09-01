@@ -4,11 +4,22 @@ lang: en
 fetched: 2026-09-01
 ---
 
-# Beyond text: pooling models and IO Processors
+# Beyond text generation
 
-Chinese: `../../zh/vllm/blog/architecture/beyond-text.md`  
-Not [Omni](../serving/vllm-omni.md): this is **non-autoregressive, one-pass multimodal output** (geospatial segmentation), not a Thinker-Talker pipeline.
+2025-09-05. IBM / TerraTorch. Study note; figures on the original page. Later multimodal pipeline: [vllm-omni.md](../serving/vllm-omni.md). Plugins: [plugin-system.md](plugin-system.md).
 
-vLLM went from text LLMs to LLaVA-style multimodal-in, text-out. Next: conv / ViT models that emit an image or structure in one pass — no detokenize. They land as **pooling** (identity pooler returns hidden) with a TerraTorch generic backend (NASA/ESA geospatial models). Needed: attention-free models, skip tokenizer, raw tensors in, serving API extensions.
+vLLM grew from text→text to LLaVA-style multimodal-in / text-out. This is the third step: **non-autoregressive models that emit multimodal output in one pass** — pooling-shaped inference with custom I/O. First landing: geospatial foundation models (multispectral/radar + metadata) via a generic TerraTorch backend.
 
-Tensor-in/tensor-out is not enough. Transformers processors do not speak GeoTIFF. **IO Processor plugins** live out-of-tree, register in `vllm.io_processor_plugins`, start with `--io-processor-plugin <name>`, wrap `/pooling`. One plugin per instance then. Prithvi flood example: `--model-impl terratorch --task embed --skip-tokenizer-init --io-processor-plugin prithvi_to_tiff`, URL in, base64 GeoTIFF out. This is the **output-shape** door, not a PagedAttention rewrite.
+Needed: attention-free models, no tokenizer, raw tensors instead of default multimodal embeddings, serving API extensions. Identity pooler returns hidden states unchanged.
+
+Tensor↔tensor is not enough (GeoTIFF). **IO Processor** plugins live outside the tree, register `vllm.io_processor_plugins`, `--io-processor-plugin <name>`. Then one plugin per instance, applied on `/pooling`.
+
+Prithvi flood example: fetch GeoTIFF → 512×512 patches (6 bands + GPS/date) → prompts → stitch with metadata.
+
+```bash
+vllm serve ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL-Sen1Floods11 \
+  --model-impl terratorch --task embed --skip-tokenizer-init --enforce-eager \
+  --io-processor-plugin prithvi_to_tiff
+```
+
+POST `/pooling` with `softmax: false` for raw output. Needed trunk newer than v0.10.1.1 at the time.

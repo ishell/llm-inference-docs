@@ -116,3 +116,14 @@ After wave 4. Order: AMD spec → RDT weights → IsoExec → bitwise RL → tok
 | Semantic Router | [semantic-router.md](serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router |
 | Iris v0.1 | [semantic-router-iris.md](serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris |
 | vLLM-Omni | [vllm-omni.md](serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni |
+
+## Rest of CATALOG (complete; optional)
+
+Dated posts **128/128** have compressed study notes. Full table: [README.md](README.md). Do not read them as another must-read wave. High-signal clusters after the main line:
+
+- Omni / TTS / diffusion RL: `omni-tts`, `omni-diffusion-cache`, `omni-autoround`, `qwen3-omni`, `omni-layerwise-offload`, `verl-omni`, `verl-omni-v020`
+- RL alignment: `vime`, `vime-rocm`
+- Pareto / hardware: `qwen35-25k-tps`, `glm52-b300`, `hpc-ops`, `gb300-deepseek`, `gpt-oss-optimizations`, `blackwell-inferencemax`, `artificial-analysis`, `eagle3-amd`
+- Day-0 / community: Nemotron 3 family, Gemma 4, Llama 3.1/4, gpt-oss getting-started, meetups, playground, vllm.ai website
+
+Semantic Router follow-ons live under `serving/semantic-router-*.md`.
