@@ -9,7 +9,7 @@
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
 
-网页里的图本地只留图注。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；vLLM 必读博客同款。图仍在原网页。
+网页里的图本地只留图注。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。图仍在原网页。
 
 ## 目录
 
@@ -19,7 +19,7 @@
     benchmarking/         # 压测 vs 性能测试、NIM 手册、博客 1–2、GenAI-Perf 客户端文
     performance-tuning/   # Mastering、博客 3、TensorRT-LLM 全套
     cost/                 # 博客 4 TCO
-    tools/                # AIPerf、GenAI-Perf、Perf Analyzer、Triton
+    tools/                # AIPerf（入口/调度/指标/五类打法）、GenAI-Perf、Perf Analyzer、Triton
   vllm/
     getting-started/      # 文档入口、quickstart、serve CLI
     optimization/
@@ -72,11 +72,13 @@
 
 | 本地 | 原文 | 完整度 |
 |---|---|---|
-| [aiperf](zh/nvidia/tools/aiperf.md) | https://github.com/ai-dynamo/aiperf | 摘译 |
-| [aiperf-load-generator](zh/nvidia/tools/aiperf-load-generator.md) | https://docs.nvidia.com/aiperf/benchmark-modes/load-generator-options-reference | 摘译 |
-| [genai-perf](zh/nvidia/tools/genai-perf.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_analyzer/genai-perf/README.html | 英文全文 + 中文导读 |
-| [perf-analyzer](zh/nvidia/tools/perf-analyzer.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_benchmark/perf-analyzer-README.html | 摘译 |
-| [triton-performance-tuning](zh/nvidia/tools/triton-performance-tuning.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/performance_tuning.html | 摘译 |
+| [aiperf](zh/nvidia/tools/aiperf.md) | https://github.com/ai-dynamo/aiperf · https://docs.nvidia.com/aiperf/ | 学习译文 |
+| [aiperf-load-generator](zh/nvidia/tools/aiperf-load-generator.md) | https://docs.nvidia.com/aiperf/benchmark-modes/load-generator-options-reference | 学习译文 |
+| [aiperf-metrics](zh/nvidia/tools/aiperf-metrics.md) | https://docs.nvidia.com/aiperf/reference/ai-perf-metrics-reference | 学习译文 |
+| [aiperf-comprehensive](zh/nvidia/tools/aiperf-comprehensive.md) | https://docs.nvidia.com/aiperf/getting-started/ai-perf-comprehensive-llm-benchmarking | 学习译文 |
+| [genai-perf](zh/nvidia/tools/genai-perf.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_analyzer/genai-perf/README.html | 学习译文（已停更） |
+| [perf-analyzer](zh/nvidia/tools/perf-analyzer.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_benchmark/perf-analyzer-README.html | 学习译文 |
+| [triton-performance-tuning](zh/nvidia/tools/triton-performance-tuning.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/performance_tuning.html | 学习译文 |
 
 ## vLLM
 
@@ -136,12 +138,14 @@
 1. [zh/GUIDE.md](zh/GUIDE.md)
 2. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
 3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
-4. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
-5. `zh/vllm/blog/MUST-READ.md`（主线 → 第二波机制 → 第三波：插件 / Triton / PegaFlow / TurboQuant / Native RL）
+4. 尺子本身：`zh/nvidia/tools/aiperf.md` → `aiperf-metrics.md` → `aiperf-load-generator.md` → `aiperf-comprehensive.md`（传统 Triton 模型再读 Perf Analyzer + Triton 调优）
+5. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
+6. `zh/vllm/blog/MUST-READ.md`（主线 → 第二波机制 → 第三波：插件 / Triton / PegaFlow / TurboQuant / Native RL）
 
 ## 刻意不做的
 
 - vLLM 博客 CATALOG 里第三波机制文以外的 day-0 / 单模型 / 活动文（URL 仍在 `CATALOG.md`）
 - `vllm serve` 生成页里每一个旗标
+- AIPerf 整页 CLI（https://docs.nvidia.com/aiperf/reference/command-line-options）以及 GenAI-Perf README 里逐条 `--help`
 
 抓取：2026-08-30 / 2026-08-31 / 2026-09-01。

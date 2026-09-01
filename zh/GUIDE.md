@@ -26,7 +26,7 @@ fetched: 2026-08-31
 ## 最短路径（评论者真正想让你读的四篇）
 
 1. [基本概念](nvidia/benchmarking/blog-01-fundamental-concepts.md) — TTFT / ITL / TPS，压测 vs 性能测试，concurrency 怎么扫。
-2. [用 AIPerf 打一轮](nvidia/benchmarking/nim-04-aiperf.md) — 画出 latency–throughput 曲线。
+2. [用 AIPerf 打一轮](nvidia/benchmarking/nim-04-aiperf.md) — 画出 latency–throughput 曲线。尺子本身：[AIPerf](nvidia/tools/aiperf.md) → [指标公式](nvidia/tools/aiperf-metrics.md) → [调度旗标](nvidia/tools/aiperf-load-generator.md) → [五类打法](nvidia/tools/aiperf-comprehensive.md)。
 3. [vLLM 调优顺序](vllm/optimization/optimization.md) — CPU 核、`-O*`、`max_num_batched_tokens`、并行、cache。
 4. [Anatomy of vLLM](vllm/blog/architecture/anatomy.md) — 把 serving 系统从里翻到外。
 
@@ -35,6 +35,12 @@ fetched: 2026-08-31
 ## TensorRT-LLM 调优手册
 
 评论里的 **performance improvement**，落到 NVIDIA 文档站，就是 [Performance Tuning Guide](nvidia/performance-tuning/trtllm-tuning-guide.md)。六章按官方目录排：先打基线，再拧编译旗标、max batch / max tokens、切卡、FP8、运行时调度。邻居页是 KV cache、IFB 调度、`trtllm-bench`。案例贯穿全书：Llama-3.3-70B、4×H100、2048/2048。数字是演示，质量每一步都要自己测。
+
+## NVIDIA 尺子（tools/）
+
+生成式 LLM：**AIPerf**。入口、三层架构、已知陷阱在 [aiperf.md](nvidia/tools/aiperf.md)；公式在 [aiperf-metrics.md](nvidia/tools/aiperf-metrics.md)；concurrency / QPS / trace / 每用户回合在 [aiperf-load-generator.md](nvidia/tools/aiperf-load-generator.md)；Pareto / jsonl / Mooncake / goodput / 时间切片在 [aiperf-comprehensive.md](nvidia/tools/aiperf-comprehensive.md)。[GenAI-Perf](nvidia/tools/genai-perf.md) 已停更，只为对照旧数字。
+
+传统 Triton 模型（分类、检测、非生成）：[Perf Analyzer](nvidia/tools/perf-analyzer.md) 打基线，[Triton 调优](nvidia/tools/triton-performance-tuning.md) 用 Model Analyzer 搜 `config.pbtxt`。不要拿 infer/sec 去跟 TTFT 吵架。
 
 ## vLLM 博客（必读线）
 
