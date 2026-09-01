@@ -43,6 +43,15 @@ fetched: 2026-08-31
 | `turboquant_*` | `--kv-cache-dtype` | [TurboQuant](performance/turboquant.md) | 先读对照；生产默认仍是 FP8。 |
 | 权重同步 / `pause keep` | （RL） | [Native RL](serving/native-rl.md) | 别再给每家框架补 worker；DPEP 两阶段 pause。 |
 | `ray symmetric-run` | 多机启动 | [Ray symmetric-run](serving/ray-symmetric.md) | SLURM / mpssh 上每台同一条命令。 |
+| `method: extract_hidden_states` | 投机配置 | [hidden 导出](architecture/extract-hidden-states.md) | dummy draft + KV Connector；只存 prompt。 |
+| `"parallel_drafting": true` / `dflash` / `dspark` | 投机 | [P-EAGLE](performance/p-eagle.md)、[并行草稿](performance/parallel-drafting.md)、[AMD 投机](performance/spec-decode-amd.md) | 一次前向猜 K 个；N 不是越大越好。 |
+| `enable_adaptive_verification` | 投机 | [DSpark 自适应](performance/dspark-adaptive.md) | 预算 = 信心 × 负载；要 FULL varlen decode graph。 |
+| `/v1/realtime`、StreamingInput | （博客） | [流式输入](serving/streaming-realtime.md) | 模型必须因果；chunked prefill 是另一件事。 |
+| `--kv-cache-dtype fp8` + `--block-size 256`（V4） | 显存 | [DeepSeek V4](architecture/deepseek-v4.md) | 逻辑 block 256 原生位置；压缩机残差当滑窗。 |
+| `--quantization ptpc_fp8` | ROCm 量化 | [PTPC-FP8](performance/ptpc-fp8.md) | 权重量化，不是 KV dtype。 |
+| `model_impl="transformers"` | 模型实现 | [Transformers backend](architecture/transformers-backend.md) | 覆盖面，不是性能默认。 |
+| `return_token_ids` | OpenAI API | [Agent Lightning](serving/agent-lightning.md) | Agent RL 禁止二次分词。 |
+| RDT / `sharded_rdt` | RL 权重同步 | [RDT](serving/rdt-weight-transfer.md) | 缓冲不计入 `gpu_memory_utilization`；当时无 EPLB。 |
 | 路由 / 控制面 | （不在 optimization 页） | production-stack / [AIBrix](serving/aibrix.md) / Router | 引擎上面的盘子可以换；记忆亲和不会消失。 |
 
 NVIDIA 侧同一张切卡地图：[trtllm-sharding](../../nvidia/performance-tuning/trtllm-sharding.md)。官方 sharding CLI 有一处把 `--tp_size` 写了两次、PP 应为 `--pp_size`，那章里注过。

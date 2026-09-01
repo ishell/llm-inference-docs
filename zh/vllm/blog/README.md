@@ -5,7 +5,7 @@
 - 机器可读全表（英文）：[en/vllm/blog/CATALOG.md](../../../en/vllm/blog/CATALOG.md)  
   来源 https://vllm.ai/llms.txt · 索引 https://vllm.ai/blog · RSS https://vllm.ai/blog/rss.xml
 
-必读线与第二、三波机制文已落学习译文。CATALOG 其余仍是 day-0 / 单模型 / 活动，需要时指定 URL。
+必读线与第二–五波机制文已落学习译文。CATALOG 其余主要是 day-0 / 单模型 / 活动，仍在补。
 
 | 主题 | 文件 | 原文 |
 |---|---|---|
@@ -42,4 +42,31 @@
 | performance | [turboquant.md](performance/turboquant.md) | https://vllm.ai/blog/2026-05-11-turboquant |
 | serving | [native-rl.md](serving/native-rl.md) | https://vllm.ai/blog/2026-05-28-native-rl-apis |
 | serving | [ray-symmetric.md](serving/ray-symmetric.md) | https://vllm.ai/blog/2025-11-22-ray-symmetric-run |
+| architecture | [extract-hidden-states.md](architecture/extract-hidden-states.md) | https://vllm.ai/blog/2026-03-30-extract-hidden-states |
+| performance | [p-eagle.md](performance/p-eagle.md) | https://vllm.ai/blog/2026-03-13-p-eagle |
+| performance | [parallel-drafting.md](performance/parallel-drafting.md) | https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting |
+| performance | [dspark-adaptive.md](performance/dspark-adaptive.md) | https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification |
+| serving | [streaming-realtime.md](serving/streaming-realtime.md) | https://vllm.ai/blog/2026-01-31-streaming-realtime |
+| serving | [tilert.md](serving/tilert.md) | https://vllm.ai/blog/2026-07-14-vllm-tilert-pd |
+| architecture | [deepseek-v4.md](architecture/deepseek-v4.md) | https://vllm.ai/blog/2026-04-24-deepseek-v4 |
+| architecture | [rocm-attention.md](architecture/rocm-attention.md) | https://vllm.ai/blog/2026-02-27-rocm-attention-backend |
+| serving | [gb200-wideep.md](serving/gb200-wideep.md) | https://vllm.ai/blog/2026-02-03-dsr1-gb200-part1 |
+| serving | [openrlhf.md](serving/openrlhf.md) | https://vllm.ai/blog/2025-04-23-openrlhf-vllm |
+| architecture | [lfai-roadmap.md](architecture/lfai-roadmap.md) | https://vllm.ai/blog/2024-07-25-lfai-perf |
+| performance | [spec-decode-amd.md](performance/spec-decode-amd.md) | https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus |
+| serving | [rdt-weight-transfer.md](serving/rdt-weight-transfer.md) | https://vllm.ai/blog/2026-08-22-rdt-weight-transfer |
+| serving | [isoexec.md](serving/isoexec.md) | https://vllm.ai/blog/2026-08-21-isoexec |
+| serving | [bitwise-rl.md](serving/bitwise-rl.md) | https://vllm.ai/blog/2025-11-10-bitwise-consistent-train-inference |
+| serving | [agent-lightning.md](serving/agent-lightning.md) | https://vllm.ai/blog/2025-10-22-agent-lightning |
+| performance | [speculators-v030.md](performance/speculators-v030.md) | https://vllm.ai/blog/2025-12-13-speculators-v030 |
+| performance | [speculators-v050.md](performance/speculators-v050.md) | https://vllm.ai/blog/2026-05-28-speculators-v050 |
+| performance | [eagle-3-1.md](performance/eagle-3-1.md) | https://vllm.ai/blog/2026-05-26-eagle-3-1 |
+| architecture | [cuda-debugging.md](architecture/cuda-debugging.md) | https://vllm.ai/blog/2025-08-11-cuda-debugging |
+| architecture | [cuda-debugging-source.md](architecture/cuda-debugging-source.md) | https://vllm.ai/blog/2025-12-03-improved-cuda-debugging |
+| architecture | [vllm-tpu.md](architecture/vllm-tpu.md) | https://vllm.ai/blog/2025-10-16-vllm-tpu |
+| performance | [ptpc-fp8.md](performance/ptpc-fp8.md) | https://vllm.ai/blog/2025-02-24-ptpc-fp8-rocm |
+| architecture | [transformers-backend.md](architecture/transformers-backend.md) | https://vllm.ai/blog/2025-04-11-transformers-backend |
+| serving | [semantic-router.md](serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router |
+| serving | [semantic-router-iris.md](serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris |
+| serving | [vllm-omni.md](serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni |
 | map | [FLAG-MAP.md](FLAG-MAP.md) | `optimization.md` 旋钮 → 博客 |

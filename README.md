@@ -4,7 +4,7 @@
 
 从「那条评论在指什么」读起：[zh/GUIDE.md](zh/GUIDE.md)。
 
-**完整度请先看一句实话：** 评论里的官方 URL **几乎都有本地笔记**（NVIDIA 手册/博客/工具/TRT-LLM，以及 vLLM 文档页），但 **不是全文下载 + 完整翻译**。vLLM 博客全表仍在 `en/vllm/blog/CATALOG.md`；[必读列表](zh/vllm/blog/MUST-READ.md) 已全部写成学习译文，CATALOG 其余为 day-0 / 单模型 / 活动；`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
+**完整度请先看一句实话：** 评论里的官方 URL **几乎都有本地笔记**（NVIDIA 手册/博客/工具/TRT-LLM，以及 vLLM 文档页），但 **不是全文下载 + 完整翻译**。vLLM 博客全表仍在 `en/vllm/blog/CATALOG.md`；[必读列表](zh/vllm/blog/MUST-READ.md) 已写到第五波机制文。CATALOG 里 day-0 / 单模型 / 活动仍在补；`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
@@ -132,6 +132,33 @@
 | blog / performance | [turboquant](zh/vllm/blog/performance/turboquant.md) | https://vllm.ai/blog/2026-05-11-turboquant | 学习译文 |
 | blog / serving | [native-rl](zh/vllm/blog/serving/native-rl.md) | https://vllm.ai/blog/2026-05-28-native-rl-apis | 学习译文 |
 | blog / serving | [ray-symmetric](zh/vllm/blog/serving/ray-symmetric.md) | https://vllm.ai/blog/2025-11-22-ray-symmetric-run | 学习译文 |
+| blog / architecture | [extract-hidden-states](zh/vllm/blog/architecture/extract-hidden-states.md) | https://vllm.ai/blog/2026-03-30-extract-hidden-states | 学习译文 |
+| blog / performance | [p-eagle](zh/vllm/blog/performance/p-eagle.md) | https://vllm.ai/blog/2026-03-13-p-eagle | 学习译文 |
+| blog / performance | [parallel-drafting](zh/vllm/blog/performance/parallel-drafting.md) | https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting | 学习译文 |
+| blog / performance | [dspark-adaptive](zh/vllm/blog/performance/dspark-adaptive.md) | https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification | 学习译文 |
+| blog / serving | [streaming-realtime](zh/vllm/blog/serving/streaming-realtime.md) | https://vllm.ai/blog/2026-01-31-streaming-realtime | 学习译文 |
+| blog / serving | [tilert](zh/vllm/blog/serving/tilert.md) | https://vllm.ai/blog/2026-07-14-vllm-tilert-pd | 学习译文 |
+| blog / architecture | [deepseek-v4](zh/vllm/blog/architecture/deepseek-v4.md) | https://vllm.ai/blog/2026-04-24-deepseek-v4 | 学习译文 |
+| blog / architecture | [rocm-attention](zh/vllm/blog/architecture/rocm-attention.md) | https://vllm.ai/blog/2026-02-27-rocm-attention-backend | 学习译文 |
+| blog / serving | [gb200-wideep](zh/vllm/blog/serving/gb200-wideep.md) | https://vllm.ai/blog/2026-02-03-dsr1-gb200-part1 | 学习译文 |
+| blog / serving | [openrlhf](zh/vllm/blog/serving/openrlhf.md) | https://vllm.ai/blog/2025-04-23-openrlhf-vllm | 学习译文 |
+| blog / architecture | [lfai-roadmap](zh/vllm/blog/architecture/lfai-roadmap.md) | https://vllm.ai/blog/2024-07-25-lfai-perf | 学习译文 |
+| blog / performance | [spec-decode-amd](zh/vllm/blog/performance/spec-decode-amd.md) | https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus | 学习译文 |
+| blog / serving | [rdt-weight-transfer](zh/vllm/blog/serving/rdt-weight-transfer.md) | https://vllm.ai/blog/2026-08-22-rdt-weight-transfer | 学习译文 |
+| blog / serving | [isoexec](zh/vllm/blog/serving/isoexec.md) | https://vllm.ai/blog/2026-08-21-isoexec | 学习译文 |
+| blog / serving | [bitwise-rl](zh/vllm/blog/serving/bitwise-rl.md) | https://vllm.ai/blog/2025-11-10-bitwise-consistent-train-inference | 学习译文 |
+| blog / serving | [agent-lightning](zh/vllm/blog/serving/agent-lightning.md) | https://vllm.ai/blog/2025-10-22-agent-lightning | 学习译文 |
+| blog / performance | [speculators-v030](zh/vllm/blog/performance/speculators-v030.md) | https://vllm.ai/blog/2025-12-13-speculators-v030 | 学习译文 |
+| blog / performance | [speculators-v050](zh/vllm/blog/performance/speculators-v050.md) | https://vllm.ai/blog/2026-05-28-speculators-v050 | 学习译文 |
+| blog / performance | [eagle-3-1](zh/vllm/blog/performance/eagle-3-1.md) | https://vllm.ai/blog/2026-05-26-eagle-3-1 | 学习译文 |
+| blog / architecture | [cuda-debugging](zh/vllm/blog/architecture/cuda-debugging.md) | https://vllm.ai/blog/2025-08-11-cuda-debugging | 学习译文 |
+| blog / architecture | [cuda-debugging-source](zh/vllm/blog/architecture/cuda-debugging-source.md) | https://vllm.ai/blog/2025-12-03-improved-cuda-debugging | 学习译文 |
+| blog / architecture | [vllm-tpu](zh/vllm/blog/architecture/vllm-tpu.md) | https://vllm.ai/blog/2025-10-16-vllm-tpu | 学习译文 |
+| blog / performance | [ptpc-fp8](zh/vllm/blog/performance/ptpc-fp8.md) | https://vllm.ai/blog/2025-02-24-ptpc-fp8-rocm | 学习译文 |
+| blog / architecture | [transformers-backend](zh/vllm/blog/architecture/transformers-backend.md) | https://vllm.ai/blog/2025-04-11-transformers-backend | 学习译文 |
+| blog / serving | [semantic-router](zh/vllm/blog/serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router | 学习译文 |
+| blog / serving | [semantic-router-iris](zh/vllm/blog/serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris | 学习译文 |
+| blog / serving | [vllm-omni](zh/vllm/blog/serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni | 学习译文 |
 
 ## 建议阅读顺序
 
@@ -140,12 +167,12 @@
 3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
 4. 尺子本身：`zh/nvidia/tools/aiperf.md` → `aiperf-metrics.md` → `aiperf-load-generator.md` → `aiperf-comprehensive.md`（传统 Triton 模型再读 Perf Analyzer + Triton 调优）
 5. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
-6. `zh/vllm/blog/MUST-READ.md`（主线 → 第二波机制 → 第三波：插件 / Triton / PegaFlow / TurboQuant / Native RL）
+6. `zh/vllm/blog/MUST-READ.md`（主线 → 第二–五波机制）
 
 ## 刻意不做的
 
-- vLLM 博客 CATALOG 里第三波机制文以外的 day-0 / 单模型 / 活动文（URL 仍在 `CATALOG.md`）
 - `vllm serve` 生成页里每一个旗标
 - AIPerf 整页 CLI（https://docs.nvidia.com/aiperf/reference/command-line-options）以及 GenAI-Perf README 里逐条 `--help`
+- 官方 HTML 全文搬进仓库（学习译文是压缩笔记）
 
 抓取：2026-08-30 / 2026-08-31 / 2026-09-01。

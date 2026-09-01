@@ -39,6 +39,15 @@ The optimization page is the polite order of knobs. The blogs are how those knob
 | `turboquant_*` | `--kv-cache-dtype` | [TurboQuant](performance/turboquant.md) | Read the bake-off; production default stays FP8. |
 | Weight sync / `pause keep` | (RL) | [Native RL](serving/native-rl.md) | Stop patching workers per framework; two-phase DPEP pause. |
 | `ray symmetric-run` | multi-node launch | [Ray symmetric-run](serving/ray-symmetric.md) | Same command on every SLURM / mpssh node. |
+| `method: extract_hidden_states` | spec config | [hidden extract](architecture/extract-hidden-states.md) | Dummy draft + KV Connector; prompt only. |
+| `"parallel_drafting": true` / `dflash` / `dspark` | spec | [P-EAGLE](performance/p-eagle.md), [parallel drafting](performance/parallel-drafting.md), [AMD spec](performance/spec-decode-amd.md) | K tokens in one forward; larger N is not always faster. |
+| `enable_adaptive_verification` | spec | [DSpark adaptive](performance/dspark-adaptive.md) | Budget = confidence × load; needs FULL varlen decode graphs. |
+| `/v1/realtime`, StreamingInput | (blog) | [streaming](serving/streaming-realtime.md) | Model must be causal; chunked prefill is a different knob. |
+| `--kv-cache-dtype fp8` + `--block-size 256` (V4) | memory | [DeepSeek V4](architecture/deepseek-v4.md) | Logical block = 256 native positions; compressor residual as SWA. |
+| `--quantization ptpc_fp8` | ROCm quant | [PTPC-FP8](performance/ptpc-fp8.md) | Weight quant, not KV dtype. |
+| `model_impl="transformers"` | model impl | [Transformers backend](architecture/transformers-backend.md) | Coverage, not the performance default. |
+| `return_token_ids` | OpenAI API | [Agent Lightning](serving/agent-lightning.md) | Agent RL must not retokenize. |
+| RDT / `sharded_rdt` | RL weight sync | [RDT](serving/rdt-weight-transfer.md) | Buffers outside `gpu_memory_utilization`; no EPLB then. |
 | Routing / control plane | (not in optimization) | production-stack / [AIBrix](serving/aibrix.md) / Router | The rack on top of the engine can change; KV affinity cannot. |
 
 NVIDIA sibling map: TensorRT-LLM sharding chapter. Official CLI once wrote `--tp_size` twice; PP is `--pp_size`.

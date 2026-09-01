@@ -75,3 +75,44 @@ After the second wave. Still not day-0. Order: plugins → hardware plugin → T
 | TurboQuant | [turboquant.md](performance/turboquant.md) | https://vllm.ai/blog/2026-05-11-turboquant |
 | Native RL APIs | [native-rl.md](serving/native-rl.md) | https://vllm.ai/blog/2026-05-28-native-rl-apis |
 | Ray symmetric-run | [ray-symmetric.md](serving/ray-symmetric.md) | https://vllm.ai/blog/2025-11-22-ray-symmetric-run |
+
+## Fourth wave (spec follow-ons / heterogeneous serving / historical roadmap)
+
+After wave 3. Order: hidden extract → P-EAGLE → parallel drafting → DSpark adaptive → streaming input → TileRT → DeepSeek V4 → ROCm attention → GB200 Wide-EP → OpenRLHF → LF AI roadmap.
+
+| Post | Local | URL |
+|---|---|---|
+| Hidden-state extract | [extract-hidden-states.md](architecture/extract-hidden-states.md) | https://vllm.ai/blog/2026-03-30-extract-hidden-states |
+| P-EAGLE | [p-eagle.md](performance/p-eagle.md) | https://vllm.ai/blog/2026-03-13-p-eagle |
+| Parallel drafting | [parallel-drafting.md](performance/parallel-drafting.md) | https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting |
+| DSpark adaptive verify | [dspark-adaptive.md](performance/dspark-adaptive.md) | https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification |
+| Streaming / realtime | [streaming-realtime.md](serving/streaming-realtime.md) | https://vllm.ai/blog/2026-01-31-streaming-realtime |
+| TileRT P/D | [tilert.md](serving/tilert.md) | https://vllm.ai/blog/2026-07-14-vllm-tilert-pd |
+| DeepSeek V4 | [deepseek-v4.md](architecture/deepseek-v4.md) | https://vllm.ai/blog/2026-04-24-deepseek-v4 |
+| ROCm attention | [rocm-attention.md](architecture/rocm-attention.md) | https://vllm.ai/blog/2026-02-27-rocm-attention-backend |
+| GB200 Wide-EP | [gb200-wideep.md](serving/gb200-wideep.md) | https://vllm.ai/blog/2026-02-03-dsr1-gb200-part1 |
+| OpenRLHF | [openrlhf.md](serving/openrlhf.md) | https://vllm.ai/blog/2025-04-23-openrlhf-vllm |
+| LF AI roadmap | [lfai-roadmap.md](architecture/lfai-roadmap.md) | https://vllm.ai/blog/2024-07-25-lfai-perf |
+
+## Fifth wave (alignment / draft training / TPU / routing / Omni)
+
+After wave 4. Order: AMD spec → RDT weights → IsoExec → bitwise RL → token IDs → Speculators 0.3/0.5 → EAGLE 3.1 → CUDA dump → TPU → PTPC-FP8 → Transformers backend → Semantic Router → Iris → Omni.
+
+| Post | Local | URL |
+|---|---|---|
+| AMD spec decode | [spec-decode-amd.md](performance/spec-decode-amd.md) | https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus |
+| RDT sharded weights | [rdt-weight-transfer.md](serving/rdt-weight-transfer.md) | https://vllm.ai/blog/2026-08-22-rdt-weight-transfer |
+| IsoExec | [isoexec.md](serving/isoexec.md) | https://vllm.ai/blog/2026-08-21-isoexec |
+| Bitwise RL | [bitwise-rl.md](serving/bitwise-rl.md) | https://vllm.ai/blog/2025-11-10-bitwise-consistent-train-inference |
+| return_token_ids | [agent-lightning.md](serving/agent-lightning.md) | https://vllm.ai/blog/2025-10-22-agent-lightning |
+| Speculators 0.3 | [speculators-v030.md](performance/speculators-v030.md) | https://vllm.ai/blog/2025-12-13-speculators-v030 |
+| Speculators 0.5 | [speculators-v050.md](performance/speculators-v050.md) | https://vllm.ai/blog/2026-05-28-speculators-v050 |
+| EAGLE 3.1 | [eagle-3-1.md](performance/eagle-3-1.md) | https://vllm.ai/blog/2026-05-26-eagle-3-1 |
+| CUDA core dump | [cuda-debugging.md](architecture/cuda-debugging.md) | https://vllm.ai/blog/2025-08-11-cuda-debugging |
+| Hang → source line | [cuda-debugging-source.md](architecture/cuda-debugging-source.md) | https://vllm.ai/blog/2025-12-03-improved-cuda-debugging |
+| vLLM TPU | [vllm-tpu.md](architecture/vllm-tpu.md) | https://vllm.ai/blog/2025-10-16-vllm-tpu |
+| PTPC-FP8 | [ptpc-fp8.md](performance/ptpc-fp8.md) | https://vllm.ai/blog/2025-02-24-ptpc-fp8-rocm |
+| Transformers backend | [transformers-backend.md](architecture/transformers-backend.md) | https://vllm.ai/blog/2025-04-11-transformers-backend |
+| Semantic Router | [semantic-router.md](serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router |
+| Iris v0.1 | [semantic-router-iris.md](serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris |
+| vLLM-Omni | [vllm-omni.md](serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni |
