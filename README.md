@@ -1,6 +1,6 @@
 # LLM 推理笔记（网站 × 主题）
 
-个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。推到 `main` 后由 [Deploy GitHub Pages](.github/workflows/pages.yml) 自动发布。
+个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。推到 `main` 后由 [Deploy GitHub Pages](.github/workflows/pages.yml) 发布。第一次请在仓库 **Settings → Pages → Source** 选 **GitHub Actions**（`GITHUB_TOKEN` 不能新建 Pages 站点）；或者加 Secret `PAGES_TOKEN`（有 repo 管理权限的 PAT），Action 会自己打开。
 
 从「那条评论在指什么」读起：[zh/GUIDE.md](zh/GUIDE.md)。
 
