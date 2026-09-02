@@ -1,9 +1,13 @@
-# 推到 main 后发布 GitHub Pages。
-# 站点：https://ishell.github.io/llm-inference-docs/
+# 推到 main 后发布站点。
+# https://ishell.github.io/llm-inference-docs/
 #
-# GITHUB_TOKEN 不能新建 Pages 站点。第一次二选一：
-#   1. Settings → Pages → Source = GitHub Actions
-#   2. 仓库 Secrets 加 PAGES_TOKEN（有 repo 管理权限的 PAT），本 workflow 会自己打开 Pages
+# GITHUB_TOKEN 不能调用 POST /pages（会 403）。本 workflow 因此：
+#   1. 把静态文件推到 gh-pages 分支（token 可以 git push）
+#   2. 再尝试 GitHub Actions Pages 部署（若 Settings 已选 GitHub Actions 就会成功）
+#
+# 第一次请打开 Settings → Pages：
+#   Source = Deploy from a branch → gh-pages → / (root)
+# 或 Source = GitHub Actions
 
 name: Deploy GitHub Pages
 
@@ -13,7 +17,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -45,43 +49,31 @@ jobs:
         with:
           path: _site
 
+      - name: Publish gh-pages branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          rsync -a _site/ "$tmp/"
+          cd "$tmp"
+          git init
+          git checkout -b gh-pages
+          git add -A
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m "Deploy ${GITHUB_SHA}"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push -f origin gh-pages
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    continue-on-error: true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Ensure GitHub Pages exists
-        env:
-          GH_TOKEN: ${{ secrets.PAGES_TOKEN || github.token }}
-        run: |
-          set +e
-          gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1
-          status=$?
-          set -e
-          if [ "$status" -eq 0 ]; then
-            gh api --method PUT "repos/${GITHUB_REPOSITORY}/pages" \
-              -f build_type=workflow >/dev/null
-            echo "Pages already on; build_type=workflow"
-            exit 0
-          fi
-          if gh api --method POST "repos/${GITHUB_REPOSITORY}/pages" \
-            -f build_type=workflow >/dev/null; then
-            echo "Created Pages site (workflow)"
-            exit 0
-          fi
-          echo "::error::GitHub Pages is not enabled. Open Settings → Pages → Source → GitHub Actions (once). Or add a PAGES_TOKEN secret (PAT with repo admin) so this job can create the site. GITHUB_TOKEN cannot enable Pages."
-          exit 1
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-
-      - name: Show site URL
-        run: |
-          {
-            echo "### Site"
-            echo "https://ishell.github.io/llm-inference-docs/"
-            echo "${{ steps.deployment.outputs.page_url }}"
-          } >> "$GITHUB_STEP_SUMMARY"
