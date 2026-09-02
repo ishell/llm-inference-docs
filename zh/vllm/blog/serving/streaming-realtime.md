@@ -25,4 +25,4 @@ PR #28973。
 
 HTTP 侧：`/v1/realtime` WebSocket。细节、事件名、与 OpenAI Realtime 的差异以原文和当时文档为准——接口还在长。
 
-和 [Anatomy](anatomy.md) 的 prefill/decode、[V1](v1.md) 的 scheduler 一起读：流式输入改的是 **请求怎么进引擎**，不是 attention 公式。
+和 [Anatomy](../architecture/anatomy.md) 的 prefill/decode、[V1](../architecture/v1-alpha.md) 的 scheduler 一起读：流式输入改的是 **请求怎么进引擎**，不是 attention 公式。

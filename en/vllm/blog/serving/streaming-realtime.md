@@ -23,4 +23,4 @@ A full prompt can still use **chunked prefill**: chunks enter the engine and TTF
 
 HTTP: `/v1/realtime` WebSocket. Event names and OpenAI Realtime deltas: original post and docs of that week — the surface is still growing.
 
-Read with [Anatomy](anatomy.md) prefill/decode and the [V1](v1.md) scheduler: this changes **how requests enter the engine**, not the attention formula.
+Read with [Anatomy](../architecture/anatomy.md) prefill/decode and the [V1](../architecture/v1-alpha.md) scheduler: this changes **how requests enter the engine**, not the attention formula.

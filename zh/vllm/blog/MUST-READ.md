@@ -6,7 +6,7 @@ fetched: 2026-08-31
 
 # 建议先读的 vLLM 博客
 
-完整机器表：英文 [`CATALOG.md`](../../en/vllm/blog/CATALOG.md)。入口 https://vllm.ai/blog ，RSS https://vllm.ai/blog/rss.xml
+完整机器表：英文 [`CATALOG.md`](../../../en/vllm/blog/CATALOG.md)。入口 https://vllm.ai/blog ，RSS https://vllm.ai/blog/rss.xml
 
 旋钮对照：[FLAG-MAP.md](FLAG-MAP.md)（`optimization.md` 里的旗标 → 这篇博客）。
 

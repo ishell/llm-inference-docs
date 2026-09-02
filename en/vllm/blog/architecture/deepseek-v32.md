@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # DeepSeek-V3.2-Exp: sparse attention in continuous batching
 
-2025-09-29. Day-0.  Later compression stack: [deepseek-v4.md](deepseek-v4.md). GB300 V3.2 vs R1: [gb300-deepseek.md](../serving/gb300-deepseek.md). Wide-EP: [gb200-wideep.md](../serving/gb200-wideep.md).
+2025-09-29. Day-0.  Later compression stack: [deepseek-v4.md](deepseek-v4.md). GB300 V3.2 vs R1: [gb300-deepseek.md](../performance/gb300-deepseek.md). Wide-EP: [gb200-wideep.md](../serving/gb200-wideep.md).
 
 DSA: lightning indexer picks top-2048, then sparse attention. Separate indexer K cache from MLA KV. Prefill vs decode layouts; batching marks causal windows with `ks` / `ke`.
 

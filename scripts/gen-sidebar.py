@@ -20,7 +20,7 @@ def title(rel: str) -> str:
 
 
 def line(rel: str) -> str:
-    return f"  - [{title(rel)}]({rel})"
+    return f"  - [{title(rel)}](/{rel})"
 
 
 NVIDIA_BENCH = [
@@ -89,10 +89,11 @@ def folder_files(sub: str) -> list[str]:
 def main() -> None:
     out = [
         "- 开始",
-        "  - [那条评论在指什么](zh/GUIDE.md)",
-        "  - [总目录](README.md)",
-        "  - [必读博客](zh/vllm/blog/MUST-READ.md)",
-        "  - [旋钮对照](zh/vllm/blog/FLAG-MAP.md)",
+        "  - [首页](/index.md)",
+        "  - [怎么读](/zh/GUIDE.md)",
+        "  - [总目录](/README.md)",
+        "  - [必读博客](/zh/vllm/blog/MUST-READ.md)",
+        "  - [旋钮对照](/zh/vllm/blog/FLAG-MAP.md)",
         "- NVIDIA · 压测",
         *[line(p) for p in NVIDIA_BENCH],
         "- NVIDIA · 调优",
@@ -110,8 +111,8 @@ def main() -> None:
         "- vLLM 博客 · Serving",
         *[line(p) for p in folder_files("serving")],
         "- 英文对照",
-        "  - [English README](README.md)",
-        "  - [CATALOG](en/vllm/blog/CATALOG.md)",
+        "  - [English README](/README.md)",
+        "  - [CATALOG](/en/vllm/blog/CATALOG.md)",
     ]
     (ROOT / "_sidebar.md").write_text("\n".join(out) + "\n", encoding="utf-8")
     print(f"wrote _sidebar.md ({len(out)} lines)")

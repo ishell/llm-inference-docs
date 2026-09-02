@@ -1,13 +1,5 @@
-# 推到 main 后发布站点。
+# Publish the notes site on each push to main.
 # https://ishell.github.io/llm-inference-docs/
-#
-# GITHUB_TOKEN 不能调用 POST /pages（会 403）。本 workflow 因此：
-#   1. 把静态文件推到 gh-pages 分支（token 可以 git push）
-#   2. 再尝试 GitHub Actions Pages 部署（若 Settings 已选 GitHub Actions 就会成功）
-#
-# 第一次请打开 Settings → Pages：
-#   Source = Deploy from a branch → gh-pages → / (root)
-# 或 Source = GitHub Actions
 
 name: Deploy GitHub Pages
 

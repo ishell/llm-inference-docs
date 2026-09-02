@@ -36,4 +36,4 @@ Prefill 仍 bf16 KV；decode 部分 token-wise fp8。CUDA graph、MTP、P/D 跟 
 
 三融合：compressor+RMSNorm+RoPE+insert（约 1.4–3×）；inverse RoPE+fp8 quant（约 2–3×）；Q norm + KV RoPE + K insert 水平融合（约 10–20× vs 朴素）。Indexer / 主压缩 / SWA insert 分 CUDA stream。官方建议：`--kv-cache-dtype fp8`、`--block-size 256`、EP+DP、FP4 indexer。Manifold-Constrained Hyper-Connections 和 MoE 改动原文略过——相对 attention 好接。
 
-和 [FP8 KV](fp8-kv.md)、[Wide-EP](wide-ep.md) 一起读。
+和 [FP8 KV](../performance/fp8-kvcache.md)、[Wide-EP](../serving/large-scale.md) 一起读。

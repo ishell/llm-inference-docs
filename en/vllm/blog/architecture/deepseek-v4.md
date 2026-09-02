@@ -34,4 +34,4 @@ Prefill still bf16 KV; decode is partly token-wise fp8. CUDA graphs, MTP, and P/
 
 Three fusions: compressor+RMSNorm+RoPE+insert (~1.4–3×); inverse RoPE+fp8 quant (~2–3×); horizontal Q-norm + KV RoPE + K insert (~10–20× vs naive). Indexer / main compress / SWA insert overlap on CUDA streams. Suggested flags: `--kv-cache-dtype fp8`, `--block-size 256`, EP+DP, FP4 indexer. Manifold-Constrained Hyper-Connections and MoE deltas are omitted in the post — easier to port than attention.
 
-Read with [FP8 KV](fp8-kv.md) and [Wide-EP](wide-ep.md).
+Read with [FP8 KV](../performance/fp8-kvcache.md) and [Wide-EP](../serving/large-scale.md).

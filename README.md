@@ -1,10 +1,10 @@
-# LLM 推理笔记（网站 × 主题）
+# LLM 推理笔记
 
-个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。推 `main` 后 Action 会更新 `gh-pages` 分支。第一次在 **Settings → Pages** 选 **Deploy from a branch** → `gh-pages` → `/`（`GITHUB_TOKEN` 不能新建 Pages 站点，这一步只要点一次）。
+个人学习库，**不是官方译本**。对照 NVIDIA NIM / TensorRT-LLM / AIPerf 与 vLLM 的公开文档写成压缩笔记：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。
 
-从「那条评论在指什么」读起：[zh/GUIDE.md](zh/GUIDE.md)。
+建议从网页首页或下面的阅读顺序读起。当初顺着一条评论里的词条整理过一遍，那段来历在 [zh/GUIDE.md](zh/GUIDE.md)，不是站点说明。
 
-**完整度请先看一句实话：** 评论里的官方 URL **几乎都有本地笔记**（NVIDIA 手册/博客/工具/TRT-LLM，以及 vLLM 文档页），但 **不是全文下载 + 完整翻译**。vLLM 博客全表在 `en/vllm/blog/CATALOG.md`；带日期的 **128 篇都有中英学习译文**（压缩笔记）。[必读列表](zh/vllm/blog/MUST-READ.md) 仍只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
+目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是完整翻译。vLLM 博客全表在 `en/vllm/blog/CATALOG.md`；带日期的 **128 篇都有中英学习译文**（压缩笔记）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
@@ -176,5 +176,3 @@ assets/                     # 正文图（与 zh/en 相对路径对齐）
 - `vllm serve` 生成页里每一个旗标
 - AIPerf 整页 CLI（https://docs.nvidia.com/aiperf/reference/command-line-options）以及 GenAI-Perf README 里逐条 `--help`
 - 官方 HTML 全文搬进仓库（学习译文是压缩笔记）
-
-抓取：2026-08-30 / 2026-08-31 / 2026-09-01。2026-09-01 又对 NVIDIA 目录全部 URL 做了一次直播抓取：**31/31 HTTP 200**。早先超时的 `docs.nvidia.com/aiperf/` 等页这次都完整打开了。对照之后：笔记仍是压缩学习译文，不是官方 HTML；AIPerf Metrics / Comprehensive / GenAI-Perf README 那种上百个小节不会整页搬进来。vLLM `auto_tune` 的 GitHub HTML 曾 429，已改用 raw README（页上无图）。GLM-4.5 文里两张 GitHub raw 图 404，原站已经挪走。
