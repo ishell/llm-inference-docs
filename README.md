@@ -1,6 +1,6 @@
 # LLM 推理笔记（网站 × 主题）
 
-个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)（GitHub Pages，直接读仓库里的 Markdown）。
+个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。推到 `main` 后由 [Deploy GitHub Pages](.github/workflows/pages.yml) 自动发布。
 
 从「那条评论在指什么」读起：[zh/GUIDE.md](zh/GUIDE.md)。
 
