@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LLM 推理笔记</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta
+      name="description"
+      content="个人学习笔记，不是官方译本。NVIDIA NIM / TensorRT-LLM / AIPerf 与 vLLM。"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css" />
+    <style>
+      :root {
+        --theme-color: #9a3412;
+        --ink: #1c1917;
+        --paper: #f4efe6;
+        --panel: #ebe4d8;
+        --muted: #57534e;
+      }
+      body {
+        font-family: "Source Han Sans SC", "Noto Sans SC", "IBM Plex Sans",
+          "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: var(--paper);
+      }
+      .sidebar {
+        background: var(--panel);
+        border-right: 1px solid #d6d0c4;
+      }
+      .sidebar-nav > ul > li > p {
+        font-weight: 650;
+        letter-spacing: 0.02em;
+      }
+      .app-name-link {
+        font-weight: 700;
+        color: var(--ink) !important;
+      }
+      .markdown-section {
+        max-width: 52rem;
+        padding: 2rem 3rem 4rem;
+      }
+      .markdown-section h1 {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .markdown-section a {
+        color: #9a3412;
+        font-weight: 550;
+      }
+      .markdown-section img {
+        max-width: 100%;
+        height: auto;
+        border: 1px solid #d6d0c4;
+        background: #fff;
+      }
+      .markdown-section pre,
+      .markdown-section code {
+        font-family: "IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
+      }
+      .markdown-section blockquote {
+        border-left: 3px solid #9a3412;
+        background: #efe8dc;
+        color: var(--muted);
+      }
+      .app-nav a {
+        color: var(--ink);
+      }
+      .search input {
+        background: #fff;
+        border: 1px solid #d6d0c4;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">载入笔记…</div>
+    <script>
+      window.$docsify = {
+        name: "LLM 推理笔记",
+        repo: "https://github.com/ishell/llm-inference-docs",
+        homepage: "zh/GUIDE.md",
+        loadSidebar: true,
+        loadNavbar: true,
+        subMaxLevel: 2,
+        relativePath: true,
+        auto2top: true,
+        alias: {
+          "/.*/_sidebar.md": "/_sidebar.md",
+          "/.*/_navbar.md": "/_navbar.md",
+        },
+        search: {
+          placeholder: "搜索笔记",
+          noData: "没有结果",
+          depth: 3,
+          hideOtherSidebarContent: true,
+        },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify-copy-code@2/dist/docsify-copy-code.min.js"></script>
+  </body>
+</html>
