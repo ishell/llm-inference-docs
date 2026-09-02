@@ -6,7 +6,7 @@ fetched: 2026-08-31
 
 # vLLM production-stack
 
-2025-01-21. https://github.com/vllm-project/production-stack (LMCache + vLLM). Study note; figures on the original page.
+2025-01-21. https://github.com/vllm-project/production-stack (LMCache + vLLM). 
 
 vLLM was already the busy single-node engine. This post is the cluster layer on top of it, not a replacement for PagedAttention. Claimed **3–10×** lower delay and **2–5×** throughput vs “bare vLLM + other racks” on their multi-round QA bench (the title also says 10× — trust the figures). Demo numbers, not your SLA.
 

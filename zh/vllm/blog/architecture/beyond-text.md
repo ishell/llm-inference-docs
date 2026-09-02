@@ -9,11 +9,20 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/beyond-text.md`  
 原文：https://vllm.ai/blog/2025-09-05-beyond-text-generation  
-2025-09-05。IBM / TerraTorch。图在原网页。后来的多模态流水线见 [vllm-omni](../serving/vllm-omni.md)；插件面见 [plugin-system](plugin-system.md)。
+2025-09-05。IBM / TerraTorch。后来的多模态流水线见 [vllm-omni](../serving/vllm-omni.md)；插件面见 [plugin-system](plugin-system.md)。
 
 vLLM 先会文本进文本出，再会 LLaVA 式多模态进、文本出。这篇走第三步：**非自回归、一次前向吐出多模态输出**——推理形态像 pooling，但输入输出要自己处理。落地是地理空间基础模型（多光谱 / 雷达 + 元数据），TerraTorch 整族经 generic backend 进 vLLM。
 
 为了让这些模型站住：无 attention 的模型、不需要 tokenizer、原始输入而不是默认 multimodal embedding、serving API 加长。Identity pooler 把 hidden 原样交出来。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![models diff](../../../../assets/vllm/blog/architecture/beyond-text/01-models-diff.png)
+
+![io plugins flow](../../../../assets/vllm/blog/architecture/beyond-text/02-io-plugins-flow.png)
+
+![prithvi prediction](../../../../assets/vllm/blog/architecture/beyond-text/03-prithvi-prediction.png)
 
 ## IO Processor
 

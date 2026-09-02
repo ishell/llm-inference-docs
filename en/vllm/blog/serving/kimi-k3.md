@@ -23,3 +23,31 @@ vllm serve moonshotai/Kimi-K3 \
 DSpark: `--speculative-config '{"model":"Inferact/Kimi-K3-DSpark","method":"dspark","num_speculative_tokens":7,...}'`. DEP → `deep_gemm_mega_moe`; TP>1 → `flashinfer_trtllm`. All-to-all: NVLink `flashinfer_nvlink_one_sided`, RDMA `deepep_v2`. ViT default `--mm-encoder-tp-mode=data`. `VLLM_USE_RUST_FRONTEND=1`.
 
 Demo bs=1: no spec TP8 **111** / TP16 **118 tok/s**; DSpark ~**3.14×** → **331 / 370**. Low-entropy ~4.73 accept/step, high-entropy ~2.61. Max reasoning: GSM8K 0.976, GPQA-Diamond 0.939. KDA metadata prep **870 µs → 34 µs** at bs=1.
+
+Local figures (copyright remains with the original site; study copies):
+
+![architecture](../../../../assets/vllm/blog/serving/kimi-k3/01-architecture.png)
+
+![hybrid cache](../../../../assets/vllm/blog/serving/kimi-k3/02-hybrid-cache.png)
+
+![dspark acceptance rates](../../../../assets/vllm/blog/serving/kimi-k3/03-dspark-acceptance-rates.png)
+
+![dspark schematic](../../../../assets/vllm/blog/serving/kimi-k3/04-dspark-schematic.png)
+
+![sequence parallelism](../../../../assets/vllm/blog/serving/kimi-k3/05-sequence-parallelism.jpg)
+
+![pd disaggregation animation](../../../../assets/vllm/blog/serving/kimi-k3/06-pd-disaggregation-animation.gif)
+
+![interval cache retention](../../../../assets/vllm/blog/serving/kimi-k3/07-interval-cache-retention.png)
+
+![selective cache retention](../../../../assets/vllm/blog/serving/kimi-k3/08-selective-cache-retention.gif)
+
+![kda decode](../../../../assets/vllm/blog/serving/kimi-k3/09-kda-decode.png)
+
+![kda metadata builder](../../../../assets/vllm/blog/serving/kimi-k3/10-kda-metadata-builder.png)
+
+![latent moe tail fusion](../../../../assets/vllm/blog/serving/kimi-k3/11-latent-moe-tail-fusion.png)
+
+![serving performance](../../../../assets/vllm/blog/serving/kimi-k3/12-serving-performance.png)
+
+![pareto gb300](../../../../assets/vllm/blog/serving/kimi-k3/13-pareto-gb300.png)

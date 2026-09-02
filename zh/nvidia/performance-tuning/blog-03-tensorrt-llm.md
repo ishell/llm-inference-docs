@@ -11,6 +11,11 @@ fetched: 2026-08-31
 
 第 1 篇给尺子，第 2 篇隔着 HTTP 打 NIM。本篇把 HTTP 请出房间：用 `trtllm-bench` 直接问引擎，再用 `trtllm-serve` 把调好的旋钮送上线。TensorRT-LLM 是开源推理引擎，旋钮很多；不调，它也会跑，只是未必按你在乎的那种快来跑。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![LLM Inference perf fig 1 png](../../../assets/nvidia/performance-tuning/blog-03-tensorrt-llm/01-LLM-Inference-perf-fig-1-png.webp)
+
 ## 先让 GPU 回到默认天气
 
 ```bash

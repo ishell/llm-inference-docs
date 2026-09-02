@@ -13,6 +13,31 @@ fetched: 2026-08-31
 
 新工作用 **AIPerf**；文中仍写 GenAI-Perf。NIM、vLLM、SGLang、Dynamo、Triton、TensorRT-LLM，凡是 OpenAI 兼容的，同一把客户端尺子都能打。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![llm fig 1 png](../../../assets/nvidia/cost/blog-04-tco/01-llm-fig-1-png.webp)
+
+![Sample Pareto png](../../../assets/nvidia/cost/blog-04-tco/02-Sample-Pareto-png.webp)
+
+![llm new fig 3 png](../../../assets/nvidia/cost/blog-04-tco/03-llm-new-fig-3-png.webp)
+
+![image 5 png](../../../assets/nvidia/cost/blog-04-tco/04-image-5-png.webp)
+
+![image 6 png](../../../assets/nvidia/cost/blog-04-tco/05-image-6-png.webp)
+
+![image 7](../../../assets/nvidia/cost/blog-04-tco/06-image-7.png)
+
+![image 8 png](../../../assets/nvidia/cost/blog-04-tco/07-image-8-png.webp)
+
+![image 9 png](../../../assets/nvidia/cost/blog-04-tco/08-image-9-png.webp)
+
+![image 10 png](../../../assets/nvidia/cost/blog-04-tco/09-image-10-png.webp)
+
+![image 11 png](../../../assets/nvidia/cost/blog-04-tco/10-image-11-png.webp)
+
+![image 12 png](../../../assets/nvidia/cost/blog-04-tco/11-image-12-png.webp)
+
 ## 你到底在量什么
 
 规模测算的前提，是每个部署单元（一台推理服务）的成绩单：给定负载下吞吐多少、延迟多少。再加上 QoS（例如最大延迟）和预期高峰（峰值请求/秒，或并发），才能估计硬件，才能谈 TCO。

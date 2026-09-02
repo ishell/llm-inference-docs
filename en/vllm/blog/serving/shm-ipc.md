@@ -15,3 +15,11 @@ V1 is multiprocess: frontend, coordinator, per-GPU workers. A 1024×3072 Command
 **Shared-memory object store:** one writer, many readers, ring buffer, address broadcast. No ordering. Memory does not grow with readers. Evict head when `writer_counter × n_readers == reader_counter`. Frontend writes; each worker reads.
 
 Command-A Vision, 4×A100 TP4, VisionArena-Chat: first request prefill **+11.5%**, TTFT **−10.5%**. Cached KV+image: prefill **+69.9%**, TTFT **−40.5%**. Larger inputs / wider TP help more. API-server scale-out disables this IPC cache (needs 1:1 API↔engine); processor cache stays.
+
+Local figures (copyright remains with the original site; study copies):
+
+![processes1](../../../../assets/vllm/blog/serving/shm-ipc/01-processes1.png)
+
+![shared memory object store](../../../../assets/vllm/blog/serving/shm-ipc/02-shared_memory_object_store.png)
+
+![processes2](../../../../assets/vllm/blog/serving/shm-ipc/03-processes2.png)

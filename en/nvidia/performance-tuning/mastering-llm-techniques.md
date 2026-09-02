@@ -14,6 +14,35 @@ English日本語
 
 # Mastering LLM Techniques: Inference Optimization
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![key value caching](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/01-key-value-caching_.png)
+
+![four way pipeline parallelism](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/02-four-way-pipeline-parallelism.png)
+
+![tensor parallelsim mlp self attention layers](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/03-tensor-parallelsim-mlp-self-attention-layers_.png)
+
+![transformer layer tensor and sequence parallelism](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/04-transformer-layer-tensor-and-sequence-parallelism.png)
+
+![scaled dot product attention and multi head attention](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/05-scaled-dot-product-attention-and-multi-head-attention.png)
+
+![comparison attention mechanisms](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/06-comparison-attention-mechanisms.png)
+
+![flash attention computation pattern memory hierarchy gpu](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/07-flash-attention-computation-pattern-memory-hierarchy-gpu.png)
+
+![memory wastage fragmentation inefficient kv cache](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/08-memory-wastage-fragmentation-inefficient-kv-cache.png)
+
+![quantization value distribution](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/09-quantization-value-distribution.png)
+
+![sparse matrix compressed format](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/10-sparse-matrix-compressed-format_.png)
+
+![knowledge distillation general framework](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/11-knowledge-distillation-general-framework.png)
+
+![speculative inference example](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/12-speculative-inference-example_.png)
+
+![llm optimize deploy graphic](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/13-llm-optimize-deploy-graphic.png)
+
 ## AI-Generated Summary
 
 - Large language models require two distinct inference phases: a prefill phase that processes input tokens in parallel and a decode phase that generates output tokens autoregressively and is memory-bound.

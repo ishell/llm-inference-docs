@@ -9,7 +9,7 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/epd.md`  
 原文：https://vllm.ai/blog/2025-12-15-vllm-epd  
-2025-12-15。标题里的 EPD 是 **Encoder / Prefill-Decode 分离**，不是 Router 那篇的文本 P/D——两件事常被缩写成「分离」。图在原网页。原生实现 PR #25233，**v0.11.1** 起。
+2025-12-15。标题里的 EPD 是 **Encoder / Prefill-Decode 分离**，不是 Router 那篇的文本 P/D——两件事常被缩写成「分离」。原生实现 PR #25233，**v0.11.1** 起。
 
 多模态模型在开口之前，图像要先过 ViT。编码器：一次性、compute-bound、要高并行；prefill：大 GEMM、吃带宽；decode：memory-bound、活得久。三件事绑在同一张 GPU 上，屋子会这样塌：
 
@@ -18,6 +18,21 @@ fetched: 2026-08-31
 - 一套并行策略伺候三种剖面，图一多就得给 decode 集群买多余的卡。
 
 `optimization.md` 里那条 `mm_encoder_tp_mode="data"` 是同一麻烦的单机解法：编码器很小，按权重做 TP 不划算，改成按 batch 切数据。EPD 把这把刀拿到集群上——编码器住另一栋楼。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![image](../../../../assets/vllm/blog/serving/epd/01-image.png)
+
+![workflow](../../../../assets/vllm/blog/serving/epd/02-workflow.png)
+
+![plot len400 epd vs non epd](../../../../assets/vllm/blog/serving/epd/03-plot_len400_epd_vs_non_epd.png)
+
+![plot len2000 epd vs non epd](../../../../assets/vllm/blog/serving/epd/04-plot_len2000_epd_vs_non_epd.png)
+
+![npu plot len400 epd vs non epd](../../../../assets/vllm/blog/serving/epd/05-npu_plot_len400_epd_vs_non_epd.png)
+
+![npu plot len2000 epd vs non epd](../../../../assets/vllm/blog/serving/epd/06-npu_plot_len2000_epd_vs_non_epd.png)
 
 ## 拆开以后
 

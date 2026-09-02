@@ -15,7 +15,22 @@ fetched: 2026-08-31
 export VLLM_USE_V2_MODEL_RUNNER=1
 ```
 
-他们计划不久后默认打开。文中「还不支持」以 **v0.18.0** 为准，会过时。图在原网页。
+他们计划不久后默认打开。文中「还不支持」以 **v0.18.0** 为准，会过时。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![persistent batch v1](../../../../assets/vllm/blog/architecture/mrv2/01-persistent_batch_v1.png)
+
+![persistent batch mrv2](../../../../assets/vllm/blog/architecture/mrv2/02-persistent_batch_mrv2.png)
+
+![async scheduling](../../../../assets/vllm/blog/architecture/mrv2/03-async_scheduling.png)
+
+![async spec decoding](../../../../assets/vllm/blog/architecture/mrv2/04-async_spec_decoding.png)
+
+![throughput comparison](../../../../assets/vllm/blog/architecture/mrv2/05-throughput_comparison.png)
+
+![tpot mtp](../../../../assets/vllm/blog/architecture/mrv2/06-tpot_mtp.png)
 
 ## 为什么又拆一次
 

@@ -19,3 +19,15 @@ Two pieces:
 Linear attention is worse: chunkwise train/prefill vs recurrent decode — mean abs ~ , max 0.25. Recurrent-everywhere makes prefill 4×+. **CPR**: recurrent state at chunk boundaries, parallel scan inside; decode resyncs rounding every chunk. Vs native mixed: train ~1.43×, prefill ~1.67×, decode ~1.38×, bitwise.
 
 No clear reward lift in 50 steps — too short to see stability. Next: Blackwell, CP invariance, sparse attn, Block-FP8 MoE. Earlier “two model copies, matched kernels”: [bitwise RL](bitwise-rl.md).
+
+Local figures (copyright remains with the original site; study copies):
+
+![unified execution abstraction](../../../../assets/vllm/blog/serving/isoexec/01-unified_execution_abstraction.png)
+
+![pik figure](../../../../assets/vllm/blog/serving/isoexec/02-pik_figure.png)
+
+![result logprob diff](../../../../assets/vllm/blog/serving/isoexec/03-result_logprob_diff.png)
+
+![result time](../../../../assets/vllm/blog/serving/isoexec/04-result_time.png)
+
+![result reward](../../../../assets/vllm/blog/serving/isoexec/05-result_reward.png)

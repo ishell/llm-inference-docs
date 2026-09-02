@@ -20,3 +20,13 @@ Three usual forks:
 That off-policy gap is not token-level IS.
 
 `"return_token_ids": true` on `/v1/chat/completions` or `/v1/completions` adds `prompt_token_ids` and `token_ids`. Agent Lightning treats each model call as its own sample instead of stitching a trajectory. v0.1 monkey-patched the OpenAI server; now the field is first-class. Read with [Native RL](native-rl.md) and [bitwise RL](bitwise-rl.md): token IDs are the policy; kernels are the numerics.
+
+Local figures (copyright remains with the original site; study copies):
+
+![1 rewards](../../../../assets/vllm/blog/serving/agent-lightning/01-1_rewards.png)
+
+![2 having](../../../../assets/vllm/blog/serving/agent-lightning/02-2_having.png)
+
+![3 agl](../../../../assets/vllm/blog/serving/agent-lightning/03-3_agl.png)
+
+![4 tasks spans loop](../../../../assets/vllm/blog/serving/agent-lightning/04-4_tasks-spans-loop.svg)

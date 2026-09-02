@@ -7,7 +7,7 @@ fetched: 2026-09-01
 # Nemotron 3.5 Lightning day-0
 
 Chinese: `../../zh/vllm/blog/serving/nemotron-35-lightning.md`  
-2026-08-10. Demo: image `vllm/vllm-openai:v0.27.1`. Figures on the original page.
+2026-08-10. Demo: image `vllm/vllm-openai:v0.27.1`. 
 
 Distilled from Nemotron 3 Ultra. Hybrid MoE **30B / 3B active**, 1M context, text-only. Same architecture as Nemotron 3 except weights and the spec stack. **Not a new engine.** Role: frontier model plans; this one runs the many small steps.
 
@@ -25,3 +25,11 @@ vllm serve nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16 \
 Spec: **MTP**, **DFlash**, **DSpark**. Low-latency → DSpark; max throughput (then) → no spec. NVFP4 often `--kv-cache-dtype fp8` + `--moe-backend marlin`. Humming W4A16 ReLU2 MoE claimed ~**+20%** vs Marlin. ReplaySSM on Mamba2.
 
 Demo: up to **4×** throughput vs similar-size open models. PinchBench: ~**30%** faster to finish 10k tasks at comparable accuracy. Pareto charts: Spark / H100, 32K prefix then 10× 2k/1k.
+
+Local figures (copyright remains with the original site; study copies):
+
+![figure1 dgx spark pareto](../../../../assets/vllm/blog/serving/nemotron-35-lightning/01-figure1-dgx-spark-pareto.png)
+
+![figure2 h100 pareto](../../../../assets/vllm/blog/serving/nemotron-35-lightning/02-figure2-h100-pareto.png)
+
+![figure3 efficiency frontier](../../../../assets/vllm/blog/serving/nemotron-35-lightning/03-figure3-efficiency-frontier.png)

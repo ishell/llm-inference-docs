@@ -9,9 +9,28 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/rdt-weight-transfer.md`  
 原文：https://vllm.ai/blog/2026-08-22-rdt-weight-transfer  
-Kimi K2 BF16：48×(8×H100)，训练 32 节点、推理 16 节点，**7.53 s** 同步约 **7.9 TB**，聚合带宽约 **1049 GB/s**。图在原网页。
+Kimi K2 BF16：48×(8×H100)，训练 32 节点、推理 16 节点，**7.53 s** 同步约 **7.9 TB**，聚合带宽约 **1049 GB/s**。
 
 NCCL broadcast 把整份 HF 权重灌进每个推理 rank：TP8 只留 ⅛，宽 EP 更浪费，集体通信还怕掉队。RDT（NIXL）改成 **推理 rank 按需 pull 自己的分片**。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![rdt blog overview](../../../../assets/vllm/blog/serving/rdt-weight-transfer/01-rdt_blog_overview.png)
+
+![layerwise reloading](../../../../assets/vllm/blog/serving/rdt-weight-transfer/02-layerwise_reloading.webp)
+
+![rdt blog init flow](../../../../assets/vllm/blog/serving/rdt-weight-transfer/03-rdt_blog_init_flow.png)
+
+![AllScenes](../../../../assets/vllm/blog/serving/rdt-weight-transfer/04-AllScenes.gif)
+
+![ExpertScenes](../../../../assets/vllm/blog/serving/rdt-weight-transfer/05-ExpertScenes.gif)
+
+![rdt pipelined execution 2x](../../../../assets/vllm/blog/serving/rdt-weight-transfer/06-rdt_pipelined_execution-2x.png)
+
+![rdt qwen weight sync latencies](../../../../assets/vllm/blog/serving/rdt-weight-transfer/07-rdt_qwen_weight_sync_latencies.png)
+
+![rdt fault tolerance](../../../../assets/vllm/blog/serving/rdt-weight-transfer/08-rdt_fault_tolerance.png)
 
 ## 录像张量
 

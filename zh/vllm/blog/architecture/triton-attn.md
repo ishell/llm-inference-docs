@@ -9,9 +9,32 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/triton-attn.md`  
 原文：https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive  
-2026-03-04。IBM Research + Red Hat + AMD 的 office hours。kernel：`vllm/v1/attention/ops/triton_unified_attention.py`（大约 800 行；对照 FlashAttention 3 大约 7 万行）。论文：*The Anatomy of a Triton Attention Kernel*。图在原网页。
+2026-03-04。IBM Research + Red Hat + AMD 的 office hours。kernel：`vllm/v1/attention/ops/triton_unified_attention.py`（大约 800 行；对照 FlashAttention 3 大约 7 万行）。论文：*The Anatomy of a Triton Attention Kernel*。
 
 Attention backend 把注意力从线性层、RMSNorm 后面隔开。CUDA 上有 FlashAttention / FlashInfer，ROCm 有自己的，MLA 还有专用。Triton 后端整份用 Triton 写、跟着 vLLM 走、只依赖 PyTorch+Triton，**总能当 fallback**。AMD ROCm 上默认；Intel XPU 的 float32（FlashAttention 不支持 fp32）走它；ALiBi sqrt、sink token、GPT-OSS、小 head、encoder/decoder、多模态 prefix、batch invariance 也常落到这里。A100 一类 pre-Hopper 同样用得上。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![image1](../../../../assets/vllm/blog/architecture/triton-attn/01-image1.png)
+
+![image2](../../../../assets/vllm/blog/architecture/triton-attn/02-image2.png)
+
+![image3](../../../../assets/vllm/blog/architecture/triton-attn/03-image3.png)
+
+![image4](../../../../assets/vllm/blog/architecture/triton-attn/04-image4.png)
+
+![image5](../../../../assets/vllm/blog/architecture/triton-attn/05-image5.png)
+
+![image6](../../../../assets/vllm/blog/architecture/triton-attn/06-image6.png)
+
+![image7](../../../../assets/vllm/blog/architecture/triton-attn/07-image7.png)
+
+![image8](../../../../assets/vllm/blog/architecture/triton-attn/08-image8.png)
+
+![image9](../../../../assets/vllm/blog/architecture/triton-attn/09-image9.png)
+
+![image10](../../../../assets/vllm/blog/architecture/triton-attn/10-image10.png)
 
 ## 为什么是 Triton
 

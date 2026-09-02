@@ -16,3 +16,9 @@ vLLM splits **physical block size**, **scheduler alignment**, and **prefix-match
 Then in flight: FlashKDA prefill; fused NVIDIA decode; AttnRes kernels; hand-fused MLA with separate P/D paths; MXFP4 MoE + SiTU (checked DP16+EP16); AMD FlyDSL A16W4/A8W4. Non-disagg serving worked; Dynamo+Mooncake still closing.
 
 Announce first, open weights later — freeze the checkpoint, then integration. **Not an engine-architecture post.**
+
+Local figures (copyright remains with the original site; study copies):
+
+![kda prefix state](../../../../assets/vllm/blog/serving/kimi-k3-preview/01-kda-prefix-state.png)
+
+![fine grained prefix cache](../../../../assets/vllm/blog/serving/kimi-k3-preview/02-fine-grained-prefix-cache.png)

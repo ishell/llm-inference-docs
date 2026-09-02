@@ -9,7 +9,7 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/production-stack.md`  
 原文：https://vllm.ai/blog/2025-01-21-stack-release  
-2025-01-21。仓库：https://github.com/vllm-project/production-stack。LMCache 团队 + vLLM。图在原网页。数字是发布时的演示。
+2025-01-21。仓库：https://github.com/vllm-project/production-stack。LMCache 团队 + vLLM。数字是发布时的演示。
 
 到这一天，vLLM 已经是开源社区里最热闹的单机推理引擎。模型多、硬件多、人多。可「最好的单机引擎」和「一家公司能放心铺开的 serving 系统」之间，还差一叠盘子：请求去哪台、KV 能不能共用、挂了谁来补、看板看什么。LMCache 团队和 vLLM 一起交出的参考实现，名字就叫 production-stack。它不替换 PagedAttention，它坐在单机引擎**上面**。
 

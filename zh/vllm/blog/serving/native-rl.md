@@ -9,9 +9,28 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/native-rl.md`  
 原文：https://vllm.ai/blog/2026-05-28-native-rl-apis  
-2026-05-28。文档：Weight transfer、Async RL。例子在 vLLM `examples/rl`。HTTP 端点要 `VLLM_SERVER_DEV_MODE=1`。图在原网页。
+2026-05-28。文档：Weight transfer、Async RL。例子在 vLLM `examples/rl`。HTTP 端点要 `VLLM_SERVER_DEV_MODE=1`。
 
 两件反复出现的疼：训练↔推理的权重同步每家框架自己补 worker；异步 RL 在 P/D、DPEP 上容易卡死。这篇给原生 API。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![rl system overview](../../../../assets/vllm/blog/serving/native-rl/01-rl_system_overview.png)
+
+![weight transfer nccl](../../../../assets/vllm/blog/serving/native-rl/02-weight_transfer_nccl.svg)
+
+![async rl](../../../../assets/vllm/blog/serving/native-rl/03-async_rl.svg)
+
+![dp generate](../../../../assets/vllm/blog/serving/native-rl/04-dp_generate.svg)
+
+![vllm deadlock](../../../../assets/vllm/blog/serving/native-rl/05-vllm_deadlock.svg)
+
+![vllm no deadlock](../../../../assets/vllm/blog/serving/native-rl/06-vllm_no_deadlock.svg)
+
+![skyrl validation](../../../../assets/vllm/blog/serving/native-rl/07-skyrl_validation.svg)
+
+![prime rl](../../../../assets/vllm/blog/serving/native-rl/08-prime_rl.svg)
 
 ## 权重传送四拍
 

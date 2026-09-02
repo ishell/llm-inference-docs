@@ -10,6 +10,25 @@ fetched: 2026-08-31
 
 Enable then: `export VLLM_USE_V1=1`. No API change.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![v1 server architecture](../../../../assets/vllm/blog/architecture/v1-alpha/01-v1_server_architecture.png)
+
+![v1 scheduling](../../../../assets/vllm/blog/architecture/v1-alpha/02-v1_scheduling.png)
+
+![v1 prefix caching](../../../../assets/vllm/blog/architecture/v1-alpha/03-v1_prefix_caching.png)
+
+![v1 tp architecture](../../../../assets/vllm/blog/architecture/v1-alpha/04-v1_tp_architecture.png)
+
+![persistent batch](../../../../assets/vllm/blog/architecture/v1-alpha/05-persistent_batch.png)
+
+![torch compile cuda graph](../../../../assets/vllm/blog/architecture/v1-alpha/06-torch_compile_cuda_graph.png)
+
+![v1 llama](../../../../assets/vllm/blog/architecture/v1-alpha/07-v1_llama.png)
+
+![v1 qwen2vl](../../../../assets/vllm/blog/architecture/v1-alpha/08-v1_qwen2vl.png)
+
 ## Why
 
 V0 scaled horizontally (models, features, hardware) but stacked poorly vertically. Debt in the foundation. V1 goals: modular code, near-zero CPU overhead, one architecture that *combines* optimizations, features on by default.

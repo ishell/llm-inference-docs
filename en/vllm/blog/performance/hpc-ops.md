@@ -19,3 +19,11 @@ MoE decode: expert GEMMs are small; gather/launch/HBM round-trips around them ar
 ```
 
 Attention then only for Hy3-family; MoE FP8 only. Not a universal default — Hunyuan production kernels through the backend interface into main.
+
+Local figures (copyright remains with the original site; study copies):
+
+![dynamic partitioning](../../../../assets/vllm/blog/performance/hpc-ops/01-dynamic-partitioning.png)
+
+![fused moe latency](../../../../assets/vllm/blog/performance/hpc-ops/02-fused-moe-latency.png)
+
+![decode dynamic vs static](../../../../assets/vllm/blog/performance/hpc-ops/03-decode-dynamic-vs-static.png)

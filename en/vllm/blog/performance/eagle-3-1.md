@@ -18,3 +18,9 @@ Chat templates, long context, OOD system prompts shrink EAGLE-3 accept length. *
 ```
 
 Training: TorchSpec. Read with [spec-decode](spec-decode.md) and [P-EAGLE](p-eagle.md).
+
+Local figures (copyright remains with the original site; study copies):
+
+![pre norm vs post norm](../../../../assets/vllm/blog/performance/eagle-3-1/01-pre-norm-vs-post-norm.png)
+
+![tpot baseline vs eagle31](../../../../assets/vllm/blog/performance/eagle-3-1/02-tpot_baseline_vs_eagle31.png)

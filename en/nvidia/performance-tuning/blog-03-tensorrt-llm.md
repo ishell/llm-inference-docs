@@ -12,6 +12,11 @@ It’s important to consider inference performance when deploying, integrating, 
 
 TensorRT-LLM, NVIDIA’s open-source AI inference engine, allows you to deploy models with its native benchmarking and serving tools, and has a wide array of features you can tune against. In this post, we’ll provide a practical guide on how to tune a model with `trtllm-bench` and then deploy using `trtllm-serve`.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![LLM Inference perf fig 1 png](../../../assets/nvidia/performance-tuning/blog-03-tensorrt-llm/01-LLM-Inference-perf-fig-1-png.webp)
+
 ## How to benchmark with trtllm-bench
 
 `trtllm-bench` is TensorRT-LLM’s Python-based utility for directly benchmarking models without the overhead of a full inference deployment. It makes it simple to quickly generate insights into model performance. `trtllm-bench` internally sets up the engine with optimal settings that generally provide good performance.

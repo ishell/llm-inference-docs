@@ -15,3 +15,15 @@ V0 Outlines pain: token-at-a-time FSM; logit processor on the hot path (compilin
 **XGrammar:** PDA (a collection of FSMs / CFGs), multi-step transitions, grammar compile in C/`pthread`. Up to **5×** better TPOT under load. V0 still a logit processor with tokenizer cache. Then missing: non-GBNF, regex, JSON with regex/numeric ranges → fall back to Outlines. lm-format-enforcer lagged on long context.
 
 V1 plan (now largely present): scheduler-level guided decoding so other requests in the batch are not blocked; bitmask computed once and broadcast; shared API with spec-decode tree scoring and tool-use. Anatomy’s Structured Output Manager is that room.
+
+Local figures (copyright remains with the original site; study copies):
+
+![shogoth gpt](../../../../assets/vllm/blog/performance/struct-decode/01-shogoth-gpt.png)
+
+![mermaid intro](../../../../assets/vllm/blog/performance/struct-decode/02-mermaid-intro.svg)
+
+![constrained json fsm](../../../../assets/vllm/blog/performance/struct-decode/03-constrained-json-fsm.webp)
+
+![vllm new xgrammar](../../../../assets/vllm/blog/performance/struct-decode/04-vllm-new-xgrammar.png)
+
+![vllm xgrammar decode time per output token](../../../../assets/vllm/blog/performance/struct-decode/05-vllm-xgrammar-decode-time-per-output-token.png)

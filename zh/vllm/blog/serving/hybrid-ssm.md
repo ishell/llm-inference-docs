@@ -15,6 +15,13 @@ FA 层的 KV 仍是按 token 的 K/V。Mamba 存的是整段历史的**塌缩**�
 
 Hybrid Memory Allocator 按类型分组、再让两组共用同一块物理张量。同一页，FA 看成 K/V，Mamba 看成 conv+SSM+padding。页大小被抬到对齐。NIXL 原来一份统一 `(address, length)` 描述符无法同时索引两种视图。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![transfer volume vs isl](../../../../assets/vllm/blog/serving/hybrid-ssm/01-transfer-volume-vs-isl.png)
+
+![disagg vs colocated](../../../../assets/vllm/blog/serving/hybrid-ssm/02-disagg-vs-colocated.png)
+
 ## 三件补丁
 
 **双描述符。** 同一片物理内存登记两套 NIXL 描述符，拼在一个 transfer handle 里：前面 FA（K/V 分开，为了异构 TP 能按 head 切），后面 Mamba。`block_id → descriptor_id` 按组选不同的 stride。

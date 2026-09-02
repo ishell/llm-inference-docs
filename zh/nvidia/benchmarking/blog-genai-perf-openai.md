@@ -21,6 +21,13 @@ NVIDIA 本来就有 Perf Analyzer 和 Model Analyzer，帮人在延迟和吞吐�
 
 许多应用把 TTFT 放第一，然后才是输出吞吐和 ITL。吞吐和 ITL 天生打架：同时服务更多人，GPU 更忙，每个人字与字之间的缝可能变宽。没有专用工具，TCO 的「最优」只是一种感觉。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![compare input output sequence length](../../../assets/nvidia/benchmarking/blog-genai-perf-openai/01-compare-input-output-sequence-length.jpg)
+
+![compare time to first token](../../../assets/nvidia/benchmarking/blog-genai-perf-openai/02-compare-time-to-first-token.jpg)
+
 ## 它能做什么
 
 Triton 当时把 GenAI-Perf 放进发行版，用来：

@@ -9,9 +9,24 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/performance/p-eagle.md`  
 原文：https://vllm.ai/blog/2026-03-13-p-eagle  
-vLLM ≥0.16.0，PR#32887。数字是 **一块 B200**、GPT-OSS-20B 上的演示。图在原网页。
+vLLM ≥0.16.0，PR#32887。数字是 **一块 B200**、GPT-OSS-20B 上的演示。
 
 EAGLE 草稿是自回归的：猜 K 个 token 要 K 次 draft 前向。草稿越好、K 越大，这段税越贵。P-EAGLE 一次前向吐出全部 K 个。相对公开 EAGLE-3 checkpoint，低并发约 **1.55–1.69×** TPS，c=64 仍约 **1.05–1.25×**。峰值常在 K=7；EAGLE-3 峰值常在 K=3——并行草稿的深度几乎免费，线性草稿不是。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![fig1 speedbench overview](../../../../assets/vllm/blog/performance/p-eagle/01-fig1_speedbench_overview.png)
+
+![fig2 architecture](../../../../assets/vllm/blog/performance/p-eagle/02-fig2_architecture.png)
+
+![fig3 sequence length](../../../../assets/vllm/blog/performance/p-eagle/03-fig3_sequence_length.png)
+
+![fig4 mtbench](../../../../assets/vllm/blog/performance/p-eagle/04-fig4_mtbench.png)
+
+![fig5 humaneval](../../../../assets/vllm/blog/performance/p-eagle/05-fig5_humaneval.png)
+
+![fig6 speedbench](../../../../assets/vllm/blog/performance/p-eagle/06-fig6_speedbench.png)
 
 ## 结构
 

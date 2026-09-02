@@ -7,7 +7,22 @@ fetched: 2026-08-31
 # Serving Agentic Workloads with vLLM × Mooncake
 
 2026-05-06. https://vllm.ai/blog/2026-05-06-mooncake-store  
-Study note, not a full reprint. Figures on the original page. Numbers are a demo on Codex / SWE-bench Pro traces.
+Study note, not a full reprint.  Numbers are a demo on Codex / SWE-bench Pro traces.
+
+
+Local figures (copyright remains with the original site; study copies):
+
+![hero vllm mooncake](../../../../assets/vllm/blog/serving/mooncake/01-hero_vllm_mooncake.svg)
+
+![agentic trace](../../../../assets/vllm/blog/serving/mooncake/02-agentic_trace.svg)
+
+![overall design option C](../../../../assets/vllm/blog/serving/mooncake/03-overall_design_option_C.svg)
+
+![animation](../../../../assets/vllm/blog/serving/mooncake/04-animation.gif)
+
+![pd compare mooncake vs nixl](../../../../assets/vllm/blog/serving/mooncake/05-pd_compare_mooncake_vs_nixl.png)
+
+![pd scaling](../../../../assets/vllm/blog/serving/mooncake/06-pd_scaling.png)
 
 ## Why agents break isolated replicas
 

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Beyond text generation
 
-2025-09-05. IBM / TerraTorch. Study note; figures on the original page. Later multimodal pipeline: [vllm-omni.md](../serving/vllm-omni.md). Plugins: [plugin-system.md](plugin-system.md).
+2025-09-05. IBM / TerraTorch.  Later multimodal pipeline: [vllm-omni.md](../serving/vllm-omni.md). Plugins: [plugin-system.md](plugin-system.md).
 
 vLLM grew from text→text to LLaVA-style multimodal-in / text-out. This is the third step: **non-autoregressive models that emit multimodal output in one pass** — pooling-shaped inference with custom I/O. First landing: geospatial foundation models (multispectral/radar + metadata) via a generic TerraTorch backend.
 
@@ -23,3 +23,11 @@ vllm serve ibm-nasa-geospatial/Prithvi-EO-2.0-300M-TL-Sen1Floods11 \
 ```
 
 POST `/pooling` with `softmax: false` for raw output. Needed trunk newer than v0.10.1.1 at the time.
+
+Local figures (copyright remains with the original site; study copies):
+
+![models diff](../../../../assets/vllm/blog/architecture/beyond-text/01-models-diff.png)
+
+![io plugins flow](../../../../assets/vllm/blog/architecture/beyond-text/02-io-plugins-flow.png)
+
+![prithvi prediction](../../../../assets/vllm/blog/architecture/beyond-text/03-prithvi-prediction.png)

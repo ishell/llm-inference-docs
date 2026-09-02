@@ -9,7 +9,14 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/architecture/vs-deepspeed.md`  
 原文：https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed  
-2023-11-14。图在原网页。这是对 DeepSpeed 那篇「我们比 vLLM 快 2×」的公开回应，不是产品手册。
+2023-11-14。这是对 DeepSpeed 那篇「我们比 vLLM 快 2×」的公开回应，不是产品手册。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![s1](../../../../assets/vllm/blog/architecture/vs-deepspeed/01-s1.png)
+
+![s2](../../../../assets/vllm/blog/architecture/vs-deepspeed/02-s2.png)
 
 ## TL;DR（原文原意）
 

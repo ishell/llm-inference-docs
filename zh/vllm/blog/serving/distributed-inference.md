@@ -9,9 +9,20 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/distributed-inference.md`  
 原文：https://vllm.ai/blog/2025-02-17-distributed-inference  
-2025-02-17。图在原网页。和 TensorRT-LLM 手册第 4 章同一张地图：通信才是约束。OOM 面前两条路——降精度，或切开。量化单独不够，模型过千亿还是要切。
+2025-02-17。和 TensorRT-LLM 手册第 4 章同一张地图：通信才是约束。OOM 面前两条路——降精度，或切开。量化单独不够，模型过千亿还是要切。
 
 推理不是训练。形状在变，要低延迟，还要管 KV、投机解码、prefill 变成 decode 的那一拍。训练可以把通信藏进巨大的、形状固定的 step 里；推理每一步都可能换一批人进场。vLLM 给出的刀，当时主要是两把：**节点内 TP**，**跨节点 PP**，再加通信 kernel 和控制面，少让 CPU 挡 GPU。EP 在这篇里还只是「往后看」——[大规模 serving](large-scale.md) 才把它写成主菜。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![tp strategies](../../../../assets/vllm/blog/serving/distributed-inference/01-tp_strategies.png)
+
+![column row parallel](../../../../assets/vllm/blog/serving/distributed-inference/02-column_row_parallel.png)
+
+![tensor parallelism](../../../../assets/vllm/blog/serving/distributed-inference/03-tensor_parallelism.png)
+
+![kv cache effects](../../../../assets/vllm/blog/serving/distributed-inference/04-kv_cache_effects.png)
 
 ## Tensor parallelism
 

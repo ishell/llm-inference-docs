@@ -7,7 +7,7 @@ fetched: 2026-09-01
 # TML Inkling day-0
 
 Chinese: `../../zh/vllm/blog/serving/inkling.md`  
-2026-07-15. Demo: 4× GB200. Figures on the original page.
+2026-07-15. Demo: 4× GB200. 
 
 1T multimodal (text/image/audio → text), native 1M context. 66 layers: 11 full + 55 SWA GQA. Position is **relative attention**, not RoPE. Four window-4 **sconv**s per layer. MoE: 256 routed top-6 + 2 shared **expert sinks**. NVFP4 on routed experts only; 8 MTP heads in BF16. **AMD not yet** (needs a relative-attn kernel). **Not a new engine** — sconv cache is a virtual SWA KV layer.
 
@@ -24,3 +24,11 @@ vllm serve thinkingmachines/Inkling-NVFP4 \
 Channel-sharded sconv (reduce-scatter / all-gather). Lamport fused collectives: bs=1 **40 µs → 8 µs**. FA4 sheared-bias. MTP KV recomputed after rejection.
 
 Demo SPEED-Bench 8K/1K: MTP8 **380 tok/s/user** (mean accept 4.5), no MTP **140**. MMAU/MMMU-Pro/BFCL within ~1 pp of reference; NIAH matches through 221K.
+
+Local figures (copyright remains with the original site; study copies):
+
+![image1](../../../../assets/vllm/blog/serving/inkling/01-image1.png)
+
+![inkling model architecture](../../../../assets/vllm/blog/serving/inkling/02-inkling-model-architecture.png)
+
+![sconv tp sharding](../../../../assets/vllm/blog/serving/inkling/03-sconv-tp-sharding.png)

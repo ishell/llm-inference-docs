@@ -9,11 +9,24 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/moriio.md`  
 原文：https://vllm.ai/blog/2026-04-07-moriio-kv-connector  
-2026-04-07。AMD Instinct MI300X，**一台 8 卡节点内**做 Prefill/Decode 分离。Connector：`MoRIIOConnector`（MORI = Modular RDMA Interface）。图在原网页。数字是 Qwen3-235B-A22B-FP8、8 req/s、输入 2000 / 输出 1000。
+2026-04-07。AMD Instinct MI300X，**一台 8 卡节点内**做 Prefill/Decode 分离。Connector：`MoRIIOConnector`（MORI = Modular RDMA Interface）。数字是 Qwen3-235B-A22B-FP8、8 req/s、输入 2000 / 输出 1000。
 
 「P/D 是机房的事」会把单机上的 goodput 留在桌子上。Prefill 是 compute-bound 的大 GEMM；decode 是 memory-bound 的反复搬权重。挤在同一套实例里，一条胖 prefill 能让几十路 decode 口吃；decode 反过来挡新的 prefill。ITL 开始乱跳。
 
 拆开：例如 4 卡 prefill + 4 卡 decode，中间把 KV 交过去。交接可以是数 GB。MORI-IO 用节点内 RDMA。第一次在一对实例之间传之前，ZMQ 在后台交换基址、块大小、stride，RDMA session 缓存起来。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![read mode request flow diagram](../../../../assets/vllm/blog/serving/moriio/01-read-mode-request-flow-diagram.svg)
+
+![write mode request flow diagram](../../../../assets/vllm/blog/serving/moriio/02-write-mode-request-flow-diagram.svg)
+
+![SLO attainment](../../../../assets/vllm/blog/serving/moriio/03-SLO-attainment.png)
+
+![read mode kv transfer sequence diagram](../../../../assets/vllm/blog/serving/moriio/04-read-mode-kv-transfer-sequence-diagram.svg)
+
+![write mode kv transfer sequence diagram](../../../../assets/vllm/blog/serving/moriio/05-write-mode-kv-transfer-sequence-diagram.svg)
 
 ## Read vs Write
 

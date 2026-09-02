@@ -22,6 +22,13 @@ When measuring LLMs, it is important to see results quickly and consistently acr
 
 Achieving optimal performance for LLM inference requires balancing these metrics effectively. There is a natural trade-off between output token throughput and inter-token latency: processing multiple user queries concurrently can increase throughput but may also lead to higher inter-token latency. Choosing the right balance to achieve total cost of ownership (TCO) savings can be challenging without specialized benchmarking tools tailored for generative AI.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![compare input output sequence length](../../../assets/nvidia/benchmarking/blog-genai-perf-openai/01-compare-input-output-sequence-length.jpg)
+
+![compare time to first token](../../../assets/nvidia/benchmarking/blog-genai-perf-openai/02-compare-time-to-first-token.jpg)
+
 ## Introducing GenAI-Perf
 
 The latest release of NVIDIA Triton now includes a new generative AI performance benchmarking tool, GenAI-Perf. This solution is designed to enhance the measurement and optimization of generative AI performance.

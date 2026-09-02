@@ -9,9 +9,28 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/diffusion-gemma.md`  
 原文：https://vllm.ai/blog/2026-06-10-diffusion-gemma  
-2026-06-10。Google DeepMind。第一只进 vLLM 的 dLLM。图在原网页。数字是单卡 batch=1 的演示。执行核见 [mrv2](mrv2.md)；草稿账本见 [spec-decode](../performance/spec-decode.md)；多模态流水线见 [vllm-omni](../serving/vllm-omni.md)。
+2026-06-10。Google DeepMind。第一只进 vLLM 的 dLLM。数字是单卡 batch=1 的演示。执行核见 [mrv2](mrv2.md)；草稿账本见 [spec-decode](../performance/spec-decode.md)；多模态流水线见 [vllm-omni](../serving/vllm-omni.md)。
 
 26B，Gemma4 骨干。不是从左往右吐字：对 **256 token 画布** 反复去噪，用算力换带宽——低 batch 时带宽才是瓶颈。块内并行，块间仍从左到右。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![ar vs diffusion](../../../../assets/vllm/blog/architecture/diffusion-gemma/01-ar-vs-diffusion.svg)
+
+![sampling loop horizontal](../../../../assets/vllm/blog/architecture/diffusion-gemma/02-sampling-loop-horizontal.svg)
+
+![denoising grid](../../../../assets/vllm/blog/architecture/diffusion-gemma/03-denoising-grid.svg)
+
+![self conditioning](../../../../assets/vllm/blog/architecture/diffusion-gemma/04-self-conditioning.svg)
+
+![stack](../../../../assets/vllm/blog/architecture/diffusion-gemma/05-stack.svg)
+
+![per seq causal attention](../../../../assets/vllm/blog/architecture/diffusion-gemma/06-per_seq_causal_attention.svg)
+
+![per seq sliding window](../../../../assets/vllm/blog/architecture/diffusion-gemma/07-per_seq_sliding_window.svg)
+
+![perf](../../../../assets/vllm/blog/architecture/diffusion-gemma/08-perf.svg)
 
 ## 两套注意力，一份权重
 

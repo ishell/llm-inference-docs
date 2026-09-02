@@ -10,6 +10,19 @@ This section defines common LLM inference metrics. Tool implementations vary, so
 
 Figure 1. Overview of popular LLM inference performance metrics.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![image3](../../../assets/nvidia/benchmarking/nim-02-metrics/01-image3.png)
+
+![image7](../../../assets/nvidia/benchmarking/nim-02-metrics/02-image7.png)
+
+![image8](../../../assets/nvidia/benchmarking/nim-02-metrics/03-image8.png)
+
+![image9](../../../assets/nvidia/benchmarking/nim-02-metrics/04-image9.png)
+
+![image10](../../../assets/nvidia/benchmarking/nim-02-metrics/05-image10.png)
+
 ## Time to First Token
 
 Time to first token (TTFT) measures how long you wait before seeing the model’s output. It is the time from query submission to the first received token, if the response is not empty.

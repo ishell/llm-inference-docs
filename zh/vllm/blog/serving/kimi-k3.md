@@ -9,9 +9,38 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/kimi-k3.md`  
 原文：https://vllm.ai/blog/2026-07-27-k3  
-2026-07-27。图在原网页。数字是 GB300 NVL72 上的演示。KDA 前缀缓存设计见 [preview](kimi-k3-preview.md)。
+2026-07-27。数字是 GB300 NVL72 上的演示。KDA 前缀缓存设计见 [preview](kimi-k3-preview.md)。
 
 `moonshotai/Kimi-K3`：2.8T MoE，896 expert 里激活 16，1M 上下文，原生视觉，权重 MXFP4。注意力是 KDA（定长 recurrent）夹 periodic full attention，再加 AttnRes、Stable LatentMoE。聊天模板是 Python 渲 token，不是 Jinja。**引擎骨架没换**；换的是 hybrid cache、kernel、配方。当时只能 Docker（含预发布 FlashInfer）。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![architecture](../../../../assets/vllm/blog/serving/kimi-k3/01-architecture.png)
+
+![hybrid cache](../../../../assets/vllm/blog/serving/kimi-k3/02-hybrid-cache.png)
+
+![dspark acceptance rates](../../../../assets/vllm/blog/serving/kimi-k3/03-dspark-acceptance-rates.png)
+
+![dspark schematic](../../../../assets/vllm/blog/serving/kimi-k3/04-dspark-schematic.png)
+
+![sequence parallelism](../../../../assets/vllm/blog/serving/kimi-k3/05-sequence-parallelism.jpg)
+
+![pd disaggregation animation](../../../../assets/vllm/blog/serving/kimi-k3/06-pd-disaggregation-animation.gif)
+
+![interval cache retention](../../../../assets/vllm/blog/serving/kimi-k3/07-interval-cache-retention.png)
+
+![selective cache retention](../../../../assets/vllm/blog/serving/kimi-k3/08-selective-cache-retention.gif)
+
+![kda decode](../../../../assets/vllm/blog/serving/kimi-k3/09-kda-decode.png)
+
+![kda metadata builder](../../../../assets/vllm/blog/serving/kimi-k3/10-kda-metadata-builder.png)
+
+![latent moe tail fusion](../../../../assets/vllm/blog/serving/kimi-k3/11-latent-moe-tail-fusion.png)
+
+![serving performance](../../../../assets/vllm/blog/serving/kimi-k3/12-serving-performance.png)
+
+![pareto gb300](../../../../assets/vllm/blog/serving/kimi-k3/13-pareto-gb300.png)
 
 ## 旗
 

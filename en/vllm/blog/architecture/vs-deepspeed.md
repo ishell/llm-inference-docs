@@ -8,6 +8,13 @@ fetched: 2026-08-31
 
 2023-11-14 reply to DeepSpeed’s “2× vs vLLM” post. Snapshot, not a 2026 bake-off. Figures on the official page.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![s1](../../../../assets/vllm/blog/architecture/vs-deepspeed/01-s1.png)
+
+![s2](../../../../assets/vllm/blog/architecture/vs-deepspeed/02-s2.png)
+
 ## TL;DR
 
 - vLLM matches FastGen on common work; **faster when outputs are long**.

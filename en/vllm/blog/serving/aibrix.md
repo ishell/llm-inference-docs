@@ -15,3 +15,7 @@ Roadmap already named P/D aggregation, request migration, cross-instance KV reus
 **vs production-stack (FAQ):** AIBrix = large-scale / cloud-native, production 6+ months. production-stack = LMCache/UChicago, from-scratch blocks, KV-centric (transfer, blending, routing) for long-context / prefill-heavy; planned to reuse AIBrix parts. **vs KServe/KubeAI:** more vLLM-native (fast load, scale, LoRA) because it only has to serve one engine.
 
 Control planes can be swapped. KV affinity does not go away — that is the [router](router.md) post.
+
+Local figures (copyright remains with the original site; study copies):
+
+![aibrix diagram](../../../../assets/vllm/blog/serving/aibrix/01-aibrix-diagram.png)

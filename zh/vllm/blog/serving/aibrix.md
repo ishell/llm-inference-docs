@@ -13,6 +13,11 @@ fetched: 2026-08-31
 
 单实例 vLLM 好开——那是 quickstart 的礼貌。规模上的路由、伸缩、容错是另一件事。AIBrix 的说法：系统与推理引擎 **共设计**，在 Kubernetes 上用云原生的方式搭推理，而不是把引擎当成一只普通 Deployment 塞进去。Clayton Coleman（GKE inference）和 Robert Nishihara（Ray）的站台原句在网页里，本地不抄。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![aibrix diagram](../../../../assets/vllm/blog/serving/aibrix/01-aibrix-diagram.png)
+
 ## 首发能力
 
 不是路线图，是当时交出来的积木：

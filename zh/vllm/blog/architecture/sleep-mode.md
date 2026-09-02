@@ -9,9 +9,14 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/architecture/sleep-mode.md`  
 原文：https://vllm.ai/blog/2025-10-26-sleep-mode  
-2025-10-26。图在原网页。数字是 A100 / A4000、vLLM 0.11.0 上的演示。
+2025-10-26。数字是 A100 / A4000、vLLM 0.11.0 上的演示。
 
 两套都能装进一张卡、却装不进同一张卡：要么占双倍显存，要么每次切换 **30–100+ 秒** 冷加载。Sleep Mode 是第三条路——进程还活着，模型去冬眠。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![sleepmode](../../../../assets/vllm/blog/architecture/sleep-mode/01-sleepmode.png)
 
 ## 两档
 

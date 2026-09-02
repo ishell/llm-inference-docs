@@ -9,9 +9,72 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/mi300x-serving.md`  
 原文：https://vllm.ai/blog/2024-10-23-vllm-serving-amd  
-2024-10-23。Embedded LLM / Hot Aisle。vLLM **0.6.2** 时代。图在原网页。数字是 8× MI300X、BF16、ShareGPT 相对 TGI 的演示。后来的 ROCm attention 路由见 [rocm-attention](rocm-attention.md)；硬件插件见 [hardware-plugin](hardware-plugin.md)。旗标是当时的，今日请以文档为准。
+2024-10-23。Embedded LLM / Hot Aisle。vLLM **0.6.2** 时代。数字是 8× MI300X、BF16、ShareGPT 相对 TGI 的演示。后来的 ROCm attention 路由见 [rocm-attention](rocm-attention.md)；硬件插件见 [hardware-plugin](hardware-plugin.md)。旗标是当时的，今日请以文档为准。
 
 相对 TGI：Llama 3.1 405B 吞吐约 **1.5×**、TTFT 约 **1.7×**；70B 吞吐约 **1.8×**、TTFT 约 **5.1×**。16 QPS 优化配置下 405B TTFT 平均约 **3.8×** 快。演示。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![405b1](../../../../assets/vllm/blog/architecture/mi300x-serving/01-405b1.png)
+
+![405b2](../../../../assets/vllm/blog/architecture/mi300x-serving/02-405b2.png)
+
+![70b1](../../../../assets/vllm/blog/architecture/mi300x-serving/03-70b1.png)
+
+![70b2](../../../../assets/vllm/blog/architecture/mi300x-serving/04-70b2.png)
+
+![Throughput Requests per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/05-Throughput-Requests-per-Second-.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/06-Mean-TTFT-ms-.png)
+
+![Requests Per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/07-Requests-Per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/08-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/09-Mean-TPOT-ms-.png)
+
+![Requests per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/10-Requests-per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/11-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/12-Mean-TPOT-ms-.png)
+
+![Requests per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/13-Requests-per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/14-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/15-Mean-TPOT-ms-.png)
+
+![Requests per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/16-Requests-per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/17-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/18-Mean-TPOT-ms-.png)
+
+![Requests Per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/19-Requests-Per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/20-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/21-Mean-TPOT-ms-.png)
+
+![Requests per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/22-Requests-per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/23-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/24-Mean-TPOT-ms-.png)
+
+![Requests per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/25-Requests-per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/26-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/27-Mean-TPOT-ms-.png)
+
+![Request per Second](../../../../assets/vllm/blog/architecture/mi300x-serving/28-Request-per-Second.png)
+
+![Mean TTFT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/29-Mean-TTFT-ms-.png)
+
+![Mean TPOT ms](../../../../assets/vllm/blog/architecture/mi300x-serving/30-Mean-TPOT-ms-.png)
 
 ## 当时的口诀
 

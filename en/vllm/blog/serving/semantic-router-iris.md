@@ -19,3 +19,23 @@ vllm-sr init
 ```
 
 K8s: `helm install semantic-router oci://ghcr.io/vllm-project/charts/semantic-router`. The MoM family is routing-only small models (domain/PII/jailbreak/HaluGate/tool/embedding). Also `/v1/responses` stateful chats and semantic tool filtering. Do not confuse with in-engine [Router](router.md).
+
+Local figures (copyright remains with the original site; study copies):
+
+![iris 0](../../../../assets/vllm/blog/serving/semantic-router-iris/01-iris-0.png)
+
+![iris 1](../../../../assets/vllm/blog/serving/semantic-router-iris/02-iris-1.png)
+
+![iris 2](../../../../assets/vllm/blog/serving/semantic-router-iris/03-iris-2.png)
+
+![iris 3](../../../../assets/vllm/blog/serving/semantic-router-iris/04-iris-3.png)
+
+![iris 4](../../../../assets/vllm/blog/serving/semantic-router-iris/05-iris-4.png)
+
+![iris 7](../../../../assets/vllm/blog/serving/semantic-router-iris/06-iris-7.png)
+
+![iris 6](../../../../assets/vllm/blog/serving/semantic-router-iris/07-iris-6.png)
+
+![iris 5](../../../../assets/vllm/blog/serving/semantic-router-iris/08-iris-5.png)
+
+![iris 8](../../../../assets/vllm/blog/serving/semantic-router-iris/09-iris-8.png)

@@ -9,9 +9,28 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/intel-arc.md`  
 原文：https://vllm.ai/blog/2025-11-11-intel-arc-pro-b  
-2025-11-11。XPU / SYCL。图在原网页。数字是当时 4–8 张 Arc Pro B60 上的演示。
+2025-11-11。XPU / SYCL。数字是当时 4–8 张 Arc Pro B60 上的演示。
 
 专业卡、大显存、能叠多卡。vLLM 在 B 系列上列了一长串：DeepSeek 蒸馏、>50K 上下文、embedding / rerank / pooling、多模态、MoE、逐层在线量化、DP / TP / PP、`torch.compile` 的 FP16/BF16、n-gram / EAGLE / EAGLE3、async scheduling、P/D、LoRA、sleep mode、structured output、tool calling。Sleep 见 [sleep-mode](sleep-mode.md)；投机见 [spec-decode](../performance/spec-decode.md)；卡从主干请出去见 [hardware-plugin](hardware-plugin.md)。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![moe](../../../../assets/vllm/blog/architecture/intel-arc/01-moe.png)
+
+![persistent kernel1](../../../../assets/vllm/blog/architecture/intel-arc/02-persistent-kernel1.png)
+
+![persistent kernel2](../../../../assets/vllm/blog/architecture/intel-arc/03-persistent-kernel2.png)
+
+![thread load1](../../../../assets/vllm/blog/architecture/intel-arc/04-thread-load1.png)
+
+![thread load2](../../../../assets/vllm/blog/architecture/intel-arc/05-thread-load2.png)
+
+![perf figure1](../../../../assets/vllm/blog/architecture/intel-arc/06-perf-figure1.png)
+
+![perf figure2](../../../../assets/vllm/blog/architecture/intel-arc/07-perf-figure2.png)
+
+![perf figure3](../../../../assets/vllm/blog/architecture/intel-arc/08-perf-figure3.png)
 
 ## MoE：不要一只一只 GEMM
 

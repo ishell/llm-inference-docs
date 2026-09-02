@@ -9,9 +9,24 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/pegaflow.md`  
 原文：https://vllm.ai/blog/2026-05-18-pegaflow  
-2026-05-18。Novita AI。Rust 守护进程 + 外部 KVConnector，不改 vLLM 源码。`vllm>=0.20.0`。图在原网页。和 [Mooncake](mooncake.md)、[KV offload](kv-offload.md) 同一扇门，把「池子」做成一台独立服务。
+2026-05-18。Novita AI。Rust 守护进程 + 外部 KVConnector，不改 vLLM 源码。`vllm>=0.20.0`。和 [Mooncake](mooncake.md)、[KV offload](kv-offload.md) 同一扇门，把「池子」做成一台独立服务。
 
 KV 可以占掉每机几百 GiB，分配和预热很慢，却常常比当时那波请求活得久。绑在 worker 进程里：崩溃、滚动升级、换模型，池子一起死，pinned 内存要重新申请。PegaFlow 把运行时搬到每机一台 daemon：pinned DRAM、SSD、拓扑、RDMA、索引、后台任务归它；vLLM 用 CUDA IPC（数据）和 gRPC（控制）连本地进程。一台 cache 伺候多引擎、多模型，namespace 隔离，共享同一份内存/盘/网。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![architecture](../../../../assets/vllm/blog/serving/pegaflow/01-architecture.png)
+
+![startup time](../../../../assets/vllm/blog/serving/pegaflow/02-startup-time.svg)
+
+![tail latency](../../../../assets/vllm/blog/serving/pegaflow/03-tail-latency.png)
+
+![results overview](../../../../assets/vllm/blog/serving/pegaflow/04-results-overview.svg)
+
+![rdma throughput](../../../../assets/vllm/blog/serving/pegaflow/05-rdma-throughput.svg)
+
+![cache policy comparison](../../../../assets/vllm/blog/serving/pegaflow/06-cache-policy-comparison.png)
 
 ## 数字（演示 / 生产抽样）
 

@@ -12,6 +12,31 @@ This is the fourth post in the large language model latency-throughput benchmark
 
 See LLM Inference Benchmarking: Fundamental Concepts for background knowledge on common metrics for benchmarking and parameters. See LLM Inference Benchmarking Guide: NVIDIA GenAI-Perf and NIM for tips on using GenAI-Perf and NVIDIA NIM for your applications.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![llm fig 1 png](../../../assets/nvidia/cost/blog-04-tco/01-llm-fig-1-png.webp)
+
+![Sample Pareto png](../../../assets/nvidia/cost/blog-04-tco/02-Sample-Pareto-png.webp)
+
+![llm new fig 3 png](../../../assets/nvidia/cost/blog-04-tco/03-llm-new-fig-3-png.webp)
+
+![image 5 png](../../../assets/nvidia/cost/blog-04-tco/04-image-5-png.webp)
+
+![image 6 png](../../../assets/nvidia/cost/blog-04-tco/05-image-6-png.webp)
+
+![image 7](../../../assets/nvidia/cost/blog-04-tco/06-image-7.png)
+
+![image 8 png](../../../assets/nvidia/cost/blog-04-tco/07-image-8-png.webp)
+
+![image 9 png](../../../assets/nvidia/cost/blog-04-tco/08-image-9-png.webp)
+
+![image 10 png](../../../assets/nvidia/cost/blog-04-tco/09-image-10-png.webp)
+
+![image 11 png](../../../assets/nvidia/cost/blog-04-tco/10-image-11-png.webp)
+
+![image 12 png](../../../assets/nvidia/cost/blog-04-tco/11-image-12-png.webp)
+
 ## Introduction 
 
 Large language models (LLMs) have become an integral and universal part of the modern software industry, functioning akin to an “operating system” base layer upon which many applications are built. These applications include AI assistants, customer support agents, coding co-pilots, and “deep research” assistants. 

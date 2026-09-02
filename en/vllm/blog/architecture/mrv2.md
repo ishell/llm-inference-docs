@@ -8,6 +8,21 @@ fetched: 2026-08-31
 
 2026-03-24. Rewrite of the **model runner**, not the whole engine. No API change. Then: `export VLLM_USE_V2_MODEL_RUNNER=1`. Feature gaps below are **v0.18.0**. Figures on the official page.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![persistent batch v1](../../../../assets/vllm/blog/architecture/mrv2/01-persistent_batch_v1.png)
+
+![persistent batch mrv2](../../../../assets/vllm/blog/architecture/mrv2/02-persistent_batch_mrv2.png)
+
+![async scheduling](../../../../assets/vllm/blog/architecture/mrv2/03-async_scheduling.png)
+
+![async spec decoding](../../../../assets/vllm/blog/architecture/mrv2/04-async_spec_decoding.png)
+
+![throughput comparison](../../../../assets/vllm/blog/architecture/mrv2/05-throughput_comparison.png)
+
+![tpot mtp](../../../../assets/vllm/blog/architecture/mrv2/06-tpot_mtp.png)
+
 ## Why
 
 After V1, async scheduling and spec decode piled onto the runner. Recurring pain: persistent batch coupled to per-step inputs; async retrofitted; CPU bookkeeping; hard to extend.

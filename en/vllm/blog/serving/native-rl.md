@@ -17,3 +17,21 @@ Two recurring pains: every RL framework patched vLLM workers to sync weights; as
 **DPEP deadlock:** pause lived in `AsyncLLM` while DP waves lived in EngineCore. Fix: pause in EngineCore; two-phase — local pause still honors `START_DP_WAVE` to finish the in-flight forward; periodic all-reduce (every 32 steps) enters global pause together, then weights move.
 
 SkyRL: Qwen3-1.7B DAPO over HTTP. Prime-RL: GLM-5.1-FP8, 16×8×H200, 2×(4P+4D) DPEP32, 1 TB CPU KV/node, vllm-router sticky, 100+ stable steps. Sleep Mode swaps models without killing the process; this swaps **new weights of the same model**.
+
+Local figures (copyright remains with the original site; study copies):
+
+![rl system overview](../../../../assets/vllm/blog/serving/native-rl/01-rl_system_overview.png)
+
+![weight transfer nccl](../../../../assets/vllm/blog/serving/native-rl/02-weight_transfer_nccl.svg)
+
+![async rl](../../../../assets/vllm/blog/serving/native-rl/03-async_rl.svg)
+
+![dp generate](../../../../assets/vllm/blog/serving/native-rl/04-dp_generate.svg)
+
+![vllm deadlock](../../../../assets/vllm/blog/serving/native-rl/05-vllm_deadlock.svg)
+
+![vllm no deadlock](../../../../assets/vllm/blog/serving/native-rl/06-vllm_no_deadlock.svg)
+
+![skyrl validation](../../../../assets/vllm/blog/serving/native-rl/07-skyrl_validation.svg)
+
+![prime rl](../../../../assets/vllm/blog/serving/native-rl/08-prime_rl.svg)

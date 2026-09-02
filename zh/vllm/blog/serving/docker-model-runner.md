@@ -9,7 +9,7 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/docker-model-runner.md`  
 原文：https://vllm.ai/blog/2025-11-19-docker-model-runner-vllm  
-当时 x86_64 + NVIDIA。图在原网页。
+当时 x86_64 + NVIDIA。
 
 ```
 docker model install-runner --backend vllm --gpu cuda

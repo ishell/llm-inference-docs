@@ -21,3 +21,11 @@ MoE decode：专家 GEMM 小、周围 gather/launch/HBM 往返更贵。路由、
 ```
 
 Attention 当时只认 Hy3 系；MoE 只认 FP8。不是通用默认，是 Hunyuan 产线 kernel 走 backend 接口进 main。
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![dynamic partitioning](../../../../assets/vllm/blog/performance/hpc-ops/01-dynamic-partitioning.png)
+
+![fused moe latency](../../../../assets/vllm/blog/performance/hpc-ops/02-fused-moe-latency.png)
+
+![decode dynamic vs static](../../../../assets/vllm/blog/performance/hpc-ops/03-decode-dynamic-vs-static.png)

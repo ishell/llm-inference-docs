@@ -13,6 +13,17 @@ fetched: 2026-08-31
 
 MoE 每一层里两件脾气相反的活：Attention 有状态，跟调度和 KV 绑在一起；FFN / 专家是 routed compute + all-to-all。绑在同一套 rank 上，伸缩只能选一个数字。[Wide-EP](large-scale.md) 把专家铺开；AFD 再把 **Attention 服务** 和 **FFN 服务** 拆开，两边拓扑可以不同。请求仍然打到 Attention 的 OpenAI 口；FFN 是一只吃 activation 的 daemon。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![vllm afd plugin architecture](../../../../assets/vllm/blog/serving/afd/01-vllm-afd-plugin-architecture.svg)
+
+![throughput dsv3 2 16k](../../../../assets/vllm/blog/serving/afd/02-throughput_dsv3-2_16k.png)
+
+![throughput dsv3 2 32k](../../../../assets/vllm/blog/serving/afd/03-throughput_dsv3-2_32k.png)
+
+![text matched dp afd median ttft](../../../../assets/vllm/blog/serving/afd/04-text_matched_dp_afd_median_ttft.png)
+
 ## 三件零件
 
 - **Attention worker：** 调度、KV、batch、采样都留在这边。plugin 的 model runner 把 DP / ubatch / 层 / graph 状态告诉 FFN。

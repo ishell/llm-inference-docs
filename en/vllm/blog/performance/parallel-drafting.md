@@ -11,6 +11,19 @@ Chinese: `../../zh/vllm/blog/performance/parallel-drafting.md`
 
 [P-EAGLE](p-eagle.md) collapses K draft forwards into one. DFlash and DSpark sit on the same road: the draft is not an autoregressive queue; one forward lays out K candidates. Verification is still **rejection sampling** — lossless; the target distribution does not change.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![compare interactivity qwen38b math](../../../../assets/vllm/blog/performance/parallel-drafting/01-compare_interactivity_qwen38b_math.png)
+
+![compare interactivity qwen330b humaneval](../../../../assets/vllm/blog/performance/parallel-drafting/02-compare_interactivity_qwen330b_humaneval.png)
+
+![compare interactivity gemma431b humaneval](../../../../assets/vllm/blog/performance/parallel-drafting/03-compare_interactivity_gemma431b_humaneval.png)
+
+![ar vs parallel](../../../../assets/vllm/blog/performance/parallel-drafting/04-ar_vs_parallel.jpg)
+
+![diagram](../../../../assets/vllm/blog/performance/parallel-drafting/05-diagram.jpg)
+
 ## How to turn it on
 
 DFlash example (checkpoint from the original post / Speculators repo):

@@ -15,6 +15,11 @@ Docs: https://docs.nvidia.com/aiperf/
 
 Works against any OpenAI-compatible server: NIM, vLLM, `trtllm-serve`, Triton, Ollama, SGLang, Dynamo. Change the engine; do not change the metric definitions.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![502324058 7eb40867 b1c1 4ebe bd57 7619f2154bba](../../../assets/nvidia/tools/aiperf/01-502324058-7eb40867-b1c1-4ebe-bd57-7619f2154bba.png)
+
 ## Install
 
 ```bash

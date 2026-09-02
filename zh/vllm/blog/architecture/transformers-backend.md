@@ -9,7 +9,7 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/transformers-backend.md`  
 原文：https://vllm.ai/blog/2025-04-11-transformers-backend  
-2025-04；2025-07 起支持视觉语言模型。图在原网页。
+2025-04；2025-07 起支持视觉语言模型。
 
 vLLM 原生 `modeling_*.py` 要跟调度、paged KV、CUDA graph 对齐，新模型进仓库慢。`model_impl="transformers"` 直接跑 Hugging Face 实现，上面仍用 PagedAttention 和 continuous batching。Hub 上还没有原生实现的架构（当时 Kyutai Helium）可以：
 

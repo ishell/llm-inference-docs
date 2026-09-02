@@ -9,9 +9,20 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/arm-cpus.md`  
 原文：https://vllm.ai/blog/2026-07-29-optimizing-vllm-on-arm-cpus  
-2026-07-29。Arm / PyTorch / oneDNN / KleidiAI。图在原网页。数字是 Neoverse 上相对 2025-10 BF16 基线的演示。
+2026-07-29。Arm / PyTorch / oneDNN / KleidiAI。数字是 Neoverse 上相对 2025-10 BF16 基线的演示。
 
 CPU 能便宜铺开。密集层大约 80% 时间已经在优化过的 BF16 GEMM 里，kernel 本身贴着硬件效率。剩下是 allocator、OpenMP 同步、weight layout、attention、量化。另一条「硬件进主干」的路见 [hardware-plugin](hardware-plugin.md)。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![heatmap bf16 optimized vs bf16 baseline](../../../../assets/vllm/blog/architecture/arm-cpus/01-heatmap_bf16_optimized_vs_bf16_baseline.png)
+
+![heatmap int8 vs bf16 optimized](../../../../assets/vllm/blog/architecture/arm-cpus/02-heatmap_int8_vs_bf16_optimized.png)
+
+![heatmap int4 vs int8](../../../../assets/vllm/blog/architecture/arm-cpus/03-heatmap_int4_vs_int8.png)
+
+![bars all vs bf16 baseline](../../../../assets/vllm/blog/architecture/arm-cpus/04-bars_all_vs_bf16_baseline.png)
 
 ## 能用
 

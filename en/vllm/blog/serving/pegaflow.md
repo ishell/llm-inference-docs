@@ -27,3 +27,17 @@ vllm serve <model> --kv-transfer-config '{
   "kv_connector_module_path": "pegaflow.connector"
 }'
 ```
+
+Local figures (copyright remains with the original site; study copies):
+
+![architecture](../../../../assets/vllm/blog/serving/pegaflow/01-architecture.png)
+
+![startup time](../../../../assets/vllm/blog/serving/pegaflow/02-startup-time.svg)
+
+![tail latency](../../../../assets/vllm/blog/serving/pegaflow/03-tail-latency.png)
+
+![results overview](../../../../assets/vllm/blog/serving/pegaflow/04-results-overview.svg)
+
+![rdma throughput](../../../../assets/vllm/blog/serving/pegaflow/05-rdma-throughput.svg)
+
+![cache policy comparison](../../../../assets/vllm/blog/serving/pegaflow/06-cache-policy-comparison.png)

@@ -15,6 +15,13 @@ fetched: 2026-08-31
 
 你需要这些数字，通常出于三种并不浪漫的理由：找出瓶颈、在服务质量与吞吐之间做交易、决定买多少机器。GenAI-Perf 是客户端工具，报 TTFT、ITL、TPS、RPS。它打任何符合 OpenAI API 的服务。本篇的服务端是 **NVIDIA NIM**：预打包微服务，后端可以是 TensorRT-LLM 或 vLLM，带企业级的门锁。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![Figure 1. Sample output by genAI perf](../../../assets/nvidia/benchmarking/blog-02-genai-perf-and-nim/01-Figure-1.-Sample-output-by-genAI-perf.png)
+
+![latency throughput curve plot](../../../assets/nvidia/benchmarking/blog-02-genai-perf-and-nim/02-latency-throughput-curve-plot.png)
+
 ## 为什么用它测
 
 NIM 是装好的容器，云上、机房、RTX 工作站都能跑。同一代硬件上，NIM 还会继续改内核。官网上的性能表不是神话，是 GenAI-Perf 打出来的成绩单。你的卡、你的机房、你的网线，只有自己测过才算数。

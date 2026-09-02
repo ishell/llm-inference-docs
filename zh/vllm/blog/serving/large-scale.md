@@ -9,9 +9,36 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/large-scale.md`  
 原文：https://vllm.ai/blog/2025-12-17-large-scale-serving  
-2025-12-17。v0.11.0 拆掉 V0 最后一行。社区当时 1969 位贡献者、一个月 950+ commit。Coreweave H200 + IB ConnectX-7，生产形态多节点，持续约 **2.2k tokens/s/H200**（早先约 1.5k）。图在原网页。数字是这一天、这一套配方上的。
+2025-12-17。v0.11.0 拆掉 V0 最后一行。社区当时 1969 位贡献者、一个月 950+ commit。Coreweave H200 + IB ConnectX-7，生产形态多节点，持续约 **2.2k tokens/s/H200**（早先约 1.5k）。数字是这一天、这一套配方上的。
 
 优化清单读起来像把 `optimization.md` 和 Anatomy 后半本叠在一起：async scheduling、**dual-batch overlap (DBO)**、P/D 分离、CUDA graph `FULL_AND_PIECEWISE`（`-O2` 那档）、DeepGEMM 默认、DeepEP、**EPLB**、DeepSeek-R1 的 SiLU kernel。每一项单独拧都有效；叠在 MoE 上才叫 Wide-EP。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![prefill throughput](../../../../assets/vllm/blog/serving/large-scale/01-prefill_throughput.png)
+
+![decode throughput](../../../../assets/vllm/blog/serving/large-scale/02-decode_throughput.png)
+
+![wide ep](../../../../assets/vllm/blog/serving/large-scale/03-wide_ep.gif)
+
+![kv cache](../../../../assets/vllm/blog/serving/large-scale/04-kv_cache.png)
+
+![a2a backends](../../../../assets/vllm/blog/serving/large-scale/05-a2a_backends.png)
+
+![dbo before](../../../../assets/vllm/blog/serving/large-scale/06-dbo_before.png)
+
+![dbo after](../../../../assets/vllm/blog/serving/large-scale/07-dbo_after.png)
+
+![eplb](../../../../assets/vllm/blog/serving/large-scale/08-eplb.gif)
+
+![disaggregated serving](../../../../assets/vllm/blog/serving/large-scale/09-disaggregated_serving.gif)
+
+![llm d](../../../../assets/vllm/blog/serving/large-scale/10-llm-d.png)
+
+![dynamo](../../../../assets/vllm/blog/serving/large-scale/11-dynamo.png)
+
+![ray serve llm](../../../../assets/vllm/blog/serving/large-scale/12-ray_serve_llm.png)
 
 ## Wide-EP
 

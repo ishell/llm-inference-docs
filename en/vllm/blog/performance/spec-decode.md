@@ -8,6 +8,29 @@ fetched: 2026-08-31
 
 2024-10-17 Office Hours write-up. Flags are of that vintage — use current `speculative_decoding` docs. Figures / slides / recording on the official page.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![figure8](../../../../assets/vllm/blog/performance/spec-decode/01-figure8.png)
+
+![figure1](../../../../assets/vllm/blog/performance/spec-decode/02-figure1.png)
+
+![figure9](../../../../assets/vllm/blog/performance/spec-decode/03-figure9.png)
+
+![figure2](../../../../assets/vllm/blog/performance/spec-decode/04-figure2.png)
+
+![figure3](../../../../assets/vllm/blog/performance/spec-decode/05-figure3.png)
+
+![figure4](../../../../assets/vllm/blog/performance/spec-decode/06-figure4.png)
+
+![figure5](../../../../assets/vllm/blog/performance/spec-decode/07-figure5.png)
+
+![figure6](../../../../assets/vllm/blog/performance/spec-decode/08-figure6.png)
+
+![figure7](../../../../assets/vllm/blog/performance/spec-decode/09-figure7.png)
+
+![figure10](../../../../assets/vllm/blog/performance/spec-decode/10-figure10.png)
+
 ## Mechanism (Leviathan et al. 2023)
 
 Draft model proposes tokens; target verifies the sequence in **one** forward pass, keeps a prefix, corrects the first miss. Lossless vs the target distribution. Example: draft `["I","like","cooking",…]` → target rewrites third token to `"playing"` → accept `["I","like","playing"]`.

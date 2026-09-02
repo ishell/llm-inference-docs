@@ -13,3 +13,9 @@ FA KV is per-token K/V. Mamba stores a collapsed conv + temporal SSM (no token a
 **Dual descriptors** over the same memory (FA K/V split for heterogeneous TP, then Mamba). **Physical vs logical blocks:** FlashInfer-style physical size applies to FA only; SSM keeps logical counts (P/D TP may differ). **3-descriptor conv:** heterogeneous TP cannot RDMA-gather interleaved SD-layout `(state_len, dim)` x|B|C. Require `VLLM_SSM_CONV_STATE_LAYOUT=DS`; contiguous x, B, C. Homogeneous TP can stay Conv+SSM.
 
 PRs #36687 / #37416 / #37635 / #37310. Router P/D assumes one shape of memory; hybrids need two dictionaries on the same NIXL pipe.
+
+Local figures (copyright remains with the original site; study copies):
+
+![transfer volume vs isl](../../../../assets/vllm/blog/serving/hybrid-ssm/01-transfer-volume-vs-isl.png)
+
+![disagg vs colocated](../../../../assets/vllm/blog/serving/hybrid-ssm/02-disagg-vs-colocated.png)

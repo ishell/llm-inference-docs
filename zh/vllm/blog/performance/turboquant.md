@@ -9,11 +9,42 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/performance/turboquant.md`  
 原文：https://vllm.ai/blog/2026-05-11-turboquant  
-2026-05-11。vLLM 0.20.2。接在 [FP8 KV](fp8-kvcache.md) 后面读。图在原网页。TurboQuant 当时只支持标准注意力（GQA 一类），滑动窗口 / 混合注意力还没有。
+2026-05-11。vLLM 0.20.2。接在 [FP8 KV](fp8-kvcache.md) 后面读。TurboQuant 当时只支持标准注意力（GQA 一类），滑动窗口 / 混合注意力还没有。
 
 关键差别：FP8（`--kv-cache-dtype fp8`）连 **attention 计算** 也走硬件 FP8 Tensor Core；TurboQuant 只压缩**存储**到 3–4 bit，算的时候再反量化回 BF16。省的是房间，付的是反量化。
 
 变体：`k8v4`（K 8 bit / V 4 bit）、`4bit_nc`（4 bit + norm correction）、`k3v4_nc`、`3bit_nc`。模型：Llama-3.3-70B、Qwen3-30B-A3B Instruct/Thinking、MiniMax-M2.7。基准：MRCR 长上下文检索；AIME25 / GPQA / MATH500 / LiveCodeBench 推理。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![llama 70b pareto](../../../../assets/vllm/blog/performance/turboquant/01-llama_70b_pareto.png)
+
+![qwen3 30b a3b pareto](../../../../assets/vllm/blog/performance/turboquant/02-qwen3_30b_a3b_pareto.png)
+
+![Llama 3.3 70B Instruct openai mrcr 2 needles plot](../../../../assets/vllm/blog/performance/turboquant/03-Llama-3.3-70B-Instruct_openai_mrcr_2_needles_plot.png)
+
+![Qwen3 30B A3B Instruct 2507 openai mrcr 2 needles plot](../../../../assets/vllm/blog/performance/turboquant/04-Qwen3-30B-A3B-Instruct-2507_openai_mrcr_2_needles_plot.png)
+
+![Qwen3 30B A3B Thinking 2507 reasoning plot](../../../../assets/vllm/blog/performance/turboquant/05-Qwen3-30B-A3B-Thinking-2507_reasoning_plot.png)
+
+![MiniMax M2.7 reasoning plot](../../../../assets/vllm/blog/performance/turboquant/06-MiniMax-M2.7_reasoning_plot.png)
+
+![qwen3 30b a3b latency](../../../../assets/vllm/blog/performance/turboquant/07-qwen3_30b_a3b_latency.png)
+
+![llama 70b latency](../../../../assets/vllm/blog/performance/turboquant/08-llama_70b_latency.png)
+
+![qwen3 30b a3b throughput](../../../../assets/vllm/blog/performance/turboquant/09-qwen3_30b_a3b_throughput.png)
+
+![llama 70b throughput](../../../../assets/vllm/blog/performance/turboquant/10-llama_70b_throughput.png)
+
+![qwen3 30b a3b serve](../../../../assets/vllm/blog/performance/turboquant/11-qwen3_30b_a3b_serve.png)
+
+![llama 70b serve](../../../../assets/vllm/blog/performance/turboquant/12-llama_70b_serve.png)
+
+![qwen3 30b a3b ttft](../../../../assets/vllm/blog/performance/turboquant/13-qwen3_30b_a3b_ttft.png)
+
+![llama 70b ttft](../../../../assets/vllm/blog/performance/turboquant/14-llama_70b_ttft.png)
 
 ## 他们的结论（演示，不是你的 SLA）
 

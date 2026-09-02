@@ -11,6 +11,11 @@ PR#33736, `vllm>=0.18.0`.
 
 EAGLE-3 / P-EAGLE / DFlash drafts eat verifier internals, not surface text. Training them needs lots of hidden states. The old options were ugly: generate with `transformers` (lose vLLM’s distributed path; risk mismatch with production hidden) or patch vLLM (often disable prefix cache / async / auto-batch).
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![design diagram](../../../../assets/vllm/blog/architecture/extract-hidden-states/01-design_diagram.png)
+
 ## Design: fake speculation
 
 vLLM already pipes verifier hidden into Eagle-3 drafts. KV Connector already writes KV to disk / NIXL / shm. Hidden aligns with tokens the same way KV does. So:

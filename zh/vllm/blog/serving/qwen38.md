@@ -9,7 +9,7 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/qwen38.md`  
 原文：https://vllm.ai/blog/2026-08-12-qwen3.8  
-2026-08-12。图在原网页。数字是演示。
+2026-08-12。数字是演示。
 
 Qwen 家第一次把 Qwen-Max 级开出来：`Qwen3.8-2.4T-A95B`。骨架仍是 Qwen 3.5——512 expert 的稀疏 MoE，92 层里每 4 层一次 full attention，其余 69 层 linear attention。vLLM 声明 **day-0、无新架构**。这篇是起服配方，不是 PagedAttention 解剖。
 

@@ -9,3 +9,11 @@ fetched: 2026-09-01
 Chinese: `../../zh/vllm/blog/serving/vllm-ai-website.md`
 
 vllm.ai used to redirect to GitHub. New site: install selector + Events. Community logistics no longer land as main-repo PRs. Feedback `website-feedback@vllm.ai`. Also `talentpool@` / `collaboration@` / `social-promotion@`. vLLM Daily summarizes commits; RSS the commits atom. No inference numbers.
+
+Local figures (copyright remains with the original site; study copies):
+
+![homepage](../../../../assets/vllm/blog/serving/vllm-ai-website/01-homepage.jpg)
+
+![install](../../../../assets/vllm/blog/serving/vllm-ai-website/02-install.jpg)
+
+![events](../../../../assets/vllm/blog/serving/vllm-ai-website/03-events.jpg)

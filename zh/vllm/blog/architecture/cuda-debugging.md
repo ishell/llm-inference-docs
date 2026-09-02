@@ -9,7 +9,7 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/cuda-debugging.md`  
 原文：https://vllm.ai/blog/2025-08-11-cuda-debugging  
-图在原网页。续篇（hang + 源码行）见 [cuda-debugging-source](cuda-debugging-source.md)。
+续篇（hang + 源码行）见 [cuda-debugging-source](cuda-debugging-source.md)。
 
 Python 栈在 IMA 上几乎总是错的：异步报错、没检查 `kernel<<<>>>` launch、CUDA graph 里只看见 graph launch。`CUDA_LAUNCH_BLOCKING=1` 救不了后两种。
 

@@ -8,6 +8,13 @@ fetched: 2026-08-31
 
 If the model does not fit on one GPU, how you shard it matters. Primer: `mastering-llm-techniques.md` (TP vs PP).
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![Pipeline Parallel Vis](../../../assets/nvidia/performance-tuning/trtllm-sharding/01-Pipeline_Parallel_Vis.svg)
+
+![Tensor Parallelism Vis](../../../assets/nvidia/performance-tuning/trtllm-sharding/02-Tensor_Parallelism_Vis.svg)
+
 ## Communication is the constraint
 
 Sharding means GPUs exchange activations.

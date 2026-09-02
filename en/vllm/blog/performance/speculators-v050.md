@@ -16,3 +16,9 @@ vllm serve -tp 2 RedHatAI/gemma-4-31B-it-speculator.dflash
 ```
 
 Hidden extraction no longer hooks vLLM internals; it uses the HTTP path in [extract-hidden-states](../architecture/extract-hidden-states.md): online during training, or offline cache. Same data format; mix them (partial offline, fill online). Read with [parallel drafting](parallel-drafting.md).
+
+Local figures (copyright remains with the original site; study copies):
+
+![gemma4 dflash acceptance rates](../../../../assets/vllm/blog/performance/speculators-v050/01-gemma4-dflash-acceptance-rates.png)
+
+![gemma4 dflash latency](../../../../assets/vllm/blog/performance/speculators-v050/02-gemma4-dflash-latency.png)

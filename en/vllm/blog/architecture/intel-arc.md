@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Intel Arc Pro B-Series
 
-2025-11-11. XPU / SYCL. Study note; figures on the original page. Demos on 4–8× Arc Pro B60. Feature list is long: DeepSeek distill, >50K context, embed/rerank/pooling, multimodal, MoE, per-layer online quant, DP/TP/PP, FP16/BF16 `torch.compile`, n-gram/EAGLE/EAGLE3, async scheduling, P/D, LoRA, sleep mode, structured output, tool calling. See [sleep-mode.md](sleep-mode.md), [spec-decode.md](../performance/spec-decode.md), [hardware-plugin.md](hardware-plugin.md).
+2025-11-11. XPU / SYCL.  Demos on 4–8× Arc Pro B60. Feature list is long: DeepSeek distill, >50K context, embed/rerank/pooling, multimodal, MoE, per-layer online quant, DP/TP/PP, FP16/BF16 `torch.compile`, n-gram/EAGLE/EAGLE3, async scheduling, P/D, LoRA, sleep mode, structured output, tool calling. See [sleep-mode.md](sleep-mode.md), [spec-decode.md](../performance/spec-decode.md), [hardware-plugin.md](hardware-plugin.md).
 
 Naive MoE GEMM: one kernel per expert after the gate. Persistent **zero-gap** kernel claimed **>80%** of B60 capacity: single persistent loop (20 XeCores × 2 SYCL groups); atomic steal of the next GEMM block (static stride wasted ~15%); MXFP4→BF16 prepack (~**+30%** load) via `Bitcast-bf16 ((x << 12) >> 6 & 0x81c0) * 2^126`.
 
@@ -20,3 +20,21 @@ vllm serve openai/gpt-oss-120b --dtype=bfloat16 --enforce-eager \
 ```
 
 Host then: Ubuntu 25.04, KMD 6.14.0. gpt-oss from the 0.10.2 XPU image.
+
+Local figures (copyright remains with the original site; study copies):
+
+![moe](../../../../assets/vllm/blog/architecture/intel-arc/01-moe.png)
+
+![persistent kernel1](../../../../assets/vllm/blog/architecture/intel-arc/02-persistent-kernel1.png)
+
+![persistent kernel2](../../../../assets/vllm/blog/architecture/intel-arc/03-persistent-kernel2.png)
+
+![thread load1](../../../../assets/vllm/blog/architecture/intel-arc/04-thread-load1.png)
+
+![thread load2](../../../../assets/vllm/blog/architecture/intel-arc/05-thread-load2.png)
+
+![perf figure1](../../../../assets/vllm/blog/architecture/intel-arc/06-perf-figure1.png)
+
+![perf figure2](../../../../assets/vllm/blog/architecture/intel-arc/07-perf-figure2.png)
+
+![perf figure3](../../../../assets/vllm/blog/architecture/intel-arc/08-perf-figure3.png)

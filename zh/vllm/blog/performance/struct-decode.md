@@ -9,11 +9,24 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/performance/struct-decode.md`  
 原文：https://vllm.ai/blog/2025-01-14-struct-decode-intro  
-2025-01-14。V1 当时还「即将发布」——那些路线图条目后来大部分进了 V1。图在原网页。JSON mode、function calling、agent 工具参数，底下往往就是这件事。
+2025-01-14。V1 当时还「即将发布」——那些路线图条目后来大部分进了 V1。JSON mode、function calling、agent 工具参数，底下往往就是这件事。
 
 LLM 擅长「这段话接下来最可能是什么」。它不擅长「必须是合法 JSON」。few-shot 可以劝，不能保证；为 JSON 单独微调又太贵。Structured / constrained / guided decoding 是同一件事：按 schema 改下一 token 的概率（通常是 logit mask），让采样仍是采样，格式却过关。作者的比喻：它对 LLM，就像校验对 API。
 
 Outlines 用 FSM 跟踪 schema 状态、滤掉非法 token。vLLM 里把 JSON schema 塞进 sampling params（Python 或 HTTP）即可。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![shogoth gpt](../../../../assets/vllm/blog/performance/struct-decode/01-shogoth-gpt.png)
+
+![mermaid intro](../../../../assets/vllm/blog/performance/struct-decode/02-mermaid-intro.svg)
+
+![constrained json fsm](../../../../assets/vllm/blog/performance/struct-decode/03-constrained-json-fsm.webp)
+
+![vllm new xgrammar](../../../../assets/vllm/blog/performance/struct-decode/04-vllm-new-xgrammar.png)
+
+![vllm xgrammar decode time per output token](../../../../assets/vllm/blog/performance/struct-decode/05-vllm-xgrammar-decode-time-per-output-token.png)
 
 ## 当时 Outlines 路径的疼
 

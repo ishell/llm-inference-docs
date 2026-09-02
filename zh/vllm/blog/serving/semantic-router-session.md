@@ -9,7 +9,7 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/semantic-router-session.md`  
 原文：https://vllm.ai/blog/2026-06-02-session-aware-agentic-routing  
-2026-06-02。图在原网页。数字是确定性矩阵 + AMD ROCm 现场跑，当演示。产品化写进 [Themis](semantic-router-themis.md)。
+2026-06-02。数字是确定性矩阵 + AMD ROCm 现场跑，当演示。产品化写进 [Themis](semantic-router-themis.md)。
 
 单轮路由看见 tool 结果像便宜短句，可能甩给小模型——工具环就断了。SAAR 仍走信号→决策→选模，外面加一层会话控制。客户端带稳定 `x-session-id`。
 
@@ -22,6 +22,27 @@ fetched: 2026-09-01
 - **Replay：** 留下为何 stay / switch / locked stay。
 
 `algorithm.type: session_aware`，`base_method: hybrid` 一类。这是选模策略，不是 endpoint 负载均衡——后者仍是 [Router](router.md) / Envoy。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![hero v2](../../../../assets/vllm/blog/serving/semantic-router-session/01-hero-v2.png)
+
+![policy flow](../../../../assets/vllm/blog/serving/semantic-router-session/02-policy-flow.png)
+
+![switch boundaries](../../../../assets/vllm/blog/serving/semantic-router-session/03-switch-boundaries.png)
+
+![cache checkout discipline](../../../../assets/vllm/blog/serving/semantic-router-session/04-cache-checkout-discipline.png)
+
+![observability trace](../../../../assets/vllm/blog/serving/semantic-router-session/05-observability-trace.png)
+
+![synthetic headline](../../../../assets/vllm/blog/serving/semantic-router-session/06-synthetic-headline.png)
+
+![safety effect](../../../../assets/vllm/blog/serving/semantic-router-session/07-safety-effect.png)
+
+![ablation effect](../../../../assets/vllm/blog/serving/semantic-router-session/08-ablation-effect.png)
+
+![live rocm effect](../../../../assets/vllm/blog/serving/semantic-router-session/09-live-rocm-effect.png)
 
 ## 数字（演示）
 

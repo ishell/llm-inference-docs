@@ -93,6 +93,6 @@ Throughput is how many people you dismiss per second. Goodput is how many of the
 
 ## Other families (not copied line-by-line)
 
-The same official page also covers image count / throughput / latency; video inference time and peak memory; audio duration and RTFx; reasoning token counts; the full usage suite (cache read/write/miss, tools, accepted/rejected predictions); OSL mismatch; ISL of failed requests. Filter by tags: `STREAMING_ONLY`, `GOODPUT`, `HTTP_TRACE`, `USAGE_DIFF_ONLY`, and so on.
+The same official page also covers image count / throughput / latency; video inference time and peak memory; audio duration and RTFx; reasoning token counts; the full usage suite (cache read/write/miss, tools, accepted/rejected predictions); OSL mismatch; ISL of failed requests; replay-schedule lag (did the client keep up with trace timestamps); theoretical prefix-cache hit; context overflow count. Filter by tags: `STREAMING_ONLY`, `GOODPUT`, `HTTP_TRACE`, `USAGE_DIFF_ONLY`, and so on.
 
 HTTP timing (`--show-trace-timing` / `--export-http-trace`) splits sending / waiting (time to first **body** byte) / receiving. That is the wire, not a synonym for TTFT. Tutorial: https://docs.nvidia.com/aiperf/tutorials/metrics-analysis/http-trace-metrics-guide

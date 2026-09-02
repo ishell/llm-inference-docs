@@ -12,7 +12,46 @@ fetched: 2026-08-31
 
 官网上那句摘要说得轻描淡写：engine、scheduler、paged attention、continuous batching、chunked prefill、prefix cache、spec decode、P/D 分离、多卡、serving、怎么 benchmark。拆开以后，它其实是在讲一件很旧的事——怎样让许多人同时说话，而不让屋子塌掉。
 
-下面按原文结构走。图在网页里；本地只留文字。V0 已弃用，类名还会改，作者强调的是想法而不是签名。
+下面按原文结构走。V0 已弃用，类名还会改，作者强调的是想法而不是签名。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![engine constructor](../../../../assets/vllm/blog/architecture/anatomy/01-engine_constructor.png)
+
+![engine loop](../../../../assets/vllm/blog/architecture/anatomy/02-engine_loop.png)
+
+![kv cache blocks](../../../../assets/vllm/blog/architecture/anatomy/03-kv_cache_blocks.png)
+
+![fwd pass](../../../../assets/vllm/blog/architecture/anatomy/04-fwd_pass.png)
+
+![chunked pt1](../../../../assets/vllm/blog/architecture/anatomy/05-chunked_pt1.png)
+
+![prefix pt1](../../../../assets/vllm/blog/architecture/anatomy/06-prefix_pt1.png)
+
+![prefix pt2](../../../../assets/vllm/blog/architecture/anatomy/07-prefix_pt2.png)
+
+![prefix pt3](../../../../assets/vllm/blog/architecture/anatomy/08-prefix_pt3.png)
+
+![fsm](../../../../assets/vllm/blog/architecture/anatomy/09-fsm.png)
+
+![fsm2](../../../../assets/vllm/blog/architecture/anatomy/10-fsm2.png)
+
+![specdec pt1](../../../../assets/vllm/blog/architecture/anatomy/11-specdec_pt1.png)
+
+![specdec pt2](../../../../assets/vllm/blog/architecture/anatomy/12-specdec_pt2.png)
+
+![pd](../../../../assets/vllm/blog/architecture/anatomy/13-pd.png)
+
+![multiprocexecutor](../../../../assets/vllm/blog/architecture/anatomy/14-multiprocexecutor.png)
+
+![server setup](../../../../assets/vllm/blog/architecture/anatomy/15-server_setup.png)
+
+![dpenginecoreproc](../../../../assets/vllm/blog/architecture/anatomy/16-dpenginecoreproc.png)
+
+![latency diagram](../../../../assets/vllm/blog/architecture/anatomy/17-latency_diagram.png)
+
+![roofline](../../../../assets/vllm/blog/architecture/anatomy/18-roofline.png)
 
 ## LLM Engine 与 Engine Core
 

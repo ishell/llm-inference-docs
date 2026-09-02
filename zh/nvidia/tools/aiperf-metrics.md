@@ -94,6 +94,6 @@ good_request_fraction = good_request_count / (request_count + error_request_coun
 
 ## 其它族（不逐条抄）
 
-官方同一页还有：图像张数 / 吞吐 / 延迟；视频推理时间与峰值显存；音频时长与 RTFx；reasoning token 计数；usage 全套（含 cache read/write/miss、tool、accepted/rejected prediction）；OSL mismatch；错误请求的 ISL。要用哪一族，回原页按 tag 滤：`STREAMING_ONLY`、`GOODPUT`、`HTTP_TRACE`、`USAGE_DIFF_ONLY` 等。
+官方同一页还有：图像张数 / 吞吐 / 延迟；视频推理时间与峰值显存；音频时长与 RTFx；reasoning token 计数；usage 全套（含 cache read/write/miss、tool、accepted/rejected prediction）；OSL mismatch；错误请求的 ISL；回放 trace 时的 schedule lag（客户端有没有跟上时间戳）；theoretical prefix cache hit；context overflow count。要用哪一族，回原页按 tag 滤：`STREAMING_ONLY`、`GOODPUT`、`HTTP_TRACE`、`USAGE_DIFF_ONLY` 等。
 
 HTTP 时序（`--show-trace-timing` / `--export-http-trace`）把一次请求拆成 sending / waiting（到第一字节 body）/ receiving。那是网线和握手，不是 TTFT 的同义词。教程：https://docs.nvidia.com/aiperf/tutorials/metrics-analysis/http-trace-metrics-guide

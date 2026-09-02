@@ -10,6 +10,27 @@ Launch post, 2023-06-20. Woosuk Kwon & Zhuohan Li (UC Berkeley). Figures stay on
 
 Claim: up to **24×** throughput vs HuggingFace Transformers, no architecture changes. Up to **3.5×** vs HF TGI. Already serving Chatbot Arena / Vicuna Demo.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![perf a100 n1 light](../../../../assets/vllm/blog/architecture/paged-attention/01-perf_a100_n1_light.png)
+
+![perf a10g n1 light](../../../../assets/vllm/blog/architecture/paged-attention/02-perf_a10g_n1_light.png)
+
+![perf a100 n3 light](../../../../assets/vllm/blog/architecture/paged-attention/03-perf_a100_n3_light.png)
+
+![perf a10g n3 light](../../../../assets/vllm/blog/architecture/paged-attention/04-perf_a10g_n3_light.png)
+
+![annimation0](../../../../assets/vllm/blog/architecture/paged-attention/05-annimation0.gif)
+
+![annimation1](../../../../assets/vllm/blog/architecture/paged-attention/06-annimation1.gif)
+
+![annimation2](../../../../assets/vllm/blog/architecture/paged-attention/07-annimation2.gif)
+
+![annimation3](../../../../assets/vllm/blog/architecture/paged-attention/08-annimation3.gif)
+
+![lmsys traffic](../../../../assets/vllm/blog/architecture/paged-attention/09-lmsys_traffic.png)
+
 ## Throughput
 
 - One completion per request: **14×–24×** vs HF, **2.2×–2.5×** vs TGI.

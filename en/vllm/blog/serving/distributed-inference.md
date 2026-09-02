@@ -7,9 +7,20 @@ fetched: 2026-08-31
 # Distributed Inference with vLLM
 
 2025-02-17. https://vllm.ai/blog/2025-02-17-distributed-inference  
-Same map as the TensorRT-LLM sharding chapter: communication is the constraint. Quantization alone does not save 100B+ models. Study note; figures on the original page.
+Same map as the TensorRT-LLM sharding chapter: communication is the constraint. Quantization alone does not save 100B+ models. 
 
 Inference is not training: shapes change, latency matters, and you still have to house KV, speculative decoding, and the prefill→decode handoff. vLLM’s knives in this post are mainly **in-node TP** and **cross-node PP**, plus communication kernels and a control plane that tries not to let CPU stall GPU. Expert parallelism is a forward look here; it becomes the main course in [large-scale.md](large-scale.md).
+
+
+Local figures (copyright remains with the original site; study copies):
+
+![tp strategies](../../../../assets/vllm/blog/serving/distributed-inference/01-tp_strategies.png)
+
+![column row parallel](../../../../assets/vllm/blog/serving/distributed-inference/02-column_row_parallel.png)
+
+![tensor parallelism](../../../../assets/vllm/blog/serving/distributed-inference/03-tensor_parallelism.png)
+
+![kv cache effects](../../../../assets/vllm/blog/serving/distributed-inference/04-kv_cache_effects.png)
 
 ## Tensor parallelism
 

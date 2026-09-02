@@ -38,6 +38,13 @@ To optimize your AI application, this post walks through the process of setting 
 
 As NIM and GenAI-Perf evolve, see the Using GenAI-Perf to Benchmark documentation.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![Figure 1. Sample output by genAI perf](../../../assets/nvidia/benchmarking/blog-02-genai-perf-and-nim/01-Figure-1.-Sample-output-by-genAI-perf.png)
+
+![latency throughput curve plot](../../../assets/nvidia/benchmarking/blog-02-genai-perf-and-nim/02-latency-throughput-curve-plot.png)
+
 ## Why use GenAI-Perf for benchmarking model performance?
 
 NVIDIA NIM microservices are prepackaged, optimized containers that make it easy to deploy and run AI models across various platforms, including clouds, data centers, and NVIDIA RTX AI PCs, accelerating generative AI development for any domain. NIM LLMs are powered by industry-leading backends, including TensorRT-LLM and vLLM. NIM is continually improved to provide optimal performance even on the same hardware generation. 

@@ -9,9 +9,24 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/mooncake.md`  
 原文：https://vllm.ai/blog/2026-05-06-mooncake-store  
-2026-05-06。Mooncake 仓库与 KVConnector 实现见原文链接。图在原网页。数字是 Codex / SWE-bench Pro 轨迹上的演示。
+2026-05-06。Mooncake 仓库与 KVConnector 实现见原文链接。数字是 Codex / SWE-bench Pro 轨迹上的演示。
 
 Agent 来了以后，推理负载换了一种脾气。不再是一问一答的短会话，而是长地平线上的循环：想一想，调用工具，把工具吐回来的东西接进上下文，再想。Jensen 在 GTC 2026 里说的「从聊天机器人走向会自己做事的系统」，落到 serving 上就是一件很具体的事——**同一段前缀被反复看见**。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![hero vllm mooncake](../../../../assets/vllm/blog/serving/mooncake/01-hero_vllm_mooncake.svg)
+
+![agentic trace](../../../../assets/vllm/blog/serving/mooncake/02-agentic_trace.svg)
+
+![overall design option C](../../../../assets/vllm/blog/serving/mooncake/03-overall_design_option_C.svg)
+
+![animation](../../../../assets/vllm/blog/serving/mooncake/04-animation.gif)
+
+![pd compare mooncake vs nixl](../../../../assets/vllm/blog/serving/mooncake/05-pd_compare_mooncake_vs_nixl.png)
+
+![pd scaling](../../../../assets/vllm/blog/serving/mooncake/06-pd_scaling.png)
 
 ## 一张 agent 轨迹的解剖
 

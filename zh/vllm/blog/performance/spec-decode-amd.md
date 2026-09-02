@@ -24,3 +24,11 @@ MI300X / MI355X、ROCm。图和整表在原网页。数字是他们试验环境�
 `num_speculative_tokens` 和 checkpoint 里的物理层数不是一回事：N 大于头深度时会多跑几轮草稿。N 越大不一定更快——后面几位接受率掉下去，草稿税就白付。Gemma 一类演示里 N=3–5 常见 **2.5–2.8×** 输出 TPS；换模型、换草稿、换并发会掉到「几乎没赚」甚至亏。看 per-position 接受率再拧 N。
 
 和 [投机解码主线](spec-decode.md)、[P-EAGLE](p-eagle.md)、[并行草稿](parallel-drafting.md)、[DSpark 自适应](dspark-adaptive.md) 一起读：这篇是 **ROCm 上怎么开、怎么量**，不是新的验收数学。
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![figure 01](../../../../assets/vllm/blog/performance/spec-decode-amd/01-figure-01.svg)
+
+![figure 02](../../../../assets/vllm/blog/performance/spec-decode-amd/02-figure-02.svg)
+
+![figure method summary](../../../../assets/vllm/blog/performance/spec-decode-amd/03-figure-method-summary.svg)

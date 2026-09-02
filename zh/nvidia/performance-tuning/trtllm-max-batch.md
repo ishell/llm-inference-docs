@@ -11,9 +11,22 @@ TensorRT-LLM 真正值钱的部分，往往不是某一颗更亮的 kernel，而
 
 数字仍是演示。环境、SKU、互联、负载会改写结局。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![TRTLLM Scheduler Vis 1](../../../assets/nvidia/performance-tuning/trtllm-max-batch/01-TRTLLM_Scheduler_Vis_1.svg)
+
+![TRTLLM Scheduler Vis 2](../../../assets/nvidia/performance-tuning/trtllm-max-batch/02-TRTLLM_Scheduler_Vis_2.svg)
+
+![TRTLLM Scheduler Vis 3](../../../assets/nvidia/performance-tuning/trtllm-max-batch/03-TRTLLM_Scheduler_Vis_3.svg)
+
+![TRTLLM Scheduler Vis 4](../../../assets/nvidia/performance-tuning/trtllm-max-batch/04-TRTLLM_Scheduler_Vis_4.svg)
+
+![TRTLLM Scheduler Vis Chunked Context 1](../../../assets/nvidia/performance-tuning/trtllm-max-batch/05-TRTLLM_Scheduler_Vis_Chunked_Context_1.svg)
+
 ## 调度器在干什么
 
-官方用一组玩具数字把调度器画出来：`max_batch_size = 4`，`max_num_tokens = 12`。每个方块是一个 token，颜色是请求。图在原网页；这里用文字把同一出戏走一遍。不同请求画在不同行上，只是为了好看，**不是真实显存布局**。
+官方用一组玩具数字把调度器画出来：`max_batch_size = 4`，`max_num_tokens = 12`。每个方块是一个 token，颜色是请求。；这里用文字把同一出戏走一遍。不同请求画在不同行上，只是为了好看，**不是真实显存布局**。
 
 引擎刚醒，门外排着几条还没被调度的请求。
 

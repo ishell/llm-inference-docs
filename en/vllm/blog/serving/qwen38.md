@@ -7,7 +7,7 @@ fetched: 2026-09-01
 # Qwen3.8-2.4T day-0
 
 Chinese: `../../zh/vllm/blog/serving/qwen38.md`  
-2026-08-12. Study note; figures on the original page. Demo numbers.
+2026-08-12.  Demo numbers.
 
 First Qwen-Max-class open weights: `Qwen3.8-2.4T-A95B`. Same Qwen 3.5 skeleton — 512-expert sparse MoE, full attention every 4th of 92 layers, 69 linear-attention layers. **No new engine architecture.** Serving recipe.
 

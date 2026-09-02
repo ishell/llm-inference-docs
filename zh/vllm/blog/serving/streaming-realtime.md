@@ -9,7 +9,7 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/streaming-realtime.md`  
 原文：https://vllm.ai/blog/2026-01-31-streaming-realtime  
-PR #28973。图在原网页。
+PR #28973。
 
 输出可以 SSE 一块块吐，输入却常常要等整段 prompt 到齐——语音、同传、实时 agent 等不起。这篇把 **streamable inputs** 和 OpenAI 风格的 **`/v1/realtime` WebSocket** 接到 vLLM。
 

@@ -9,6 +9,13 @@ fetched: 2026-08-31
 
 大模型常常塞不进一张 GPU，必须切开。切法会改写成绩单。这一页帮你在 **tensor parallelism（TP）**、**pipeline parallelism（PP）**，或两者混用之间做选择。不熟这两个词，先回 `mastering-llm-techniques.md`。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![Pipeline Parallel Vis](../../../assets/nvidia/performance-tuning/trtllm-sharding/01-Pipeline_Parallel_Vis.svg)
+
+![Tensor Parallelism Vis](../../../assets/nvidia/performance-tuning/trtllm-sharding/02-Tensor_Parallelism_Vis.svg)
+
 ## 通信才是约束
 
 把权重拆到多张卡上，激活就要在卡之间跑。这段路上的税，决定哪条切法更便宜。

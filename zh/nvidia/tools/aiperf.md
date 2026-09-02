@@ -16,6 +16,11 @@ NIM 实操走 `../benchmarking/nim-04-aiperf.md`。调度旗标见 `aiperf-load-
 
 OpenAI 兼容的服务都能打：NIM、vLLM、`trtllm-serve`、Triton、Ollama、SGLang、Dynamo。换引擎，不要换尺子的定义。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![502324058 7eb40867 b1c1 4ebe bd57 7619f2154bba](../../../assets/nvidia/tools/aiperf/01-502324058-7eb40867-b1c1-4ebe-bd57-7619f2154bba.png)
+
 ## 安装
 
 ```bash

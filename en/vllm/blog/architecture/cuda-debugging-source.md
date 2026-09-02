@@ -26,3 +26,7 @@ dd if=/dev/zero bs=1M count=1 > /tmp/cuda_coredump_pipe_...
 ```
 
 `cuda-gdb` on the dump shows the hang line. Find the pipe via `/proc/<pid>/fd`. Fat C++ kernels: default `cuda-gdb` shows only the last inlined line; you want the full inline stack. When `lineinfo` is still wrong, the original post’s second half walks DWARF by hand.
+
+Local figures (copyright remains with the original site; study copies):
+
+![poisoned code](../../../../assets/vllm/blog/architecture/cuda-debugging-source/01-poisoned_code.png)

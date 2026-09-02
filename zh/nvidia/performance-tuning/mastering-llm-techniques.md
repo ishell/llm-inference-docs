@@ -9,9 +9,38 @@ fetched: 2026-08-31
 
 英文全文：`en/nvidia/performance-tuning/mastering-llm-techniques.md`
 
-后面 NIM / TensorRT-LLM / vLLM 的调优文，都默认你读过这篇。它不是某一条命令的说明书，而是一张地图：推理为什么贵，记忆为什么胀，刀可以往哪几处磨。网页上有图（KV cache、流水线气泡、MHA/GQA/MQA、FlashAttention tiling、PagedAttention、量化分布、稀疏、蒸馏、IFB、speculative）。本地只留文字。
+后面 NIM / TensorRT-LLM / vLLM 的调优文，都默认你读过这篇。它不是某一条命令的说明书，而是一张地图：推理为什么贵，记忆为什么胀，刀可以往哪几处磨。
 
 堆 Transformer 层能换来更好的精度、少样本能力，甚至在不少语言任务上接近人的「突然会了」。训练一次已经很贵；推理是反复发生的成本。今天的热门模型可以到百亿、千亿参数，RAG 一类用法还会把整篇检索塞进输入，让模型每一口都咬得更重。读者需要一点 Transformer 和 attention 的常识。可用 TensorRT-LLM 和 Nemotron 3 这类开放模型在生产级代码里试这些权衡，而不是只在黑板上。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![key value caching](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/01-key-value-caching_.png)
+
+![four way pipeline parallelism](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/02-four-way-pipeline-parallelism.png)
+
+![tensor parallelsim mlp self attention layers](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/03-tensor-parallelsim-mlp-self-attention-layers_.png)
+
+![transformer layer tensor and sequence parallelism](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/04-transformer-layer-tensor-and-sequence-parallelism.png)
+
+![scaled dot product attention and multi head attention](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/05-scaled-dot-product-attention-and-multi-head-attention.png)
+
+![comparison attention mechanisms](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/06-comparison-attention-mechanisms.png)
+
+![flash attention computation pattern memory hierarchy gpu](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/07-flash-attention-computation-pattern-memory-hierarchy-gpu.png)
+
+![memory wastage fragmentation inefficient kv cache](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/08-memory-wastage-fragmentation-inefficient-kv-cache.png)
+
+![quantization value distribution](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/09-quantization-value-distribution.png)
+
+![sparse matrix compressed format](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/10-sparse-matrix-compressed-format_.png)
+
+![knowledge distillation general framework](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/11-knowledge-distillation-general-framework.png)
+
+![speculative inference example](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/12-speculative-inference-example_.png)
+
+![llm optimize deploy graphic](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/13-llm-optimize-deploy-graphic.png)
 
 ## 推理分两段
 

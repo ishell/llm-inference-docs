@@ -6,7 +6,7 @@ fetched: 2026-08-31
 
 # Decode Context Parallelism
 
-2026-08-07. CLI: `-dcp` / `--decode-context-parallel-size`. Sibling idea in TRT-LLM: Helix Parallelism. Study note; figures on the original page.
+2026-08-07. CLI: `-dcp` / `--decode-context-parallel-size`. Sibling idea in TRT-LLM: Helix Parallelism. 
 
 Long-context agents (64K–1M) make KV huge. TP shards KV **by head**. GQA bottoms out at one KV head per GPU then duplicates; MLA has one latent, fully replicated on every TP rank. DCP shards KV **by sequence**. A 200K request can be 50K per GPU of four. Needs a fast GPU interconnect.
 
@@ -23,3 +23,17 @@ vllm serve deepseek-ai/DeepSeek-V2-Lite \
 MLA: `TP >= DCP` and `TP % DCP == 0` (R1 can be 8/8). GQA: DCP only fills the duplicates after `TP > num_kv_heads`; `(TP // num_kv_heads) >= DCP` and divides (Qwen3-235B, 4 KV heads, TP8 → DCP≤2).
 
 Roadmap: finer TP/DCP, A2A kernels, MTP/spec, P/D, Prefill Context Parallelism (`-pcp`).
+
+Local figures (copyright remains with the original site; study copies):
+
+![kv parallelism overview](../../../../assets/vllm/blog/performance/dcp/01-kv-parallelism-overview.svg)
+
+![figure 1](../../../../assets/vllm/blog/performance/dcp/02-figure-1.png)
+
+![figure 2](../../../../assets/vllm/blog/performance/dcp/03-figure-2.png)
+
+![figure 3](../../../../assets/vllm/blog/performance/dcp/04-figure-3.png)
+
+![figure 4](../../../../assets/vllm/blog/performance/dcp/05-figure-4.png)
+
+![figure 5](../../../../assets/vllm/blog/performance/dcp/06-figure-5.png)

@@ -15,3 +15,15 @@ Prefill (compute-bound GEMMs) and decode (memory-bound weight walks) sharing an 
 Goodput (DistServe): TTFT **< 1 s** and ITL **< 50 ms**. At 8 req/s / 100 reqs: 1×TP8 26/100; 2×TP4 30/100; Read 70/100 (**2.4×**); Write **73/100 (2.5×)**. Collocated dies on bimodal ITL (~30 ms and ~150 ms). Disagg kills ITL violations; leftovers are TTFT.
 
 [router.md](router.md) is the cross-pod gateway; this post is P/D **inside one box**. Same connector family as Mooncake / NIXL / CPU offload, different transport.
+
+Local figures (copyright remains with the original site; study copies):
+
+![read mode request flow diagram](../../../../assets/vllm/blog/serving/moriio/01-read-mode-request-flow-diagram.svg)
+
+![write mode request flow diagram](../../../../assets/vllm/blog/serving/moriio/02-write-mode-request-flow-diagram.svg)
+
+![SLO attainment](../../../../assets/vllm/blog/serving/moriio/03-SLO-attainment.png)
+
+![read mode kv transfer sequence diagram](../../../../assets/vllm/blog/serving/moriio/04-read-mode-kv-transfer-sequence-diagram.svg)
+
+![write mode kv transfer sequence diagram](../../../../assets/vllm/blog/serving/moriio/05-write-mode-kv-transfer-sequence-diagram.svg)

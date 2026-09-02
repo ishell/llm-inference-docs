@@ -8,6 +8,21 @@ fetched: 2026-08-31
 
 Same machinery as handbook chapter 3 (`trtllm-max-batch.md`), written as a feature page. Figures stay on the official HTML.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![max bs toks len](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/01-max_bs_toks_len.svg)
+
+![TRTLLM Scheduler Vis 1](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/02-TRTLLM_Scheduler_Vis_1.svg)
+
+![TRTLLM Scheduler Vis 2](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/03-TRTLLM_Scheduler_Vis_2.svg)
+
+![TRTLLM Scheduler Vis 3](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/04-TRTLLM_Scheduler_Vis_3.svg)
+
+![TRTLLM Scheduler Vis 4](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/05-TRTLLM_Scheduler_Vis_4.svg)
+
+![TRTLLM Scheduler Vis Chunked Context 1](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/06-TRTLLM_Scheduler_Vis_Chunked_Context_1.svg)
+
 ## In-flight batching (IFB)
 
 Also continuous / iteration-level batching. Context-phase and generation-phase sequences run in the **same** iteration. Requires packed (unpadded) inputs — padding generation’s single token out to max prompt length is waste.

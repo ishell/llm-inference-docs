@@ -9,9 +9,18 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/nemotron-35-lightning.md`  
 原文：https://vllm.ai/blog/2026-08-10-nemotron-3-5-lightning-vllm  
-2026-08-10。图在原网页。数字是演示。镜像 `vllm/vllm-openai:v0.27.1`。
+2026-08-10。数字是演示。镜像 `vllm/vllm-openai:v0.27.1`。
 
 从 Nemotron 3 Ultra **蒸馏**下来的 hybrid MoE：30B 总参、3B 激活、1M 上下文、纯文本。角色是「前沿模型管编排、小模型跑碎步」。架构与 Nemotron 3 几乎同构，差在权重和投机栈。**不是新引擎。**
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![figure1 dgx spark pareto](../../../../assets/vllm/blog/serving/nemotron-35-lightning/01-figure1-dgx-spark-pareto.png)
+
+![figure2 h100 pareto](../../../../assets/vllm/blog/serving/nemotron-35-lightning/02-figure2-h100-pareto.png)
+
+![figure3 efficiency frontier](../../../../assets/vllm/blog/serving/nemotron-35-lightning/03-figure3-efficiency-frontier.png)
 
 ## 旗与硬件
 

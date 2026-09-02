@@ -16,6 +16,19 @@ NVIDIA’s inference stack includes Dynamo, TensorRT-LLM, and NIM. For benchmark
 
 Client-side tools disagree on how they define and compute metrics. Do not compare numbers across tools until definitions match.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![llm inference performance metrics](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/01-llm-inference-performance-metrics.png)
+
+![time to first token process](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/02-time-to-first-token-process.png)
+
+![end to end request latency](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/03-end-to-end-request-latency.png)
+
+![itl average time between consecutive token generations](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/04-itl-average-time-between-consecutive-token-generations.png)
+
+![event timeline benchmarking run](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/05-event-timeline-benchmarking-run.png)
+
 ## Load testing vs performance benchmarking
 
 - **Load testing:** simulate lots of concurrent traffic; find capacity, autoscaling, network, resource issues.

@@ -9,11 +9,26 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/performance/dcp.md`  
 原文：https://vllm.ai/blog/2026-08-07-decode-context-parallelism  
-2026-08-07。vLLM 支持 DCP 已近一年，这篇是在 agent 把上下文拉到 64K–1M 之后把它写清楚。`vllm serve` 里的 `-dcp` / `--decode-context-parallel-size`。NVIDIA TensorRT-LLM 侧相近的方向叫 Helix Parallelism。图在原网页。
+2026-08-07。vLLM 支持 DCP 已近一年，这篇是在 agent 把上下文拉到 64K–1M 之后把它写清楚。`vllm serve` 里的 `-dcp` / `--decode-context-parallel-size`。NVIDIA TensorRT-LLM 侧相近的方向叫 Helix Parallelism。
 
 Agent 要读仓库、要带着长对话。KV 按这个长度长。基线 TP 按 **attention head** 切 KV：GQA 切到每卡一个 KV head 就到底，再加卡就开始复制；MLA 等于只有一个 KV head，latent 在每个 TP rank 上整份复制。[分布式推理](../serving/distributed-inference.md) 那张「TP 给 KV 腾房间」的超线性图，在 MLA 上会反过来。房子被复制填满，并发上不去。
 
 DCP 按 **序列维** 切：同一条 200K 的请求，四张卡可以各管 50K 的 KV。每卡只存、只读自己那一段，batch 才能再涨。要高带宽的卡间互联。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![kv parallelism overview](../../../../assets/vllm/blog/performance/dcp/01-kv-parallelism-overview.svg)
+
+![figure 1](../../../../assets/vllm/blog/performance/dcp/02-figure-1.png)
+
+![figure 2](../../../../assets/vllm/blog/performance/dcp/03-figure-2.png)
+
+![figure 3](../../../../assets/vllm/blog/performance/dcp/04-figure-3.png)
+
+![figure 4](../../../../assets/vllm/blog/performance/dcp/05-figure-4.png)
+
+![figure 5](../../../../assets/vllm/blog/performance/dcp/06-figure-5.png)
 
 ## 成绩（演示）
 

@@ -7,7 +7,22 @@ fetched: 2026-08-31
 
 # Paged Attention、IFB 与请求调度
 
-手册第 3 章用玩具数字把调度器演了一遍。这一页是同一套机制的功能说明：inflight batching 是什么、三个尺寸旋钮、chunked prefill、contiguous vs paged KV。图仍在原网页。
+手册第 3 章用玩具数字把调度器演了一遍。这一页是同一套机制的功能说明：inflight batching 是什么、三个尺寸旋钮、chunked prefill、contiguous vs paged KV。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![max bs toks len](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/01-max_bs_toks_len.svg)
+
+![TRTLLM Scheduler Vis 1](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/02-TRTLLM_Scheduler_Vis_1.svg)
+
+![TRTLLM Scheduler Vis 2](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/03-TRTLLM_Scheduler_Vis_2.svg)
+
+![TRTLLM Scheduler Vis 3](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/04-TRTLLM_Scheduler_Vis_3.svg)
+
+![TRTLLM Scheduler Vis 4](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/05-TRTLLM_Scheduler_Vis_4.svg)
+
+![TRTLLM Scheduler Vis Chunked Context 1](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/06-TRTLLM_Scheduler_Vis_Chunked_Context_1.svg)
 
 ## In-flight batching（IFB）
 

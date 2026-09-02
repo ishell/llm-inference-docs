@@ -9,9 +9,14 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/extract-hidden-states.md`  
 原文：https://vllm.ai/blog/2026-03-30-extract-hidden-states  
-PR#33736，`vllm>=0.18.0`。图在原网页。
+PR#33736，`vllm>=0.18.0`。
 
 EAGLE-3 / P-EAGLE / DFlash 这类 draft 模型吃的是 verifier 的中间层，不是表面文字。训练它们需要大量 hidden states。以前两条路都不体面：用 `transformers` 生成，丢掉 vLLM 的分布式和优化，还可能和线上 hidden 对不齐；或给 vLLM 打补丁，prefix cache / async / 自动 batch 常常得关。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![design diagram](../../../../assets/vllm/blog/architecture/extract-hidden-states/01-design_diagram.png)
 
 ## 设计：假装去投机
 

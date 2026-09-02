@@ -36,6 +36,45 @@ Note: * Analysis is based on commit 42172ad(August 9th, 2025).
 - I'll focus on the V1 engine. I also explored V0 (now deprecated), which was valuable for understanding how the project evolved, and many concepts still carry over.
 - The first section on LLM Engine / Engine Core might be a bit overwhelming/dry - but the rest of the blog has plenty examples and visuals. :)
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![engine constructor](../../../../assets/vllm/blog/architecture/anatomy/01-engine_constructor.png)
+
+![engine loop](../../../../assets/vllm/blog/architecture/anatomy/02-engine_loop.png)
+
+![kv cache blocks](../../../../assets/vllm/blog/architecture/anatomy/03-kv_cache_blocks.png)
+
+![fwd pass](../../../../assets/vllm/blog/architecture/anatomy/04-fwd_pass.png)
+
+![chunked pt1](../../../../assets/vllm/blog/architecture/anatomy/05-chunked_pt1.png)
+
+![prefix pt1](../../../../assets/vllm/blog/architecture/anatomy/06-prefix_pt1.png)
+
+![prefix pt2](../../../../assets/vllm/blog/architecture/anatomy/07-prefix_pt2.png)
+
+![prefix pt3](../../../../assets/vllm/blog/architecture/anatomy/08-prefix_pt3.png)
+
+![fsm](../../../../assets/vllm/blog/architecture/anatomy/09-fsm.png)
+
+![fsm2](../../../../assets/vllm/blog/architecture/anatomy/10-fsm2.png)
+
+![specdec pt1](../../../../assets/vllm/blog/architecture/anatomy/11-specdec_pt1.png)
+
+![specdec pt2](../../../../assets/vllm/blog/architecture/anatomy/12-specdec_pt2.png)
+
+![pd](../../../../assets/vllm/blog/architecture/anatomy/13-pd.png)
+
+![multiprocexecutor](../../../../assets/vllm/blog/architecture/anatomy/14-multiprocexecutor.png)
+
+![server setup](../../../../assets/vllm/blog/architecture/anatomy/15-server_setup.png)
+
+![dpenginecoreproc](../../../../assets/vllm/blog/architecture/anatomy/16-dpenginecoreproc.png)
+
+![latency diagram](../../../../assets/vllm/blog/architecture/anatomy/17-latency_diagram.png)
+
+![roofline](../../../../assets/vllm/blog/architecture/anatomy/18-roofline.png)
+
 ## LLM Engine & Engine Core
 
 The LLM engine is the fundamental building block of vLLM. On its own, it already enables high-throughput inference - but only in an offline setting. You can't serve it to customers over the web yet.

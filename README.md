@@ -1,6 +1,6 @@
 # LLM 推理笔记（网站 × 主题）
 
-个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。
+个人学习库，**不是官方译本**。中文是学习笔记的重写：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)（GitHub Pages，直接读仓库里的 Markdown）。
 
 从「那条评论在指什么」读起：[zh/GUIDE.md](zh/GUIDE.md)。
 
@@ -9,11 +9,12 @@
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
 
-网页里的图本地只留图注。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。图仍在原网页。
+正文图下在 `assets/`（按笔记相对路径），中英笔记里用 Markdown 引用。版权仍归原站，只作学习对照；站点 logo、作者头像、封面库存图不收。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。
 
 ## 目录
 
 ```
+assets/                     # 正文图（与 zh/en 相对路径对齐）
 {en,zh}/
   nvidia/
     benchmarking/         # 压测 vs 性能测试、NIM 手册、博客 1–2、GenAI-Perf 客户端文
@@ -176,4 +177,4 @@
 - AIPerf 整页 CLI（https://docs.nvidia.com/aiperf/reference/command-line-options）以及 GenAI-Perf README 里逐条 `--help`
 - 官方 HTML 全文搬进仓库（学习译文是压缩笔记）
 
-抓取：2026-08-30 / 2026-08-31 / 2026-09-01。
+抓取：2026-08-30 / 2026-08-31 / 2026-09-01。2026-09-01 又对 NVIDIA 目录全部 URL 做了一次直播抓取：**31/31 HTTP 200**。早先超时的 `docs.nvidia.com/aiperf/` 等页这次都完整打开了。对照之后：笔记仍是压缩学习译文，不是官方 HTML；AIPerf Metrics / Comprehensive / GenAI-Perf README 那种上百个小节不会整页搬进来。vLLM `auto_tune` 的 GitHub HTML 曾 429，已改用 raw README（页上无图）。GLM-4.5 文里两张 GitHub raw 图 404，原站已经挪走。

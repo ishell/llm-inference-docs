@@ -19,3 +19,7 @@ ray symmetric-run \
 ```
 
 Same argv everywhere. Workers only join and wait; head `--head`, wait for `--min-nodes`, run the command, shut down. Prefix env vars propagate: `ENV=VAR ray symmetric-run ...`.
+
+Local figures (copyright remains with the original site; study copies):
+
+![symmetric run](../../../../assets/vllm/blog/serving/ray-symmetric/01-symmetric-run.png)

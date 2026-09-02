@@ -13,6 +13,41 @@ fetched: 2026-08-31
 
 三层门：CI 抓住会响的崩；夜间性能/精度抓住不响的慢和错；发布流程决定哪一颗 commit 能出门。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![00 production quality hero airport](../../../../assets/vllm/blog/performance/production-quality/01-00-production-quality-hero-airport.png)
+
+![01 ci pipeline and selected jobs](../../../../assets/vllm/blog/performance/production-quality/02-01-ci-pipeline-and-selected-jobs.png)
+
+![02 ci test groups 266 jobs](../../../../assets/vllm/blog/performance/production-quality/03-02-ci-test-groups-266-jobs.png)
+
+![03 container build stages](../../../../assets/vllm/blog/performance/production-quality/04-03-container-build-stages.png)
+
+![04 pip compiled dependency graph](../../../../assets/vllm/blog/performance/production-quality/05-04-pip-compiled-dependency-graph.png)
+
+![05 accelerator runner fleet](../../../../assets/vllm/blog/performance/production-quality/06-05-accelerator-runner-fleet.png)
+
+![06 standalone buildkite agent flow](../../../../assets/vllm/blog/performance/production-quality/07-06-standalone-buildkite-agent-flow.png)
+
+![07 kubernetes buildkite agent flow](../../../../assets/vllm/blog/performance/production-quality/08-07-kubernetes-buildkite-agent-flow.png)
+
+![08 h200 mig slices](../../../../assets/vllm/blog/performance/production-quality/09-08-h200-mig-slices.png)
+
+![12 ci analyzer bot](../../../../assets/vllm/blog/performance/production-quality/10-12-ci-analyzer-bot.png)
+
+![14 nightly perf eval workload](../../../../assets/vllm/blog/performance/production-quality/11-14-nightly-perf-eval-workload.png)
+
+![14 performance trends](../../../../assets/vllm/blog/performance/production-quality/12-14-performance-trends.svg)
+
+![15 compare view](../../../../assets/vllm/blog/performance/production-quality/13-15-compare-view.png)
+
+![16 accuracy sample debugging](../../../../assets/vllm/blog/performance/production-quality/14-16-accuracy-sample-debugging.svg)
+
+![18 release candidate loop](../../../../assets/vllm/blog/performance/production-quality/15-18-release-candidate-loop.png)
+
+![08 main branch health](../../../../assets/vllm/blog/performance/production-quality/16-08-main-branch-health.png)
+
 ## Layer 1：CI
 
 GitHub Actions 做 lint；committer 点头后 Buildkite 按 diff **动态**组流水线——改文档可能几条，动 kernel 可能 **100+** 并行。当时全套 **37** 组、**266** 个 job。

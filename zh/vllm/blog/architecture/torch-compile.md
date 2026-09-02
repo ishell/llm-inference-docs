@@ -9,11 +9,32 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/architecture/torch-compile.md`  
 原文：https://vllm.ai/blog/2025-08-20-torch-compile  
-2025-08-20。从 Red Hat + Berkeley 的 office hours 整理。图在原网页。`optimization.md` 里的 `-O0`～`-O3`、`--enforce-eager`，底下就是这篇。
+2025-08-20。从 Red Hat + Berkeley 的 office hours 整理。`optimization.md` 里的 `-O0`～`-O3`、`--enforce-eager`，底下就是这篇。
 
 手写 kernel 能摸到天花板，但要为每一种模型、每一家硬件付一次税。`torch.compile` 是 JIT：给函数或 `nn.Module` 套一层，前端把张量运算收成图，后端再吐出融合过的 kernel。TorchBench 上他们引用的是 **1.8–2×** geomean——那是「先有一条不丢人的基线」，不是替你写完 FlashAttention。
 
 vLLM 不只把它当加速器。原则是：**模型定义保持干净，优化发生在编译时。** 几百个模型不用每个都去拆抽象。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![figure1](../../../../assets/vllm/blog/architecture/torch-compile/01-figure1.png)
+
+![figure2](../../../../assets/vllm/blog/architecture/torch-compile/02-figure2.png)
+
+![figure3](../../../../assets/vllm/blog/architecture/torch-compile/03-figure3.png)
+
+![figure4](../../../../assets/vllm/blog/architecture/torch-compile/04-figure4.png)
+
+![figure5 a](../../../../assets/vllm/blog/architecture/torch-compile/05-figure5_a.png)
+
+![figure5 b](../../../../assets/vllm/blog/architecture/torch-compile/06-figure5_b.png)
+
+![figure6](../../../../assets/vllm/blog/architecture/torch-compile/07-figure6.png)
+
+![figure7](../../../../assets/vllm/blog/architecture/torch-compile/08-figure7.png)
+
+![figure8](../../../../assets/vllm/blog/architecture/torch-compile/09-figure8.png)
 
 ## 两段管道
 

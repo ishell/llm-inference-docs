@@ -11,6 +11,15 @@ V4-Pro 1.6T / V4-Flash 285B, 1M context. Image `vllm/vllm-openai:deepseekv4-cu13
 
 V4 attention compresses KV and compute together: shared K/V (then inverse RoPE), `c4a` / `c128a` across tokens, DSA over top compressed slots, 128-token window for locality. At 1M, bf16 ≈ 9.62 GiB/sequence vs ~83.9 GiB for a 61-layer V3.2-style stack (~8.7×). Production uses fp4 indexer cache and fp8 attention cache, roughly another 2×.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![c4a animation](../../../../assets/vllm/blog/architecture/deepseek-v4/01-c4a_animation.gif)
+
+![kv cache comparison](../../../../assets/vllm/blog/architecture/deepseek-v4/02-kv-cache-comparison.svg)
+
+![decode path](../../../../assets/vllm/blog/architecture/deepseek-v4/03-decode-path.svg)
+
 ## Three allocator moves
 
 Heterogeneous compress ratios would shred paged KV. vLLM:

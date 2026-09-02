@@ -9,11 +9,20 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/serving/shm-ipc.md`  
 原文：https://vllm.ai/blog/2025-11-13-shm-ipc-cache  
-2025-11-13。Cohere 贡献，先发在他们博客。`optimization.md` 里 `mm_processor_cache_type="shm"` 就是这篇。图在原网页。
+2025-11-13。Cohere 贡献，先发在他们博客。`optimization.md` 里 `mm_processor_cache_type="shm"` 就是这篇。
 
 V1 是多进程：前端预处理、coordinator 调度、每卡一个 worker。小输入的 IPC 可以忽略；一张 1024×3072 的图在 Command-A Vision 里大约 **9 MB** int8，多图就是几十 MB。多轮再传一遍，税会叠。
 
 旧方案是 **mirrored cache**：发送方和接收方各维护一份顺序相同的副本，命中就假设对面也有、不再传。它要求两边处理顺序完全一致。coordinator 一重排，cache 就对不齐。所以 vLLM 只把它用在前端↔coordinator；多 worker 时 coordinator↔worker 仍走 socket，要序列化、传送、反序列化。单 worker 则和 coordinator 同进程，根本不必 IPC。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![processes1](../../../../assets/vllm/blog/serving/shm-ipc/01-processes1.png)
+
+![shared memory object store](../../../../assets/vllm/blog/serving/shm-ipc/02-shared_memory_object_store.png)
+
+![processes2](../../../../assets/vllm/blog/serving/shm-ipc/03-processes2.png)
 
 ## 共享内存对象库
 

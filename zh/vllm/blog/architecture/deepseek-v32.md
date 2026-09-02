@@ -9,9 +9,16 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/deepseek-v32.md`  
 原文：https://vllm.ai/blog/2025-09-29-deepseek-v3-2  
-2025-09-29。Day-0。图在原网页。后续 V4 压缩栈见 [deepseek-v4](deepseek-v4.md)；GB300 上 V3.2 vs R1 见 [gb300-deepseek](../serving/gb300-deepseek.md)；宽 EP 见 [gb200-wideep](../serving/gb200-wideep.md)。
+2025-09-29。Day-0。后续 V4 压缩栈见 [deepseek-v4](deepseek-v4.md)；GB300 上 V3.2 vs R1 见 [gb300-deepseek](../serving/gb300-deepseek.md)；宽 EP 见 [gb200-wideep](../serving/gb200-wideep.md)。
 
 DSA：lightning indexer 挑 top-2048，再稀疏注意力。Indexer 有自己的 K cache，和 MLA KV 分开分配。Prefill / decode 布局不同，continuous batch 要把因果窗口用 `ks` / `ke` 标出来。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![dsa explained](../../../../assets/vllm/blog/architecture/deepseek-v32/01-dsa-explained.png)
+
+![mla indexer block](../../../../assets/vllm/blog/architecture/deepseek-v32/02-mla-indexer-block.png)
 
 ## Cache 长什么样
 

@@ -10,3 +10,11 @@ Chinese: `../../zh/vllm/blog/serving/nemotron-3-nano.md`
 1M context. 2026-01-28 addendum: NVFP4 + QAD, B200 vs FP8-H100 they quote **4×**.
 
 vs Nano 2: FFN→sparse MoE, most attention→Mamba-2. They quote up to ~**4×** token throughput. Then `reasoning-parser deepseek_r1` (later Nemotron 3 often `nemotron_v3`). `VLLM_ATTENTION_BACKEND=FLASHINFER`. Day-0 how-to, not kernel depth. Larger: [nemotron-3-super](nemotron-3-super.md) / [nemotron-3-ultra](nemotron-3-ultra.md).
+
+Local figures (copyright remains with the original site; study copies):
+
+![figure 1](../../../../assets/vllm/blog/serving/nemotron-3-nano/01-figure_1.png)
+
+![figure 2](../../../../assets/vllm/blog/serving/nemotron-3-nano/02-figure_2.png)
+
+![figure 3](../../../../assets/vllm/blog/serving/nemotron-3-nano/03-figure_3.png)

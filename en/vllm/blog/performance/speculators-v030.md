@@ -18,3 +18,13 @@ vllm serve RedHatAI/Llama-3.1-8B-Instruct-speculator.eagle3
 ```
 
 Long form swaps a quantized verifier and `num_speculative_tokens`. Train/serve then: Llama 3.x, Qwen3 dense/MoE, GPT-OSS; Llama 4 vision serve-only. They quote ~**1.5–3×** latency when the draft matches — not a promise.
+
+Local figures (copyright remains with the original site; study copies):
+
+![data generation](../../../../assets/vllm/blog/performance/speculators-v030/01-data_generation.png)
+
+![hidden state generator](../../../../assets/vllm/blog/performance/speculators-v030/02-hidden_state_generator.png)
+
+![flex attention](../../../../assets/vllm/blog/performance/speculators-v030/03-flex_attention.png)
+
+![EAGLE3](../../../../assets/vllm/blog/performance/speculators-v030/04-EAGLE3.png)

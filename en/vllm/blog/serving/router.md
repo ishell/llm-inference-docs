@@ -6,7 +6,7 @@ fetched: 2026-08-31
 
 # vLLM Router
 
-2025-12-13. GitHub: vllm-router. Rust load balancer between clients and a vLLM fleet. Forked from SGLang model gateway, then simplified; they floated merging into vLLM and realigning large-scale gateway features with SGLang later. K8s or bare metal. Study note; figures on the original page.
+2025-12-13. GitHub: vllm-router. Rust load balancer between clients and a vLLM fleet. Forked from SGLang model gateway, then simplified; they floated merging into vLLM and realigning large-scale gateway features with SGLang later. K8s or bare metal. 
 
 Vanilla LBs treat the LLM as stateless HTTP. KV is stateful. Prefill/Decode disaggregation is not “every pod looks the same.” This gateway is the Helm-chart intuition from production-stack, extracted.
 
@@ -23,3 +23,9 @@ Local stickiness is layer one. When the next turn lands elsewhere, [mooncake.md]
 **Ops.** K8s label discovery; retries with jitter; circuit breaker; eject on failed health; Prometheus `/metrics`. The control plane (AIBrix / production-stack / llm-d) can change; the gateway cares about worker state.
 
 **Bench snapshot (demo).** Excluded vLLM’s own DP/EP coordinator (then ~1/8 the others’ throughput — known bug). Llama 3.1 8B, 8P+8D: ~**+25%** req/s vs llm-d, ~**2×** vs K8s RR; TTFT ~1200 ms better than llm-d. DeepSeek V3 1P+1D TP8: ~2× vs K8s RR; TTFT ~2000 ms better than both. K8s RR does not understand P/D — a fair villain, not a 2026 llm-d score.
+
+Local figures (copyright remains with the original site; study copies):
+
+![llama benchmark](../../../../assets/vllm/blog/serving/router/01-llama-benchmark.png)
+
+![deepseek benchmark](../../../../assets/vllm/blog/serving/router/02-deepseek-benchmark.png)

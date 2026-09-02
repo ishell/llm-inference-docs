@@ -8,6 +8,19 @@ fetched: 2026-08-31
 
 In-flight batching mixes context (prefill) and generation in one iteration. Two build-time caps decide who is scheduled: `max_batch_size` and `max_num_tokens`. Numbers below are illustrative.
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![TRTLLM Scheduler Vis 1](../../../assets/nvidia/performance-tuning/trtllm-max-batch/01-TRTLLM_Scheduler_Vis_1.svg)
+
+![TRTLLM Scheduler Vis 2](../../../assets/nvidia/performance-tuning/trtllm-max-batch/02-TRTLLM_Scheduler_Vis_2.svg)
+
+![TRTLLM Scheduler Vis 3](../../../assets/nvidia/performance-tuning/trtllm-max-batch/03-TRTLLM_Scheduler_Vis_3.svg)
+
+![TRTLLM Scheduler Vis 4](../../../assets/nvidia/performance-tuning/trtllm-max-batch/04-TRTLLM_Scheduler_Vis_4.svg)
+
+![TRTLLM Scheduler Vis Chunked Context 1](../../../assets/nvidia/performance-tuning/trtllm-max-batch/05-TRTLLM_Scheduler_Vis_Chunked_Context_1.svg)
+
 ## How the scheduler thinks
 
 Toy values in the official page: `max_batch_size = 4`, `max_num_tokens = 12`. Squares = tokens; color = request. Rows are visualization only, not memory layout.

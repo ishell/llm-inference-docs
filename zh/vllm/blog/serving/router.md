@@ -9,9 +9,16 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/router.md`  
 原文：https://vllm.ai/blog/2025-12-13-vllm-router-release  
-2025-12-13。仓库在 GitHub 的 vllm-router。Rust，尽量轻。坐在客户端和一队 vLLM worker 之间，K8s 或裸金属都行。从 **SGLang model gateway** fork 再简化；他们说可能并进 vLLM 主仓，大规模 gateway 功能也可能再和 SGLang 对齐。图在原网页。
+2025-12-13。仓库在 GitHub 的 vllm-router。Rust，尽量轻。坐在客户端和一队 vLLM worker 之间，K8s 或裸金属都行。从 **SGLang model gateway** fork 再简化；他们说可能并进 vLLM 主仓，大规模 gateway 功能也可能再和 SGLang 对齐。
 
 普通负载均衡把 LLM 当无状态 HTTP。KV 是有状态的——下一句还想住在上一句住过的房间里。Prefill/Decode 分离更不是「所有 pod 长得一样」：一边是 compute-bound 的阅读，一边是 memory-bound 的说话。Router 要办的就是这两件事。production-stack 里的 prefix-aware routing 是同一直觉的 Helm 版；这一篇把它收成一只独立网关。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![llama benchmark](../../../../assets/vllm/blog/serving/router/01-llama-benchmark.png)
+
+![deepseek benchmark](../../../../assets/vllm/blog/serving/router/02-deepseek-benchmark.png)
 
 ## 负载策略
 

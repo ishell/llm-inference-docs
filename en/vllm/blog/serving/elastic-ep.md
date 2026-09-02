@@ -17,6 +17,11 @@ curl -X POST http://localhost:8000/scale_elastic_ep \
   -d '{"new_data_parallel_size": 8}'
 ```
 
+
+Local figures (copyright remains with the original site; study copies):
+
+![elastic ep](../../../../assets/vllm/blog/serving/elastic-ep/01-elastic-ep.png)
+
 ## What has to change
 
 A new EP size invalidates: EP/DP/world groups (fixed rank sets); expert→rank maps; weights on new and reshuffled ranks; CUDA graphs and `torch.compile` specializations. Scaling is a coordinated state machine that must coexist with in-flight forwards.

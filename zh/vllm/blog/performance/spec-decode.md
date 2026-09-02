@@ -11,6 +11,29 @@ fetched: 2026-08-31
 原文：https://vllm.ai/blog/2024-10-17-spec-decode  
 2024-10-17，整理自 Office Hours。CLI 旗标是当时的；今日请以文档 `speculative_decoding` 为准。图、幻灯、录像在原网页。
 
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![figure8](../../../../assets/vllm/blog/performance/spec-decode/01-figure8.png)
+
+![figure1](../../../../assets/vllm/blog/performance/spec-decode/02-figure1.png)
+
+![figure9](../../../../assets/vllm/blog/performance/spec-decode/03-figure9.png)
+
+![figure2](../../../../assets/vllm/blog/performance/spec-decode/04-figure2.png)
+
+![figure3](../../../../assets/vllm/blog/performance/spec-decode/05-figure3.png)
+
+![figure4](../../../../assets/vllm/blog/performance/spec-decode/06-figure4.png)
+
+![figure5](../../../../assets/vllm/blog/performance/spec-decode/07-figure5.png)
+
+![figure6](../../../../assets/vllm/blog/performance/spec-decode/08-figure6.png)
+
+![figure7](../../../../assets/vllm/blog/performance/spec-decode/09-figure7.png)
+
+![figure10](../../../../assets/vllm/blog/performance/spec-decode/10-figure10.png)
+
 ## 它在干什么
 
 Leviathan et al., 2023。小模型（draft）一个一个猜；大模型（target）**一次前向**核对这一串。对的留下，错的从第一个错处切开，错处由 target 改正。无损：最终分布仍是大模型的。

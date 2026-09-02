@@ -9,9 +9,18 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/architecture/deepseek-v4.md`  
 原文：https://vllm.ai/blog/2026-04-24-deepseek-v4  
-V4-Pro 1.6T / V4-Flash 285B，1M 上下文。镜像 `vllm/vllm-openai:deepseekv4-cu130`。图在原网页。
+V4-Pro 1.6T / V4-Flash 285B，1M 上下文。镜像 `vllm/vllm-openai:deepseekv4-cu130`。
 
 V4 的 attention 同时压 KV、压计算：K/V 共享（再 inverse RoPE）、`c4a` / `c128a` 跨 token 压缩、DSA 只看 top 压缩位、128 token 滑窗保住局部。1M、bf16 估计约 9.62 GiB/序列，相对 V3.2 风格栈大约 8.7×；线上 indexer 用 fp4、attention cache 用 fp8，再砍大约一半。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![c4a animation](../../../../assets/vllm/blog/architecture/deepseek-v4/01-c4a_animation.gif)
+
+![kv cache comparison](../../../../assets/vllm/blog/architecture/deepseek-v4/02-kv-cache-comparison.svg)
+
+![decode path](../../../../assets/vllm/blog/architecture/deepseek-v4/03-decode-path.svg)
 
 ## 分配器三招
 

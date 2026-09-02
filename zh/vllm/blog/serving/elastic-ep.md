@@ -9,7 +9,7 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/elastic-ep.md`  
 原文：https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism  
-2026-05-14。RFC #20323，落地 PR #34861；NIXL EP 是 PR #35627。容错方向见 RFC #30112。图在原网页。当时实现范围很窄，旗标以原文为准。
+2026-05-14。RFC #20323，落地 PR #34861；NIXL EP 是 PR #35627。容错方向见 RFC #30112。当时实现范围很窄，旗标以原文为准。
 
 [大规模 serving](large-scale.md) 把 Wide-EP 写成了主菜：专家铺开，KV 的房子变大，并发和长上下文才站得住。RL 要又长又快，agent 会把对话越拉越长。可 EP 一直是**静态**的——启动时几张卡，就几张卡。流量涨了加不进去，闲了减不下来。唯一的办法是换配置重启，慢，而且会丢掉一大截正在飞的请求。
 
@@ -24,6 +24,11 @@ curl -X POST http://localhost:8000/scale_elastic_ep \
 ```
 
 当前部署会被改到 8 个 DP worker。不必重启 server。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![elastic ep](../../../../assets/vllm/blog/serving/elastic-ep/01-elastic-ep.png)
 
 ## 背景：两把刀为什么要一起用
 

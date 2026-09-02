@@ -9,9 +9,24 @@ fetched: 2026-08-31
 
 英文对照：`en/vllm/blog/serving/kv-offload.md`  
 原文：https://vllm.ai/blog/2026-01-08-kv-offloading-connector  
-2026-01-08。随 vLLM 0.11.0 进来；0.12.0 因物理块变大，性能跳了一档。图在原网页。和 [Mooncake](mooncake.md) 同一扇 **KVConnector** 门：一个寄存在本机 DRAM，一个放到集群池。
+2026-01-08。随 vLLM 0.11.0 进来；0.12.0 因物理块变大，性能跳了一档。和 [Mooncake](mooncake.md) 同一扇 **KVConnector** 门：一个寄存在本机 DRAM，一个放到集群池。
 
 Prefix 命中：少算 prefill，TTFT 降，GPU 也能接更多人。没有共享前缀时，offload 仍有用——batch 把 GPU KV 挤满，引擎会抢占、丢掉 KV，回头再 **RECOMPUTE**。先卸到 CPU，再请回来，重算那笔可以不付。CPU RAM 几乎处处都有、比 HBM 大、PCIe 往返相对外置存储又近，还适合当再往盘上卸的中转。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![figure1](../../../../assets/vllm/blog/serving/kv-offload/01-figure1.png)
+
+![figure2](../../../../assets/vllm/blog/serving/kv-offload/02-figure2.png)
+
+![figure3](../../../../assets/vllm/blog/serving/kv-offload/03-figure3.png)
+
+![figure4](../../../../assets/vllm/blog/serving/kv-offload/04-figure4.png)
+
+![figure5](../../../../assets/vllm/blog/serving/kv-offload/05-figure5.png)
+
+![figure6](../../../../assets/vllm/blog/serving/kv-offload/06-figure6.png)
 
 ## 异步 Connector
 

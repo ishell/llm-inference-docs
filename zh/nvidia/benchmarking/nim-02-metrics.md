@@ -9,7 +9,20 @@ fetched: 2026-08-31
 
 这一节给常用 LLM 推理指标下定义。工具实现不同，只有定义对齐以后，数字才配坐在同一张桌子上。采集方法见「用 AIPerf 做基准测试」。
 
-官网页上有一张总览图（Figure 1）和 TTFT 示意图（Figure 2）：TTFT 包含第一个输出 token 的 tokenize / detokenize。本地不存图。
+官网页上有一张总览图（Figure 1）和 TTFT 示意图（Figure 2）：TTFT 包含第一个输出 token 的 tokenize / detokenize。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![image3](../../../assets/nvidia/benchmarking/nim-02-metrics/01-image3.png)
+
+![image7](../../../assets/nvidia/benchmarking/nim-02-metrics/02-image7.png)
+
+![image8](../../../assets/nvidia/benchmarking/nim-02-metrics/03-image8.png)
+
+![image9](../../../assets/nvidia/benchmarking/nim-02-metrics/04-image9.png)
+
+![image10](../../../assets/nvidia/benchmarking/nim-02-metrics/05-image10.png)
 
 ## Time to First Token
 

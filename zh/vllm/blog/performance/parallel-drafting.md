@@ -9,9 +9,22 @@ fetched: 2026-09-01
 
 英文对照：`en/vllm/blog/performance/parallel-drafting.md`  
 原文：https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting  
-图在原网页。**勘误 2026-07-29**：Figure 1 的环境有 bug，相对排名没变，绝对值请以勘误后为准。
+**勘误 2026-07-29**：Figure 1 的环境有 bug，相对排名没变，绝对值请以勘误后为准。
 
 [P-EAGLE](p-eagle.md) 把「K 次草稿前向」压成一次。同一条路上还有 DFlash、DSpark：草稿不再自回归排队，而是一次前向铺开 K 个候选。验收仍是 **rejection sampling**——无损，target 分布不变。
+
+
+本地图（原文版权仍归原站；学习对照用）：
+
+![compare interactivity qwen38b math](../../../../assets/vllm/blog/performance/parallel-drafting/01-compare_interactivity_qwen38b_math.png)
+
+![compare interactivity qwen330b humaneval](../../../../assets/vllm/blog/performance/parallel-drafting/02-compare_interactivity_qwen330b_humaneval.png)
+
+![compare interactivity gemma431b humaneval](../../../../assets/vllm/blog/performance/parallel-drafting/03-compare_interactivity_gemma431b_humaneval.png)
+
+![ar vs parallel](../../../../assets/vllm/blog/performance/parallel-drafting/04-ar_vs_parallel.jpg)
+
+![diagram](../../../../assets/vllm/blog/performance/parallel-drafting/05-diagram.jpg)
 
 ## 怎么开
 
