@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 走进 vLLM：一套高吞吐推理系统的解剖
 
-英文全文（约 50 KB）：`en/vllm/blog/architecture/anatomy.md`  
+英文全文（约 50 KB）：[en/vllm/blog/architecture/anatomy.md](../../../../en/vllm/blog/architecture/anatomy.md)  
 原文：https://vllm.ai/blog/2025-09-05-anatomy-of-vllm
 
 官网上那句摘要说得轻描淡写：engine、scheduler、paged attention、continuous batching、chunked prefill、prefix cache、spec decode、P/D 分离、多卡、serving、怎么 benchmark。拆开以后，它其实是在讲一件很旧的事——怎样让许多人同时说话，而不让屋子塌掉。

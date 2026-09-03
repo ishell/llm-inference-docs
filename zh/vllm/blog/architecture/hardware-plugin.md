@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Hardware Plugin：把卡从主干里请出去
 
-英文对照：`en/vllm/blog/architecture/hardware-plugin.md`  
+英文对照：[en/vllm/blog/architecture/hardware-plugin.md](../../../../en/vllm/blog/architecture/hardware-plugin.md)  
 原文：https://vllm.ai/blog/2025-05-12-hardware-plugin  
 2025-05-12。Hardware Pluggable RFC，2024 年 12 月起和昇腾一起做。落地仓库：`vllm-ascend`、`vllm-spyre`。
 

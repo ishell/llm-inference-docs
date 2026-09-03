@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Laguna XS.2：Day-0 serve + DFlash draft + LLM Compressor 量化盘
 
-英文对照：`en/vllm/blog/performance/laguna-xs2.md`  
+英文对照：[en/vllm/blog/performance/laguna-xs2.md](../../../../en/vllm/blog/performance/laguna-xs2.md)  
 原文：https://vllm.ai/blog/2026-05-28-laguna-xs2-dflash-llm-compressor  
 Poolside 33B-A3B MoE，agentic coding。并行草稿算法见 [parallel-drafting](parallel-drafting.md)。
 

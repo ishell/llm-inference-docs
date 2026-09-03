@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Nemotron Nano 2: 9B hybrid; Thinking Budget is a two-call client, not an engine flag
 
-Chinese: `../../zh/vllm/blog/serving/nemotron-nano2.md`  
+Chinese: [zh/vllm/blog/serving/nemotron-nano2.md](../../../../zh/vllm/blog/serving/nemotron-nano2.md)  
 They quote thinking tokens up to ~**6×** vs similar-size dense.
 
 ```

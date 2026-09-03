@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # vime on ROCm：`vllm/vime-rocm`，MI355X 上 Qwen3-8B ~4100 tok/gpu/s
 
-英文对照：`en/vllm/blog/serving/vime-rocm.md`  
+英文对照：[en/vllm/blog/serving/vime-rocm.md](../../../../en/vllm/blog/serving/vime-rocm.md)  
 原文：https://vllm.ai/blog/2026-07-10-vime-rocm  
 主线：[vime](vime.md)。
 

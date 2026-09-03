@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Speculators v0.3.0：把 EAGLE-3 草稿训出来
 
-英文对照：`en/vllm/blog/performance/speculators-v030.md`  
+英文对照：[en/vllm/blog/performance/speculators-v030.md](../../../../en/vllm/blog/performance/speculators-v030.md)  
 原文：https://vllm.ai/blog/2025-12-13-speculators-v030  
 后来的 DFlash / 在线训练见 [v0.5.0](speculators-v050.md)；hidden 导出见 [extract-hidden-states](../architecture/extract-hidden-states.md)。
 

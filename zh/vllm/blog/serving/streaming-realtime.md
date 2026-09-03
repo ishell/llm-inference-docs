@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 流式输入与 `/v1/realtime`
 
-英文对照：`en/vllm/blog/serving/streaming-realtime.md`  
+英文对照：[en/vllm/blog/serving/streaming-realtime.md](../../../../en/vllm/blog/serving/streaming-realtime.md)  
 原文：https://vllm.ai/blog/2026-01-31-streaming-realtime  
 PR #28973。
 

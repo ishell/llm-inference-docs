@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DeepSeek-V3.2 on GB300：验证部署，不是刷峰值
 
-英文对照：`en/vllm/blog/performance/gb300-deepseek.md`  
+英文对照：[en/vllm/blog/performance/gb300-deepseek.md](../../../../en/vllm/blog/performance/gb300-deepseek.md)  
 原文：https://vllm.ai/blog/2026-02-13-gb300-deepseek  
 vLLM 0.14.1，CUDA 13.0。GB300 / B300 288GB。文内强调 **可复现基线**，不是调到顶。
 

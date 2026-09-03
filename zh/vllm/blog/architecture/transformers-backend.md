@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Transformers modeling backend：新架构先跑起来
 
-英文对照：`en/vllm/blog/architecture/transformers-backend.md`  
+英文对照：[en/vllm/blog/architecture/transformers-backend.md](../../../../en/vllm/blog/architecture/transformers-backend.md)  
 原文：https://vllm.ai/blog/2025-04-11-transformers-backend  
 2025-04；2025-07 起支持视觉语言模型。
 

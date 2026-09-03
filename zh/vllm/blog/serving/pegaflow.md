@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # PegaFlow：让 KV 活得比推理进程更长
 
-英文对照：`en/vllm/blog/serving/pegaflow.md`  
+英文对照：[en/vllm/blog/serving/pegaflow.md](../../../../en/vllm/blog/serving/pegaflow.md)  
 原文：https://vllm.ai/blog/2026-05-18-pegaflow  
 2026-05-18。Novita AI。Rust 守护进程 + 外部 KVConnector，不改 vLLM 源码。`vllm>=0.20.0`。和 [Mooncake](mooncake.md)、[KV offload](kv-offload.md) 同一扇门，把「池子」做成一台独立服务。
 

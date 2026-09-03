@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Quickstart — vLLM
 
-Chinese: `../../zh/vllm/getting-started/quickstart.md`  
+Chinese: [zh/vllm/getting-started/quickstart.md](../../../zh/vllm/getting-started/quickstart.md)  
 Knob order: `../optimization/optimization.md`. Perf-related `vllm serve` flags: `serve.md` (the generated CLI page is not copied).
 
 Linux; Python **3.10–3.13**. Official NVIDIA path uses `uv`:

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Modular LoRA: stop running a full model per classifier
 
-Chinese: `../../zh/vllm/blog/serving/semantic-router-modular.md`  
+Chinese: [zh/vllm/blog/serving/semantic-router-modular.md](../../../../zh/vllm/blog/serving/semantic-router-modular.md)  
 2025-10-27. Launch: [semantic-router.md](semantic-router.md). Shared-base LoRA lands in [Iris](semantic-router-iris.md).  Cited numbers are demos.
 
 Intent + PII + jailbreak used to mean three full BERT forwards. Candle binding is layered; `DualPathUnifiedClassifier` picks fine-tuned vs LoRA.

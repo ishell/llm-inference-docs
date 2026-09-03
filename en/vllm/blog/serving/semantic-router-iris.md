@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Semantic Router v0.1 Iris: from 14 classes to a signal chain
 
-Chinese: `../../zh/vllm/blog/serving/semantic-router-iris.md`  
+Chinese: [zh/vllm/blog/serving/semantic-router-iris.md](../../../../zh/vllm/blog/serving/semantic-router-iris.md)  
 Signal/decision internals: later signal-decision post.
 
 Launch-day used one ModernBERT over 14 MMLU domains. Iris is **signal → decision → plugins**: domain / keyword / embedding / factual / feedback / preference, AND/OR with priority. Jailbreak, PII, semantic cache, HaluGate become per-decision plugins. Classification with Candle is **one shared base + many LoRAs**: N full forwards become 1 + N×ε.

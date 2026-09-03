@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Llama Stack × vLLM：inference 是可换的 Provider，不是另一套引擎
 
-英文对照：`en/vllm/blog/serving/llama-stack.md`  
+英文对照：[en/vllm/blog/serving/llama-stack.md](../../../../en/vllm/blog/serving/llama-stack.md)  
 原文：https://vllm.ai/blog/2025-01-27-intro-to-llama-stack-with-vllm  
 Red Hat + Meta。演示 Llama-3.2-1B CPU 容器。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 逐 bit 对齐：vLLM × TorchTitan 的 on-policy
 
-英文对照：`en/vllm/blog/serving/bitwise-rl.md`  
+英文对照：[en/vllm/blog/serving/bitwise-rl.md](../../../../en/vllm/blog/serving/bitwise-rl.md)  
 原文：https://vllm.ai/blog/2025-11-10-bitwise-consistent-train-inference  
 Qwen3 1.7B、GSM8K 演示。RFC #28326 / #27433。
 

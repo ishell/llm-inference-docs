@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Multi-LoRA 进 MoE：一只 GPU 侍候多套适配器
 
-英文对照：`en/vllm/blog/serving/multi-lora.md`  
+英文对照：[en/vllm/blog/serving/multi-lora.md](../../../../en/vllm/blog/serving/multi-lora.md)  
 原文：https://vllm.ai/blog/2026-02-26-multi-lora  
 vLLM ≥0.15.0。GPT-OSS 20B 为贯穿例子。SageMaker / Bedrock 上还有额外调参。
 

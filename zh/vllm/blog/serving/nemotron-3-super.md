@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Nemotron 3 Super：120B/12B，1M 上下文，Thinking Budget
 
-英文对照：`en/vllm/blog/serving/nemotron-3-super.md`  
+英文对照：[en/vllm/blog/serving/nemotron-3-super.md](../../../../en/vllm/blog/serving/nemotron-3-super.md)  
 原文：https://vllm.ai/blog/2026-03-11-nemotron-3-super  
 v0.17.1。4×H100 BF16 示例。Spark 上的实测见 [dgx-spark](dgx-spark.md)。
 

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # `return_token_ids`: stop retokenizing agent RL
 
-Chinese: `../../zh/vllm/blog/serving/agent-lightning.md`  
+Chinese: [zh/vllm/blog/serving/agent-lightning.md](../../../../zh/vllm/blog/serving/agent-lightning.md)  
 vLLM ≥0.10.2.
 
 Single-turn RL can take tokens from `generate`. Agent stacks call OpenAI `chat.completions`, which used to return strings only. Trainers retokenize: **Retokenization Drift**. Their plot: two text-and-retokenize runs wobble; the run that keeps engine tokens does not.

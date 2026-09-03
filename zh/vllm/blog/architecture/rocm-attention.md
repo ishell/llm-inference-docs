@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # ROCm 上的七条 attention 路
 
-英文对照：`en/vllm/blog/architecture/rocm-attention.md`  
+英文对照：[en/vllm/blog/architecture/rocm-attention.md](../../../../en/vllm/blog/architecture/rocm-attention.md)  
 原文：https://vllm.ai/blog/2026-02-27-rocm-attention-backend  
 Triton attention 默认见 [triton-attn](triton-attn.md)；这篇讲 **AITER FA 三路**。
 

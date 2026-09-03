@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # HaluGate：工具已经说对了，模型还在编
 
-英文对照：`en/vllm/blog/serving/halugate.md`  
+英文对照：[en/vllm/blog/serving/halugate.md](../../../../en/vllm/blog/serving/halugate.md)  
 原文：https://vllm.ai/blog/2025-12-14-halugate  
 挂在 [Iris](semantic-router-iris.md) 的插件链上。
 

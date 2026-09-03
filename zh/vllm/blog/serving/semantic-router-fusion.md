@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Fusion：面板、法官、合成，但是一条路由决策
 
-英文对照：`en/vllm/blog/serving/semantic-router-fusion.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-fusion.md](../../../../en/vllm/blog/serving/semantic-router-fusion.md)  
 原文：https://vllm.ai/blog/2026-06-16-vllm-sr-fusion-api  
 2026-06-16。OpenRouter DRACO 分数是**他们的表**，不是 vLLM-SR 评测。MoM 总论见 [new chapter](semantic-router-mom.md)；Looper 全家见 [Micro-Agent](semantic-router-micro-agent.md)。
 

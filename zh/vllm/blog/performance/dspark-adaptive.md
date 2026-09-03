@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DSpark 自适应验收：按信心和负载改预算
 
-英文对照：`en/vllm/blog/performance/dspark-adaptive.md`  
+英文对照：[en/vllm/blog/performance/dspark-adaptive.md](../../../../en/vllm/blog/performance/dspark-adaptive.md)  
 原文：https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification  
 PR #47808，`enable_adaptive_verification`。演示：DS-V4-Pro TP8、8×B300。
 

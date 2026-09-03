@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 笔记：vLLM 对 DeepSpeed-FastGen
 
-英文对照：`en/vllm/blog/architecture/vs-deepspeed.md`  
+英文对照：[en/vllm/blog/architecture/vs-deepspeed.md](../../../../en/vllm/blog/architecture/vs-deepspeed.md)  
 原文：https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed  
 2023-11-14。这是对 DeepSpeed 那篇「我们比 vLLM 快 2×」的公开回应，不是产品手册。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # gpt-oss Day-0：MXFP4 MoE + 满/滑窗 1:1 attention + hybrid KV
 
-英文对照：`en/vllm/blog/serving/gpt-oss.md`  
+英文对照：[en/vllm/blog/serving/gpt-oss.md](../../../../en/vllm/blog/serving/gpt-oss.md)  
 原文：https://vllm.ai/blog/2025-08-05-gpt-oss  
 20B / 120B。Blackwell、Hopper、MI300x/MI355x。当时 `vllm==0.10.1+gptoss` 或 `vllm/vllm-openai:gptoss`。Pareto 后续见 [gpt-oss-optimizations](../performance/gpt-oss-optimizations.md)。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # HPC-Ops：H20 上混长 decode 的 attention，和小 expert GEMM 的 MoE
 
-英文对照：`en/vllm/blog/performance/hpc-ops.md`  
+英文对照：[en/vllm/blog/performance/hpc-ops.md](../../../../en/vllm/blog/performance/hpc-ops.md)  
 原文：https://vllm.ai/blog/2026-07-06-vllm-hpc-ops  
 Hopper，尤其 H20。Attention PR #46020，MoE PR #45924。图与表在原网页。
 

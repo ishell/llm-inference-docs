@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Nemotron 3 Nano：30B/3B hybrid MoE，Thinking Budget，NVFP4 后补
 
-英文对照：`en/vllm/blog/serving/nemotron-3-nano.md`  
+英文对照：[en/vllm/blog/serving/nemotron-3-nano.md](../../../../en/vllm/blog/serving/nemotron-3-nano.md)  
 原文：https://vllm.ai/blog/2025-12-15-run-nvidia-nemotron-3-nano  
 1M 上下文。2026-01-28 补 NVFP4 + QAD，B200 相对 FP8-H100 他们报 **4×**。
 

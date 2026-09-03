@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # vLLM Playground：容器里点一下起 server，CLI 仍是同一套旋钮
 
-英文对照：`en/vllm/blog/serving/playground.md`  
+英文对照：[en/vllm/blog/serving/playground.md](../../../../en/vllm/blog/serving/playground.md)  
 原文：https://vllm.ai/blog/2026-01-02-introducing-vllm-playground  
 `pip install vllm-playground` → localhost:7860。Apache-2.0。当时镜像钉 v0.11.0。
 

@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # AFD Plugin：Attention 和 FFN 也可以不住在同一栋楼
 
-英文对照：`en/vllm/blog/serving/afd.md`  
+英文对照：[en/vllm/blog/serving/afd.md](../../../../en/vllm/blog/serving/afd.md)  
 原文：https://vllm.ai/blog/2026-07-23-vllm-afd-plugin  
 2026-07-23。实验性外部插件：https://github.com/vllm-project/afd-plugin。走 `vllm.general_plugins` 和 `--additional-config`，不改 vLLM 源码。当时钉在 vLLM **0.19.1**、Python 3.10–3.13、仅 model runner v1。数字是受控实验，不是 SLA。
 

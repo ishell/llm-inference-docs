@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # verl-Omni v0.2：请求级 batch 把 gen 从 226s 压到 108s
 
-英文对照：`en/vllm/blog/serving/verl-omni-v020.md`  
+英文对照：[en/vllm/blog/serving/verl-omni-v020.md](../../../../en/vllm/blog/serving/verl-omni-v020.md)  
 原文：https://vllm.ai/blog/2026-08-20-verl-omni-v0-2-0  
 上一篇：[verl-omni](verl-omni.md)。
 

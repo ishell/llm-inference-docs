@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # AMD 上的 MoM 现场：六只模型、十一条决策
 
-英文对照：`en/vllm/blog/serving/semantic-router-mom-amd.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-mom-amd.md](../../../../en/vllm/blog/serving/semantic-router-mom-amd.md)  
 原文：https://vllm.ai/blog/2026-01-23-mom-on-amd-gpu  
 Playground：https://play.vllm-semantic-router.com  
 MI300X / MI355X。

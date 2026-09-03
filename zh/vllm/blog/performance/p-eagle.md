@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # P-EAGLE：一次前向猜 K 个字
 
-英文对照：`en/vllm/blog/performance/p-eagle.md`  
+英文对照：[en/vllm/blog/performance/p-eagle.md](../../../../en/vllm/blog/performance/p-eagle.md)  
 原文：https://vllm.ai/blog/2026-03-13-p-eagle  
 vLLM ≥0.16.0，PR#32887。数字是 **一块 B200**、GPT-OSS-20B 上的演示。
 

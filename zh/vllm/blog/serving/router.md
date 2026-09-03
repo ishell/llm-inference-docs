@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # vLLM Router：认得 KV、认得 Prefill/Decode 的负载均衡
 
-英文对照：`en/vllm/blog/serving/router.md`  
+英文对照：[en/vllm/blog/serving/router.md](../../../../en/vllm/blog/serving/router.md)  
 原文：https://vllm.ai/blog/2025-12-13-vllm-router-release  
 2025-12-13。仓库在 GitHub 的 vllm-router。Rust，尽量轻。坐在客户端和一队 vLLM worker 之间，K8s 或裸金属都行。从 **SGLang model gateway** fork 再简化；他们说可能并进 vLLM 主仓，大规模 gateway 功能也可能再和 SGLang 对齐。
 

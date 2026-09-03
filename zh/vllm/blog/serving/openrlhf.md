@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # OpenRLHF × vLLM：生成占 RLHF 的九成
 
-英文对照：`en/vllm/blog/serving/openrlhf.md`  
+英文对照：[en/vllm/blog/serving/openrlhf.md](../../../../en/vllm/blog/serving/openrlhf.md)  
 原文：https://vllm.ai/blog/2025-04-23-openrlhf-vllm  
 2025-04。后来的暂停/恢复 API 见 [Native RL](native-rl.md)。
 

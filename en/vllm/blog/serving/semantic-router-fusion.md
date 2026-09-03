@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Fusion: panel, judge, synthesis — as a routing decision
 
-Chinese: `../../zh/vllm/blog/serving/semantic-router-fusion.md`  
+Chinese: [zh/vllm/blog/serving/semantic-router-fusion.md](../../../../zh/vllm/blog/serving/semantic-router-fusion.md)  
 2026-06-16. MoM: [mom](semantic-router-mom.md). Loopers: [micro-agent](semantic-router-micro-agent.md).  OpenRouter DRACO rows are **their** numbers, not a vLLM-SR eval.
 
 Fusion is policy, not a global slug. Signals first; only a Fusion decision pays for a panel.

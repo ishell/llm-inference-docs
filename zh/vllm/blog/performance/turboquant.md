@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # TurboQuant：KV 再压到 3–4 bit 之前，先读完这篇对照
 
-英文对照：`en/vllm/blog/performance/turboquant.md`  
+英文对照：[en/vllm/blog/performance/turboquant.md](../../../../en/vllm/blog/performance/turboquant.md)  
 原文：https://vllm.ai/blog/2026-05-11-turboquant  
 2026-05-11。vLLM 0.20.2。接在 [FP8 KV](fp8-kvcache.md) 后面读。TurboQuant 当时只支持标准注意力（GQA 一类），滑动窗口 / 混合注意力还没有。
 

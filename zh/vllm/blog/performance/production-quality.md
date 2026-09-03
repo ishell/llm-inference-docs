@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 怎样把 vLLM 保持在「能上线」的质量
 
-英文对照：`en/vllm/blog/performance/production-quality.md`  
+英文对照：[en/vllm/blog/performance/production-quality.md](../../../../en/vllm/blog/performance/production-quality.md)  
 原文：https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality  
 2026-07-16。数字会过时：当时 86k+ stars、每月 5.6M pip、2.5M 镜像、1000+ 模型架构、600+ 加速器。2026 年 6 月 main 合入 **1918** 个 commit（日均 64），CI **1300 万** job-minute，峰值 **1400** 并发 runner。H100 上干净的改动，可能在 AMD 编不过、在 B200 变慢、在某一个 backend 把输出拧歪一点。
 

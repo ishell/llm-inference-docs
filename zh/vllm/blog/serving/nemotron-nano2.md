@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Nemotron Nano 2：9B hybrid，Thinking Budget 是客户端两刀，不是引擎旋钮
 
-英文对照：`en/vllm/blog/serving/nemotron-nano2.md`  
+英文对照：[en/vllm/blog/serving/nemotron-nano2.md](../../../../en/vllm/blog/serving/nemotron-nano2.md)  
 原文：https://vllm.ai/blog/2025-10-23-now_serving_nvidia_nemotron_with_vllm  
 他们报 thinking token 相对同尺寸 dense 最高约 **6×**。
 

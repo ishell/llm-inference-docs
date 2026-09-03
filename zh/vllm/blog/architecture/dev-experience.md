@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 安装与开发：nightly 按 commit 钉死，uv 比 pip 快两个数量级（他们那台机）
 
-英文对照：`en/vllm/blog/architecture/dev-experience.md`  
+英文对照：[en/vllm/blog/architecture/dev-experience.md](../../../../en/vllm/blog/architecture/dev-experience.md)  
 原文：https://vllm.ai/blog/2025-01-10-dev-experience  
 当时公开最新 v0.6.6.post1。数字是演示。
 

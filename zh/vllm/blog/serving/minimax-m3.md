@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # MiniMax M3：1M 上下文靠 MSA 选 128-token 块，不是满 attention
 
-英文对照：`en/vllm/blog/serving/minimax-m3.md`  
+英文对照：[en/vllm/blog/serving/minimax-m3.md](../../../../en/vllm/blog/serving/minimax-m3.md)  
 原文：https://vllm.ai/blog/2026-06-12-minimax-m3-vllm  
 BF16 / MXFP8。验证过 H200 / GB200 / B300；AMD MI350/MI300。
 

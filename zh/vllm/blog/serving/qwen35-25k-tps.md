@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Qwen3.5 25K TPS/GPU：GDN + 异构 cache 搬完才到 Pareto 左端
 
-英文对照：`en/vllm/blog/serving/qwen35-25k-tps.md`  
+英文对照：[en/vllm/blog/serving/qwen35-25k-tps.md](../../../../en/vllm/blog/serving/qwen35-25k-tps.md)  
 原文：https://vllm.ai/blog/2026-08-06-qwen35-25k-tps  
 GB200 NVL72。Qwen3.5-397B-A17B-NVFP4。ISL/OSL=8192/1024。
 

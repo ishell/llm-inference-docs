@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # TileRT: decode-side P/D without a vLLM fork
 
-Chinese: `../../zh/vllm/blog/serving/tilert.md`  
+Chinese: [zh/vllm/blog/serving/tilert.md](../../../../zh/vllm/blog/serving/tilert.md)  
 TileRT 0.1.5, V1 KV Connector.
 
 Prefill stays stock vLLM; decode is TileRT. The join is a V1 connector — **no vLLM fork**. Demos then: GLM-5 / 5.1, DeepSeek-V3.2. Prefill needs MTP; decode has one in-flight request. Dual pools: MultiConnector + NIXL.

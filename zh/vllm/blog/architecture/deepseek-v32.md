@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DeepSeek-V3.2-Exp：细粒度稀疏注意力进了 continuous batch
 
-英文对照：`en/vllm/blog/architecture/deepseek-v32.md`  
+英文对照：[en/vllm/blog/architecture/deepseek-v32.md](../../../../en/vllm/blog/architecture/deepseek-v32.md)  
 原文：https://vllm.ai/blog/2025-09-29-deepseek-v3-2  
 2025-09-29。Day-0。后续 V4 压缩栈见 [deepseek-v4](deepseek-v4.md)；GB300 上 V3.2 vs R1 见 [gb300-deepseek](../performance/gb300-deepseek.md)；宽 EP 见 [gb200-wideep](../serving/gb200-wideep.md)。
 

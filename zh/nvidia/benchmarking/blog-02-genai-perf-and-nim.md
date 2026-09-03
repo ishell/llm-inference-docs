@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 系列第 2 篇：用 GenAI-Perf 测 NIM
 
-英文对照：`en/nvidia/benchmarking/blog-02-genai-perf-and-nim.md`
+英文对照：[en/nvidia/benchmarking/blog-02-genai-perf-and-nim.md](../../../en/nvidia/benchmarking/blog-02-genai-perf-and-nim.md)
 
 **今天请用 AIPerf。** GenAI-Perf 已停更，命令几乎同构；NIM 手册第 4 章是 AIPerf 版：`nim-04-aiperf.md`。本篇保留官方当时的 GenAI-Perf 流程，因为 NIM Performance 页面上那些数字，就是用这套仪式测出来的。换工具，不要换尺子的定义。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # `return_token_ids`：Agent RL 别再二次分词
 
-英文对照：`en/vllm/blog/serving/agent-lightning.md`  
+英文对照：[en/vllm/blog/serving/agent-lightning.md](../../../../en/vllm/blog/serving/agent-lightning.md)  
 原文：https://vllm.ai/blog/2025-10-22-agent-lightning  
 vLLM ≥0.10.2。
 

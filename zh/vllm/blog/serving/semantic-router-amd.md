@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # AMD × Semantic Router：GPU 上的控制面
 
-英文对照：`en/vllm/blog/serving/semantic-router-amd.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-amd.md](../../../../en/vllm/blog/serving/semantic-router-amd.md)  
 原文：https://vllm.ai/blog/2025-12-16-vllm-sr-amd  
 现场 demo 见 [MoM on AMD](semantic-router-mom-amd.md)。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 2024 年报 / 2025 愿景：星标 2.3×，V1 重写，遥测可关
 
-英文对照：`en/vllm/blog/architecture/vllm-2024-wrapped.md`  
+英文对照：[en/vllm/blog/architecture/vllm-2024-wrapped.md](../../../../en/vllm/blog/architecture/vllm-2024-wrapped.md)  
 原文：https://vllm.ai/blog/2025-01-10-vllm-2024-wrapped-2025-vision  
 star 14k→32.6k，贡献者 190→740，月下载 6k→27k，GPU hours 约 10×。https://2024.vllm.ai
 

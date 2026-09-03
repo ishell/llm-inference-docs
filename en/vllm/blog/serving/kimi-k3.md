@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Kimi K3 day-0
 
-Chinese: `../../zh/vllm/blog/serving/kimi-k3.md`  
+Chinese: [zh/vllm/blog/serving/kimi-k3.md](../../../../zh/vllm/blog/serving/kimi-k3.md)  
 2026-07-27. Demo: GB300 NVL72. KDA prefix-cache design: [preview](kimi-k3-preview.md). Docker-only then (prerelease FlashInfer).
 
 `moonshotai/Kimi-K3`: 2.8T MoE, 16 of 896 experts, 1M context, native vision, MXFP4 weights. Hybrid KDA + periodic full attention, AttnRes, Stable LatentMoE. Chat template is a Python renderer, not Jinja. **Not a new engine** — hybrid cache, kernels, recipes.

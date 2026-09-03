@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Themis v0.3：能问「刚才为什么走这条」
 
-英文对照：`en/vllm/blog/serving/semantic-router-themis.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-themis.md](../../../../en/vllm/blog/serving/semantic-router-themis.md)  
 原文：https://vllm.ai/blog/2026-06-05-v0.3-vllm-sr-themis-release  
 相对 v0.2 约 350+ commit。
 

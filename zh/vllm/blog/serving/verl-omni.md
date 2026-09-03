@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # verl × Omni：扩散 RL 的 rollout 不另起炉灶
 
-英文对照：`en/vllm/blog/serving/verl-omni.md`  
+英文对照：[en/vllm/blog/serving/verl-omni.md](../../../../en/vllm/blog/serving/verl-omni.md)  
 原文：https://vllm.ai/blog/2026-05-14-verl-omni  
 H800。v0.2 见 [verl-omni-v020](verl-omni-v020.md)。
 

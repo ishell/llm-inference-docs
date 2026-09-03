@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Qwen3-Omni: Thinker / Talker / Code2Wav
 
-Chinese: `../../zh/vllm/blog/serving/qwen3-omni.md`  
+Chinese: [zh/vllm/blog/serving/qwen3-omni.md](../../../../zh/vllm/blog/serving/qwen3-omni.md)  
 TTS engineering: [omni-tts](omni-tts.md).
 
 ```

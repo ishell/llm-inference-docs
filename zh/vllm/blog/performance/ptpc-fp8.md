@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # PTPC-FP8：ROCm 上更贴 BF16 的 FP8
 
-英文对照：`en/vllm/blog/performance/ptpc-fp8.md`  
+英文对照：[en/vllm/blog/performance/ptpc-fp8.md](../../../../en/vllm/blog/performance/ptpc-fp8.md)  
 原文：https://vllm.ai/blog/2025-02-24-ptpc-fp8-rocm  
 vLLM ≥0.7.3。数字是 MI300X 演示。
 

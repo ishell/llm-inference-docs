@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 信号–决策：14 类不够用之后
 
-英文对照：`en/vllm/blog/serving/semantic-router-signal.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-signal.md](../../../../en/vllm/blog/serving/semantic-router-signal.md)  
 原文：https://vllm.ai/blog/2025-11-19-signal-decision  
 落地见 [Iris](semantic-router-iris.md)。
 

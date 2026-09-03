@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # CUDA core dump: which kernel actually IMA’d
 
-Chinese: `../../zh/vllm/blog/architecture/cuda-debugging.md`  
+Chinese: [zh/vllm/blog/architecture/cuda-debugging.md](../../../../zh/vllm/blog/architecture/cuda-debugging.md)  
 Follow-up (hangs + source line): [cuda-debugging-source](cuda-debugging-source.md).
 
 Python stacks on illegal memory access are almost always wrong: async report, unchecked `kernel<<<>>>` launches, CUDA-graph launch as the only frame. `CUDA_LAUNCH_BLOCKING=1` does not fix the last two.

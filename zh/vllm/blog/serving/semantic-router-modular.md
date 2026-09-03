@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 模块化 LoRA：别为每个分类器跑一整只 BERT
 
-英文对照：`en/vllm/blog/serving/semantic-router-modular.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-modular.md](../../../../en/vllm/blog/serving/semantic-router-modular.md)  
 原文：https://vllm.ai/blog/2025-10-27-semantic-router-modular  
 落地见 [Iris](semantic-router-iris.md)。引用数字是演示/文献，不是你集群的 SLA。
 

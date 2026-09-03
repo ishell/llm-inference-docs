@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # vLLM TPU：PyTorch 和 JAX 走同一条 XLA 路
 
-英文对照：`en/vllm/blog/architecture/vllm-tpu.md`  
+英文对照：[en/vllm/blog/architecture/vllm-tpu.md](../../../../en/vllm/blog/architecture/vllm-tpu.md)  
 原文：https://vllm.ai/blog/2025-10-16-vllm-tpu  
 `pip install vllm-tpu`。
 

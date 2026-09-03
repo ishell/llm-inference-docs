@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 分布式推理：一张卡装不下以后
 
-英文对照：`en/vllm/blog/serving/distributed-inference.md`  
+英文对照：[en/vllm/blog/serving/distributed-inference.md](../../../../en/vllm/blog/serving/distributed-inference.md)  
 原文：https://vllm.ai/blog/2025-02-17-distributed-inference  
 2025-02-17。和 TensorRT-LLM 手册第 4 章同一张地图：通信才是约束。OOM 面前两条路——降精度，或切开。量化单独不够，模型过千亿还是要切。
 

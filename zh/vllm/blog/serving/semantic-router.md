@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Semantic Router：按意图决定走不走推理
 
-英文对照：`en/vllm/blog/serving/semantic-router.md`  
+英文对照：[en/vllm/blog/serving/semantic-router.md](../../../../en/vllm/blog/serving/semantic-router.md)  
 原文：https://vllm.ai/blog/2025-09-11-semantic-router  
 2025-09 立项文。v0.1 架构翻新见 [Iris](semantic-router-iris.md)。
 

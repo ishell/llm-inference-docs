@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # EAGLE 3.1：压住 attention drift
 
-英文对照：`en/vllm/blog/performance/eagle-3-1.md`  
+英文对照：[en/vllm/blog/performance/eagle-3-1.md](../../../../en/vllm/blog/performance/eagle-3-1.md)  
 原文：https://vllm.ai/blog/2026-05-26-eagle-3-1  
 vLLM nightly / 当时即将 v0.22.0。Kimi K2.6 NVFP4、TP4、GB200、非分离、SPEED-Bench coding：**c=1 约 2.03×** 每用户输出 TPS，c=4 约 1.71×，c=16 约 1.66×。
 

@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # FP8 KV cache：长上下文时把记忆砍半
 
-英文对照：`en/vllm/blog/performance/fp8-kvcache.md`  
+英文对照：[en/vllm/blog/performance/fp8-kvcache.md](../../../../en/vllm/blog/performance/fp8-kvcache.md)  
 原文：https://vllm.ai/blog/2026-04-22-fp8-kvcache  
 2026-04-22。`--kv-cache-dtype fp8` 把 KV **和** QK / ScoreV 的注意力乘都打成 FP8（文中全程 **e4m3**）。长上下文（128k+）时 KV 往往占满显存，decode 每步还要把它读一遍；砍半，并发或窗口才能在同一张卡上再长一截——前提是精度还站得住。
 

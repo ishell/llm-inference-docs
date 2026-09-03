@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Distributed Layerwise Offload：124 GB 模型挤进 64 GB HBM
 
-英文对照：`en/vllm/blog/serving/omni-layerwise-offload.md`  
+英文对照：[en/vllm/blog/serving/omni-layerwise-offload.md](../../../../en/vllm/blog/serving/omni-layerwise-offload.md)  
 原文：https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload  
 vLLM 0.27.0 + Omni `v0.27.0rc1`。Cosmos3-Super 64B / 124 GB。
 

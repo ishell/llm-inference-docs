@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 扩散 cache：相邻 timestep 不必重算
 
-英文对照：`en/vllm/blog/serving/omni-diffusion-cache.md`  
+英文对照：[en/vllm/blog/serving/omni-diffusion-cache.md](../../../../en/vllm/blog/serving/omni-diffusion-cache.md)  
 原文：https://vllm.ai/blog/2025-12-19-vllm-omni-diffusion-cache-acceleration  
 H200、Qwen-Image 1024²。
 

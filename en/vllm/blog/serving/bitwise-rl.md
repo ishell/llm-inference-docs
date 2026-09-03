@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Bitwise on-policy: vLLM × TorchTitan
 
-Chinese: `../../zh/vllm/blog/serving/bitwise-rl.md`  
+Chinese: [zh/vllm/blog/serving/bitwise-rl.md](../../../../zh/vllm/blog/serving/bitwise-rl.md)  
 Qwen3 1.7B, GSM8K demo. RFC #28326 / #27433.
 
 Trainer and sampler pick different kernels (batch-parallel vs within-instance parallel). Tiny numeric gaps get amplified by RL. `batch_inv_OFF` loses reward over 100 steps; bitwise-on (`kl_div` always 0) trains in fewer steps to a higher reward. They import vLLM’s batch-invariant forwards (fused SiLU MLP, RMSNorm+residual) into TorchTitan and register simple backwards. Sync: trainer and `VLLMRolloutEngine` alternate on one host — illustrative on-policy, not large async RL.

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Omni × AutoRound：W4A16 一次量化、直接 serve
 
-英文对照：`en/vllm/blog/serving/omni-autoround.md`  
+英文对照：[en/vllm/blog/serving/omni-autoround.md](../../../../en/vllm/blog/serving/omni-autoround.md)  
 原文：https://vllm.ai/blog/2026-06-02-vllm-omni-autoround  
 LLM Compressor 那条见另篇。
 

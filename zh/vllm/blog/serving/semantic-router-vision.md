@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 视觉信号：不是换更大的 encoder，是 Candle 对不齐
 
-英文对照：`en/vllm/blog/serving/semantic-router-vision.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-vision.md](../../../../en/vllm/blog/serving/semantic-router-vision.md)  
 原文：https://vllm.ai/blog/2026-05-28-vllm-sr-vision-encoder-hardening  
 接 [Athena](semantic-router-athena.md) 的 `multi-modal-embed-small`。
 

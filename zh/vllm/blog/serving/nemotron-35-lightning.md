@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Nemotron 3.5 Lightning：常开 agent 的小炉子
 
-英文对照：`en/vllm/blog/serving/nemotron-35-lightning.md`  
+英文对照：[en/vllm/blog/serving/nemotron-35-lightning.md](../../../../en/vllm/blog/serving/nemotron-35-lightning.md)  
 原文：https://vllm.ai/blog/2026-08-10-nemotron-3-5-lightning-vllm  
 2026-08-10。数字是演示。镜像 `vllm/vllm-openai:v0.27.1`。
 

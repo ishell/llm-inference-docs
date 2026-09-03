@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # vLLM-Omni：文本之外的流水线
 
-英文对照：`en/vllm/blog/serving/vllm-omni.md`  
+英文对照：[en/vllm/blog/serving/vllm-omni.md](../../../../en/vllm/blog/serving/vllm-omni.md)  
 原文：https://vllm.ai/blog/2025-11-30-vllm-omni  
 首发叠在 vLLM v0.11.0 上（v0.11.0rc）。后续 TTS / 扩散 cache / AutoRound / Qwen3-Omni 优化另有专篇。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Nemotron 3 Ultra：550B/55B hybrid MoE，训练 rollout 也走 vLLM
 
-英文对照：`en/vllm/blog/serving/nemotron-3-ultra.md`  
+英文对照：[en/vllm/blog/serving/nemotron-3-ultra.md](../../../../en/vllm/blog/serving/nemotron-3-ultra.md)  
 原文：https://vllm.ai/blog/2026-06-04-nemotron-3-ultra-vllm  
 v0.22.0 镜像。8×B200 示例。cookbook 才是完整菜谱。
 

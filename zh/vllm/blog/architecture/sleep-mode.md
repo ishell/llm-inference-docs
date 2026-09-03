@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Sleep Mode：换模型不必把房子拆了重建
 
-英文对照：`en/vllm/blog/architecture/sleep-mode.md`  
+英文对照：[en/vllm/blog/architecture/sleep-mode.md](../../../../en/vllm/blog/architecture/sleep-mode.md)  
 原文：https://vllm.ai/blog/2025-10-26-sleep-mode  
 2025-10-26。数字是 A100 / A4000、vLLM 0.11.0 上的演示。
 

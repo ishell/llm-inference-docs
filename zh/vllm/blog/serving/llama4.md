@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Llama 4：Scout 16E / Maverick 128E，iRoPE 1:3，v0.8.3+
 
-英文对照：`en/vllm/blog/serving/llama4.md`  
+英文对照：[en/vllm/blog/serving/llama4.md](../../../../en/vllm/blog/serving/llama4.md)  
 原文：https://vllm.ai/blog/2025-04-05-llama4  
 每 token 只激活 **1** expert（17B active）。
 

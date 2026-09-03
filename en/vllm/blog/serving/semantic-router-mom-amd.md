@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Live MoM on AMD: six models, eleven decisions
 
-Chinese: `../../zh/vllm/blog/serving/semantic-router-mom-amd.md`  
+Chinese: [zh/vllm/blog/serving/semantic-router-mom-amd.md](../../../../zh/vllm/blog/serving/semantic-router-mom-amd.md)  
 Playground: https://play.vllm-semantic-router.com  
 MI300X / MI355X.
 

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Signal–decision: after 14 MMLU classes
 
-Chinese: `../../zh/vllm/blog/serving/semantic-router-signal.md`  
+Chinese: [zh/vllm/blog/serving/semantic-router-signal.md](../../../../zh/vllm/blog/serving/semantic-router-signal.md)  
 Ships in [Iris](semantic-router-iris.md).
 
 “Urgent review of an auth vulnerability” becomes “computer science” under 14 MMLU labels and hits a generic coder — urgency, jailbreak, reasoning budget gone. “Urgent patient data breach” may reach a medical model with no PII plugin.

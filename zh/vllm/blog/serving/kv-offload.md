@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # KV Offloading Connector：抢占时把记忆寄存在 CPU
 
-英文对照：`en/vllm/blog/serving/kv-offload.md`  
+英文对照：[en/vllm/blog/serving/kv-offload.md](../../../../en/vllm/blog/serving/kv-offload.md)  
 原文：https://vllm.ai/blog/2026-01-08-kv-offloading-connector  
 2026-01-08。随 vLLM 0.11.0 进来；0.12.0 因物理块变大，性能跳了一档。和 [Mooncake](mooncake.md) 同一扇 **KVConnector** 门：一个寄存在本机 DRAM，一个放到集群池。
 

@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 旋钮 → 博客：从 `optimization.md` 走到必读线
 
-英文对照：`en/vllm/blog/FLAG-MAP.md`  
+英文对照：[en/vllm/blog/FLAG-MAP.md](../../../en/vllm/blog/FLAG-MAP.md)  
 文档页告诉你旋钮的礼貌顺序；博客告诉你这些旋钮是怎么长出来的。CLI 与指标名保持英文。数字以各篇原文为准。
 
 完整阅读顺序：[MUST-READ.md](MUST-READ.md)。优化页：[optimization.md](../optimization/optimization.md)。serve 旗标摘录：[serve.md](../getting-started/serve.md)。

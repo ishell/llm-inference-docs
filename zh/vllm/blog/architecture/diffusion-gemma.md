@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DiffusionGemma：把画布当成一次全拒的草稿
 
-英文对照：`en/vllm/blog/architecture/diffusion-gemma.md`  
+英文对照：[en/vllm/blog/architecture/diffusion-gemma.md](../../../../en/vllm/blog/architecture/diffusion-gemma.md)  
 原文：https://vllm.ai/blog/2026-06-10-diffusion-gemma  
 2026-06-10。Google DeepMind。第一只进 vLLM 的 dLLM。数字是单卡 batch=1 的演示。执行核见 [mrv2](mrv2.md)；草稿账本见 [spec-decode](../performance/spec-decode.md)；多模态流水线见 [vllm-omni](../serving/vllm-omni.md)。
 

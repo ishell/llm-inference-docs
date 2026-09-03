@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Model Runner V2：给执行核换一块更干净的底板
 
-英文对照：`en/vllm/blog/architecture/mrv2.md`  
+英文对照：[en/vllm/blog/architecture/mrv2.md](../../../../en/vllm/blog/architecture/mrv2.md)  
 原文：https://vllm.ai/blog/2026-03-24-mrv2  
 2026-03-24。V1 是引擎骨架；MRV2 是 **model runner** 的重写。用户 API 不变。当时还不是默认：
 

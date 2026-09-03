@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DeepSeek V4 在 vLLM 里怎么侍候
 
-英文对照：`en/vllm/blog/architecture/deepseek-v4.md`  
+英文对照：[en/vllm/blog/architecture/deepseek-v4.md](../../../../en/vllm/blog/architecture/deepseek-v4.md)  
 原文：https://vllm.ai/blog/2026-04-24-deepseek-v4  
 V4-Pro 1.6T / V4-Flash 285B，1M 上下文。镜像 `vllm/vllm-openai:deepseekv4-cu130`。
 

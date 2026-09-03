@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Semantic Router v0.1 Iris：从 14 类到信号链
 
-英文对照：`en/vllm/blog/serving/semantic-router-iris.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-iris.md](../../../../en/vllm/blog/serving/semantic-router-iris.md)  
 原文：https://vllm.ai/blog/2026-01-05-vllm-sr-iris  
 信号/决策细节见后续 signal-decision 篇。
 

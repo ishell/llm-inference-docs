@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 单机也要 P/D：MI300X 上的 MORI-IO
 
-英文对照：`en/vllm/blog/serving/moriio.md`  
+英文对照：[en/vllm/blog/serving/moriio.md](../../../../en/vllm/blog/serving/moriio.md)  
 原文：https://vllm.ai/blog/2026-04-07-moriio-kv-connector  
 2026-04-07。AMD Instinct MI300X，**一台 8 卡节点内**做 Prefill/Decode 分离。Connector：`MoRIIOConnector`（MORI = Modular RDMA Interface）。数字是 Qwen3-235B-A22B-FP8、8 req/s、输入 2000 / 输出 1000。
 

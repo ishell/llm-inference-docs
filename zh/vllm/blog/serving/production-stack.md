@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # vLLM production-stack：从单机引擎到 K8s 上的一叠盘子
 
-英文对照：`en/vllm/blog/serving/production-stack.md`  
+英文对照：[en/vllm/blog/serving/production-stack.md](../../../../en/vllm/blog/serving/production-stack.md)  
 原文：https://vllm.ai/blog/2025-01-21-stack-release  
 2025-01-21。仓库：https://github.com/vllm-project/production-stack。LMCache 团队 + vLLM。数字是发布时的演示。
 

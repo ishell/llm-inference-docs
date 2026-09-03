@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # `ray symmetric-run`：多机起 vLLM 不必先扮演 head/worker
 
-英文对照：`en/vllm/blog/serving/ray-symmetric.md`  
+英文对照：[en/vllm/blog/serving/ray-symmetric.md](../../../../en/vllm/blog/serving/ray-symmetric.md)  
 原文：https://vllm.ai/blog/2025-11-22-ray-symmetric-run  
 2025-11-22。面向 SLURM / `mpssh` 这类「每台机器敲同一条命令」的人。[Elastic EP](elastic-ep.md) 也依赖 Ray DP；这篇是把集群**先拉起来**的那条命令。
 

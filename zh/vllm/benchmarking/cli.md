@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Benchmark CLI — vLLM
 
-英文对照：`en/vllm/benchmarking/cli.md`  
+英文对照：[en/vllm/benchmarking/cli.md](../../../en/vllm/benchmarking/cli.md)  
 原文：https://docs.vllm.ai/en/stable/benchmarking/cli/
 
 这一页的定位官方写得很清楚：偏 **功能回归 / 特性评测**。生产 serving 他们更推荐 **GuideLLM**（进度条、自动报告；数据集、请求格式、流量形态更灵活）。`vllm bench serve` 仍是仓库里那把自带客户端。NVIDIA 系列用 AIPerf 打同一类 OpenAI 兼容口。指标名字接近，**公式仍可能不同，不要直接横比数字。**

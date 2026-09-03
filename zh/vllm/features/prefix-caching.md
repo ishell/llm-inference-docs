@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 自动前缀缓存（Automatic Prefix Caching）
 
-英文对照：`en/vllm/features/prefix-caching.md`  
+英文对照：[en/vllm/features/prefix-caching.md](../../../en/vllm/features/prefix-caching.md)  
 原文：https://docs.vllm.ai/en/stable/features/automatic_prefix_caching/  
 实现：[prefix-caching-design.md](prefix-caching-design.md)。图在文档站。
 

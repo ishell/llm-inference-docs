@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 并行草稿：P-EAGLE / DFlash / DSpark
 
-英文对照：`en/vllm/blog/performance/parallel-drafting.md`  
+英文对照：[en/vllm/blog/performance/parallel-drafting.md](../../../../en/vllm/blog/performance/parallel-drafting.md)  
 原文：https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting  
 **勘误 2026-07-29**：Figure 1 的环境有 bug，相对排名没变，绝对值请以勘误后为准。
 

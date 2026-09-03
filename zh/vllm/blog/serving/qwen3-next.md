@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Qwen3-Next：Gated DeltaNet + 满 attention 交错，hybrid KV 按物理页对齐
 
-英文对照：`en/vllm/blog/serving/qwen3-next.md`  
+英文对照：[en/vllm/blog/serving/qwen3-next.md](../../../../en/vllm/blog/serving/qwen3-next.md)  
 原文：https://vllm.ai/blog/2025-09-11-qwen3-next  
 80B-A3B，1:50 MoE。当时 nightly。`vllm serve Qwen/Qwen3-Next-80B-A3B-Instruct -tp 4`。后继 3.5/3.8 见 [qwen35-25k-tps](qwen35-25k-tps.md) / [qwen38](qwen38.md)。
 

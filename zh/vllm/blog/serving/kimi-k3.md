@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Kimi K3 day-0：2.8T 怎么端上桌
 
-英文对照：`en/vllm/blog/serving/kimi-k3.md`  
+英文对照：[en/vllm/blog/serving/kimi-k3.md](../../../../en/vllm/blog/serving/kimi-k3.md)  
 原文：https://vllm.ai/blog/2026-07-27-k3  
 2026-07-27。数字是 GB300 NVL72 上的演示。KDA 前缀缓存设计见 [preview](kimi-k3-preview.md)。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DeepLearning.AI 课：压缩 → serve → GuideLLM 压测，不是新 kernel
 
-英文对照：`en/vllm/blog/serving/deeplearning-ai-course.md`  
+英文对照：[en/vllm/blog/serving/deeplearning-ai-course.md](../../../../en/vllm/blog/serving/deeplearning-ai-course.md)  
 原文：https://vllm.ai/blog/2026-06-03-deeplearning-ai-vllm-course  
 约 1.5h，9 视频 + 3 lab。Cedric Clyburn（Red Hat）。课免费。
 

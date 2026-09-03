@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Sharded weight transfer with RDT: Kimi K2 in 7.53s
 
-Chinese: `../../zh/vllm/blog/serving/rdt-weight-transfer.md`  
+Chinese: [zh/vllm/blog/serving/rdt-weight-transfer.md](../../../../zh/vllm/blog/serving/rdt-weight-transfer.md)  
 Kimi K2 BF16: 48×(8×H100), 32 trainer + 16 inference nodes, **7.53 s** for ~**7.9 TB**, ~**1049 GB/s** aggregate.
 
 NCCL broadcast ships full HF weights to every inference rank: TP8 keeps ⅛; wide EP wastes more; collectives stall on stragglers. RDT (NIXL) lets each inference rank **pull only its shard**.

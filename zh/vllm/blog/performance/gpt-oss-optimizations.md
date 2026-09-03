@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # gpt-oss on Blackwell：推的是 Pareto，不是单点 TPS
 
-英文对照：`en/vllm/blog/performance/gpt-oss-optimizations.md`  
+英文对照：[en/vllm/blog/performance/gpt-oss-optimizations.md](../../../../en/vllm/blog/performance/gpt-oss-optimizations.md)  
 原文：https://vllm.ai/blog/2026-02-01-gpt-oss-optimizations  
 gpt-oss-120b MXFP4 MoE，B200/GB200。续篇见 [blackwell-inferencemax](blackwell-inferencemax.md)。
 

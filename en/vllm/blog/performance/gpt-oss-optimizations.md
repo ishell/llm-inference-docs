@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # gpt-oss on Blackwell: push the Pareto, not a single TPS point
 
-Chinese: `../../zh/vllm/blog/performance/gpt-oss-optimizations.md`  
+Chinese: [zh/vllm/blog/performance/gpt-oss-optimizations.md](../../../../zh/vllm/blog/performance/gpt-oss-optimizations.md)  
 gpt-oss-120b MXFP4 MoE, B200/GB200. Sibling: [blackwell-inferencemax](blackwell-inferencemax.md).
 
 Max-throughput ~**+38%**, min-latency ~**+13%** — both ends of the curve. FlashInfer: `trtllm-gen` / CUTLASS MoE, FP8 KV attention. `torch.compile` fuses AR+RMSNorm instead of hardcoded fusion. Pad+Quant / Finalize+Slice still rolling, ~6% expected. GPU too fast, CPU cannot dispatch: async scheduling (default in later releases) ~**10%**; `--stream-interval` buffers later tokens (first token still immediate). On gpt-oss-20b @ 1024 concurrency they quote ~**57%** e2e — output-queue bottleneck, not a 57% kernel.

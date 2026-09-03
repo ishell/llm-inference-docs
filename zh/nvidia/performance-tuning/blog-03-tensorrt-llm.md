@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 系列第 3 篇：用 TensorRT-LLM 调性能
 
-英文对照：`en/nvidia/performance-tuning/blog-03-tensorrt-llm.md`
+英文对照：[en/nvidia/performance-tuning/blog-03-tensorrt-llm.md](../../../en/nvidia/performance-tuning/blog-03-tensorrt-llm.md)
 
 第 1 篇给尺子，第 2 篇隔着 HTTP 打 NIM。本篇把 HTTP 请出房间：用 `trtllm-bench` 直接问引擎，再用 `trtllm-serve` 把调好的旋钮送上线。TensorRT-LLM 是开源推理引擎，旋钮很多；不调，它也会跑，只是未必按你在乎的那种快来跑。
 

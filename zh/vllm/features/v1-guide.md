@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # vLLM V1 指南（学习译文）
 
-英文对照：`en/vllm/features/v1-guide.md`  
+英文对照：[en/vllm/features/v1-guide.md](../../../en/vllm/features/v1-guide.md)  
 原文：https://docs.vllm.ai/en/stable/usage/v1_guide/  
 发布故事：[v1-alpha](../blog/architecture/v1-alpha.md)。解剖：[Anatomy](../blog/architecture/anatomy.md)。调优顺序：[optimization.md](../optimization/optimization.md)。
 

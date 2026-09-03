@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Mixture-of-Models：从选模型到造系统
 
-英文对照：`en/vllm/blog/serving/semantic-router-mom.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-mom.md](../../../../en/vllm/blog/serving/semantic-router-mom.md)  
 原文：https://vllm.ai/blog/2026-07-21-vllm-sr-new-chapter-mom  
 发布页自称 5k stars / 150+ 贡献者 / HF 累计 30 万下载——当时的社区数字。
 

@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Prefix cache 怎么记账
 
-英文对照：`en/vllm/features/prefix-caching-design.md`  
+英文对照：[en/vllm/features/prefix-caching-design.md](../../../en/vllm/features/prefix-caching-design.md)  
 原文：https://docs.vllm.ai/en/stable/design/prefix_caching/  
 对外说明：[prefix-caching.md](prefix-caching.md)。Anatomy 调度那一节是同一张图。
 

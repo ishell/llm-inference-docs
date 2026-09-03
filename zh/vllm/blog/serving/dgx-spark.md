@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DGX Spark：128GB 统一内存上的小并发 NVFP4，不是机房卡
 
-英文对照：`en/vllm/blog/serving/dgx-spark.md`  
+英文对照：[en/vllm/blog/serving/dgx-spark.md](../../../../en/vllm/blog/serving/dgx-spark.md)  
 原文：https://vllm.ai/blog/2026-06-01-vllm-dgx-spark  
 GB10，`sm_121`。Nemotron-3-Super-120B-A12B-NVFP4。数字是他们单机 demo，不是排行榜。
 

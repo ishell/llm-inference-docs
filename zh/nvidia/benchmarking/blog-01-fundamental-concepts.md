@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # LLM 推理基准测试：基本概念
 
-系列第 1 篇。英文对照：`en/nvidia/benchmarking/blog-01-fundamental-concepts.md`
+系列第 1 篇。英文对照：[en/nvidia/benchmarking/blog-01-fundamental-concepts.md](../../../en/nvidia/benchmarking/blog-01-fundamental-concepts.md)
 
 有人在等第一个字。可能是客服窗口里那个才亮起来的光标，也可能是你自己——对着一张还没长出句子的空白。LLM 推理的全部戏剧，几乎都发生在这个等待里：排队、把整段 prompt 读进记忆、然后一个 token 一个 token 地往外递。
 

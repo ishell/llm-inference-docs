@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Serving DeepSeek V4 in vLLM
 
-Chinese: `../../zh/vllm/blog/architecture/deepseek-v4.md`  
+Chinese: [zh/vllm/blog/architecture/deepseek-v4.md](../../../../zh/vllm/blog/architecture/deepseek-v4.md)  
 V4-Pro 1.6T / V4-Flash 285B, 1M context. Image `vllm/vllm-openai:deepseekv4-cu130`.
 
 V4 attention compresses KV and compute together: shared K/V (then inverse RoPE), `c4a` / `c128a` across tokens, DSA over top compressed slots, 128-token window for locality. At 1M, bf16 ≈ 9.62 GiB/sequence vs ~83.9 GiB for a 61-layer V3.2-style stack (~8.7×). Production uses fp4 indexer cache and fp8 attention cache, roughly another 2×.

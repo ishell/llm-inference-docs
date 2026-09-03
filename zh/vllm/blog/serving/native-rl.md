@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Native RL APIs：权重同步别再每家写一套 worker 补丁
 
-英文对照：`en/vllm/blog/serving/native-rl.md`  
+英文对照：[en/vllm/blog/serving/native-rl.md](../../../../en/vllm/blog/serving/native-rl.md)  
 原文：https://vllm.ai/blog/2026-05-28-native-rl-apis  
 2026-05-28。文档：Weight transfer、Async RL。例子在 vLLM `examples/rl`。HTTP 端点要 `VLLM_SERVER_DEV_MODE=1`。
 

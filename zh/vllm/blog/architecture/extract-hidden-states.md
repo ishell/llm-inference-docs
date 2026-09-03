@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 把 hidden states 从 vLLM 里取出来
 
-英文对照：`en/vllm/blog/architecture/extract-hidden-states.md`  
+英文对照：[en/vllm/blog/architecture/extract-hidden-states.md](../../../../en/vllm/blog/architecture/extract-hidden-states.md)  
 原文：https://vllm.ai/blog/2026-03-30-extract-hidden-states  
 PR#33736，`vllm>=0.18.0`。
 

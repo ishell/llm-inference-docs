@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # IsoExec: one execution contract for trainer and engine
 
-Chinese: `../../zh/vllm/blog/serving/isoexec.md`  
+Chinese: [zh/vllm/blog/serving/isoexec.md](../../../../zh/vllm/blog/serving/isoexec.md)  
 SkyRL × vLLM × Megatron. 8×H100, Qwen3.5-35B-A3B sync DAPO: mean rollout–train logprob gap on contract-covered regions **below 1e-6**, ~**25%** wall-clock vs the SkyRL baseline then. Repo: https://github.com/zanderjiang/SkyRL-IsoExec
 
 On-policy assumes the same policy twice. Floats are non-associative: kernels, batch shapes, TP/EP/SP layouts change token probabilities. VeXact / Fireworks: mismatch can destabilize GRPO and clip nearly half the tokens.

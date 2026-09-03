@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # InferenceMAX：Blackwell 相对 Hopper 是整条 Pareto，不是一个点
 
-英文对照：`en/vllm/blog/performance/blackwell-inferencemax.md`  
+英文对照：[en/vllm/blog/performance/blackwell-inferencemax.md](../../../../en/vllm/blog/performance/blackwell-inferencemax.md)  
 原文：https://vllm.ai/blog/2025-10-09-blackwell-inferencemax  
 2025-10。gpt-oss 120B / Llama 3.3 70B。后续数字见 [gpt-oss-optimizations](gpt-oss-optimizations.md)。
 

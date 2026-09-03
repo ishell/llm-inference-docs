@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 韩国首场 Meetup：350+ 报名，插件、TPU、量化评测
 
-英文对照：`en/vllm/blog/serving/korea-meetup-2025.md`  
+英文对照：[en/vllm/blog/serving/korea-meetup-2025.md](../../../../en/vllm/blog/serving/korea-meetup-2025.md)  
 原文：https://vllm.ai/blog/2025-09-16-vllm-meetup  
 2025-08-19 首尔。Rebellions + Red Hat。续篇 [korea-meetup-2026](korea-meetup-2026.md)。
 

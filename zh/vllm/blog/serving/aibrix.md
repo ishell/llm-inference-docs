@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # AIBrix：ByteDance 交出来的 vLLM 控制面
 
-英文对照：`en/vllm/blog/serving/aibrix.md`  
+英文对照：[en/vllm/blog/serving/aibrix.md](../../../../en/vllm/blog/serving/aibrix.md)  
 原文：https://vllm.ai/blog/2025-02-21-aibrix-release  
 2025-02-21。仓库：https://github.com/vllm-project/aibrix。2024 年初做起，已在字节多个业务上跑。白皮书和部署文档在仓库里。Slack：`#aibrix`。
 

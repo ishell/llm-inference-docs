@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # EAGLE 3 on Instinct：Quark MXFP4，Kimi-K2.5 约 1.69–2.00×
 
-英文对照：`en/vllm/blog/performance/eagle3-amd.md`  
+英文对照：[en/vllm/blog/performance/eagle3-amd.md](../../../../en/vllm/blog/performance/eagle3-amd.md)  
 原文：https://vllm.ai/blog/2026-07-13-eagle-3-amd-instinct  
 CUDA 侧 EAGLE 见 [p-eagle](p-eagle.md) / [eagle31](eagle-3-1.md)；AMD spec-decode 见 [amd-spec-decode](spec-decode-amd.md)。
 

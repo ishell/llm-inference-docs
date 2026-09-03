@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Qwen3.8-2.4T：Max 级开权，引擎不用换骨架
 
-英文对照：`en/vllm/blog/serving/qwen38.md`  
+英文对照：[en/vllm/blog/serving/qwen38.md](../../../../en/vllm/blog/serving/qwen38.md)  
 原文：https://vllm.ai/blog/2026-08-12-qwen3.8  
 2026-08-12。数字是演示。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # RDT 分片权重搬运：Kimi K2 7.53 秒
 
-英文对照：`en/vllm/blog/serving/rdt-weight-transfer.md`  
+英文对照：[en/vllm/blog/serving/rdt-weight-transfer.md](../../../../en/vllm/blog/serving/rdt-weight-transfer.md)  
 原文：https://vllm.ai/blog/2026-08-22-rdt-weight-transfer  
 Kimi K2 BF16：48×(8×H100)，训练 32 节点、推理 16 节点，**7.53 s** 同步约 **7.9 TB**，聚合带宽约 **1049 GB/s**。
 

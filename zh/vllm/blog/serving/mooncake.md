@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # vLLM × Mooncake：agent 的前缀，不该每回合重读一遍
 
-英文对照：`en/vllm/blog/serving/mooncake.md`  
+英文对照：[en/vllm/blog/serving/mooncake.md](../../../../en/vllm/blog/serving/mooncake.md)  
 原文：https://vllm.ai/blog/2026-05-06-mooncake-store  
 2026-05-06。Mooncake 仓库与 KVConnector 实现见原文链接。数字是 Codex / SWE-bench Pro 轨迹上的演示。
 

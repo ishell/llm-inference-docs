@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Qwen3.5 25K TPS/GPU: GDN + heterogeneous cache transfer, then the left Pareto
 
-Chinese: `../../zh/vllm/blog/serving/qwen35-25k-tps.md`  
+Chinese: [zh/vllm/blog/serving/qwen35-25k-tps.md](../../../../zh/vllm/blog/serving/qwen35-25k-tps.md)  
 GB200 NVL72. Qwen3.5-397B-A17B-NVFP4. ISL/OSL=8192/1024.
 
 System TPS/GPU ≠ per-user TPS. They sweep the **left** Pareto (aggregate throughput), concurrency 64–5120, not 1–32. Decode fixed 1×DEP8; prefill 4–8×DEP2. Peak **25,000 tok/s/GPU**. GSM8K **88%** on all five topologies, matching aggregated.

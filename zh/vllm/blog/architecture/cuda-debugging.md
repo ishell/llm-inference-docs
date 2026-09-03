@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # CUDA core dump：illegal memory access 落到哪只 kernel
 
-英文对照：`en/vllm/blog/architecture/cuda-debugging.md`  
+英文对照：[en/vllm/blog/architecture/cuda-debugging.md](../../../../en/vllm/blog/architecture/cuda-debugging.md)  
 原文：https://vllm.ai/blog/2025-08-11-cuda-debugging  
 续篇（hang + 源码行）见 [cuda-debugging-source](cuda-debugging-source.md)。
 

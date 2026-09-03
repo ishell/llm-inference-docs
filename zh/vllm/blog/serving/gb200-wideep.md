@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # DeepSeek-R1 上 GB200：Wide-EP 第二张成绩单
 
-英文对照：`en/vllm/blog/serving/gb200-wideep.md`  
+英文对照：[en/vllm/blog/serving/gb200-wideep.md](../../../../en/vllm/blog/serving/gb200-wideep.md)  
 原文：https://vllm.ai/blog/2026-02-03-dsr1-gb200-part1  
 接 [Wide-EP](large-scale.md) 的 H200 线（约 2.2k tok/s/H200）。数字是当时演示，不是你机器的承诺。
 

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Transformers modeling backend: new arches without a native port
 
-Chinese: `../../zh/vllm/blog/architecture/transformers-backend.md`  
+Chinese: [zh/vllm/blog/architecture/transformers-backend.md](../../../../zh/vllm/blog/architecture/transformers-backend.md)  
 April 2025; VLMs from July 2025.
 
 Native `modeling_*.py` must match the scheduler, paged KV, CUDA graphs — slow to land. `model_impl="transformers"` runs the Hugging Face module under PagedAttention and continuous batching. Architectures without a native port (Kyutai Helium then):

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # P-EAGLE: K drafts in one forward
 
-Chinese: `../../zh/vllm/blog/performance/p-eagle.md`  
+Chinese: [zh/vllm/blog/performance/p-eagle.md](../../../../zh/vllm/blog/performance/p-eagle.md)  
 vLLM ≥0.16.0, PR#32887. Numbers are **one B200**, GPT-OSS-20B. 
 
 EAGLE drafts autoregressively: K tokens need K draft forwards. Better drafts and larger K make that tax worse. P-EAGLE emits all K in one pass. Versus a public EAGLE-3 checkpoint: about **1.55–1.69×** TPS at low concurrency, still **1.05–1.25×** at c=64. Peak often at K=7; EAGLE-3 often at K=3 — parallel depth is almost free; linear drafting is not.

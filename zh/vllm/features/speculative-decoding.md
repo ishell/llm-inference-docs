@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Speculative decoding（功能页）
 
-英文对照：`en/vllm/features/speculative-decoding.md`  
+英文对照：[en/vllm/features/speculative-decoding.md](../../../en/vllm/features/speculative-decoding.md)  
 原文：https://docs.vllm.ai/en/stable/features/speculative_decoding/  
 原理与 2024 年那组数字：[博客 spec-decode](../blog/performance/spec-decode.md)。文中「还不支持」是历史。
 

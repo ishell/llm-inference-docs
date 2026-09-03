@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # LF AI 孵化与 2024 年中的路线图
 
-英文对照：`en/vllm/blog/architecture/lfai-roadmap.md`  
+英文对照：[en/vllm/blog/architecture/lfai-roadmap.md](../../../../en/vllm/blog/architecture/lfai-roadmap.md)  
 原文：https://vllm.ai/blog/2024-07-25-lfai-perf  
 2024-07。历史文献。
 

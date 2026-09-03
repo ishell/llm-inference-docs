@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Kimi K3 preview (before weights)
 
-Chinese: `../../zh/vllm/blog/serving/kimi-k3-preview.md`  
+Chinese: [zh/vllm/blog/serving/kimi-k3-preview.md](../../../../zh/vllm/blog/serving/kimi-k3-preview.md)  
 2026-07-22. Weights planned 2026-07-27. Launch numbers: [k3](kimi-k3.md).
 
 2.8T, 1M, native vision, KDA + AttnRes + 896/16 LatentMoE, MXFP4 + SiTU. Not a bigger K2. KDA keeps a recurrent state, not per-token KV. Large physical state blocks used to pin prefix hits to block boundaries — near-identical prompts still missed.

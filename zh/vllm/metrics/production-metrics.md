@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 生产指标 — vLLM
 
-英文对照：`en/vllm/metrics/production-metrics.md`  
+英文对照：[en/vllm/metrics/production-metrics.md](../../../en/vllm/metrics/production-metrics.md)  
 这些名字是**怎么算出来的**：`design-metrics.md`。客户端秒表（AIPerf / `vllm bench serve`）在门外；`/metrics` 在屋里。两套时钟可以对不齐，要对公式，不要对「都叫 TTFT」三个字母。
 
 OpenAI 兼容 API server 在 `/metrics` 暴露 Prometheus。

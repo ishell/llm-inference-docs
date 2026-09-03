@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # MiniMax-M1：Lightning Attention + MoE，当时 Docker 示例还钉 V0
 
-英文对照：`en/vllm/blog/serving/minimax-m1.md`  
+英文对照：[en/vllm/blog/serving/minimax-m1.md](../../../../en/vllm/blog/serving/minimax-m1.md)  
 原文：https://vllm.ai/blog/2025-06-30-minimax-m1  
 456B 总、约 45.9B 激活。M3 见 [minimax-m3](minimax-m3.md)。
 

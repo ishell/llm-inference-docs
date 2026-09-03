@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Parallel drafting: P-EAGLE / DFlash / DSpark
 
-Chinese: `../../zh/vllm/blog/performance/parallel-drafting.md`  
+Chinese: [zh/vllm/blog/performance/parallel-drafting.md](../../../../zh/vllm/blog/performance/parallel-drafting.md)  
 **Errata 2026-07-29**: Figure 1 had an environment bug; relative ranking unchanged — trust the corrected numbers, not the first figure.
 
 [P-EAGLE](p-eagle.md) collapses K draft forwards into one. DFlash and DSpark sit on the same road: the draft is not an autoregressive queue; one forward lays out K candidates. Verification is still **rejection sampling** — lossless; the target distribution does not change.

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Speculative decoding on AMD GPUs: five draft paths
 
-Chinese: `../../zh/vllm/blog/performance/spec-decode-amd.md`  
+Chinese: [zh/vllm/blog/performance/spec-decode-amd.md](../../../../zh/vllm/blog/performance/spec-decode-amd.md)  
 MI300X / MI355X, ROCm. Tables on the original page. Demo numbers, not a promise.
 
 Draft proposes, target verifies once: lossless. Five paths:

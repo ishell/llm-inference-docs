@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Kimi K2 tool-calling：坏的是 chat template 握手，不是 MoE kernel
 
-英文对照：`en/vllm/blog/serving/kimi-k2-accuracy.md`  
+英文对照：[en/vllm/blog/serving/kimi-k2-accuracy.md](../../../../en/vllm/blog/serving/kimi-k2-accuracy.md)  
 原文：https://vllm.ai/blog/2025-10-28-kimi-k2-accuracy  
 v0.11.0，K2-Vendor-Verifier。模板需晚于 Kimi-K2-0905 `94a4053` / Kimi-K2 `0102674`。
 

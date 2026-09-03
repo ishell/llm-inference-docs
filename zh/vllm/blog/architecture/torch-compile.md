@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # torch.compile：把优化从模型作者手里拿走
 
-英文对照：`en/vllm/blog/architecture/torch-compile.md`  
+英文对照：[en/vllm/blog/architecture/torch-compile.md](../../../../en/vllm/blog/architecture/torch-compile.md)  
 原文：https://vllm.ai/blog/2025-08-20-torch-compile  
 2025-08-20。从 Red Hat + Berkeley 的 office hours 整理。`optimization.md` 里的 `-O0`～`-O3`、`--enforce-eager`，底下就是这篇。
 

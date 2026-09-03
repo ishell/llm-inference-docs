@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # TileRT：decode 侧零 fork 的 P/D
 
-英文对照：`en/vllm/blog/serving/tilert.md`  
+英文对照：[en/vllm/blog/serving/tilert.md](../../../../en/vllm/blog/serving/tilert.md)  
 原文：https://vllm.ai/blog/2026-07-14-vllm-tilert-pd  
 TileRT 0.1.5，V1 KV Connector。
 

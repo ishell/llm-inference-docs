@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # LF AI incubation and the mid-2024 roadmap
 
-Chinese: `../../zh/vllm/blog/architecture/lfai-roadmap.md`  
+Chinese: [zh/vllm/blog/architecture/lfai-roadmap.md](../../../../zh/vllm/blog/architecture/lfai-roadmap.md)  
 July 2024. Historical.
 
 vLLM entered LF AI & Data incubation. About 8/10 Llama 3.1 8B/70B partners used vLLM for inference then. Roadmap words that later became posts: async scheduling, isolated API frontend, FA3, Flux, torch.compile, disagg prefill. Read it as a **time capsule**: V1, Wide-EP, Mooncake, Elastic EP were not written yet.

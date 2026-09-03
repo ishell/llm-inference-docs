@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # vLLM TPU: PyTorch and JAX on one XLA path
 
-Chinese: `../../zh/vllm/blog/architecture/vllm-tpu.md`  
+Chinese: [zh/vllm/blog/architecture/vllm-tpu.md](../../../../zh/vllm/blog/architecture/vllm-tpu.md)  
 `pip install vllm-tpu`.
 
 Gen-1 used PyTorch/XLA + MPMD and, by Cloud Next, ~**3.6×** Llama 3.1-8B on v6e-1 and ~**2.1×** 70B on v6e-8. This generation is **tpu-inference**: Torchax and JAX both lower JAX→XLA. Same `llama.py`, new lowering, about **+20%** throughput. Default: TPU-optimized code in tpu-inference if present, else upstream PyTorch via Torchax. Native JAX rewrites exist because GPU-shaped logic hurts TPUs, not because JAX is magically faster.

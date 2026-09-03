@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 大规模 serving：DeepSeek @ 2.2k tok/s/H200
 
-英文对照：`en/vllm/blog/serving/large-scale.md`  
+英文对照：[en/vllm/blog/serving/large-scale.md](../../../../en/vllm/blog/serving/large-scale.md)  
 原文：https://vllm.ai/blog/2025-12-17-large-scale-serving  
 2025-12-17。v0.11.0 拆掉 V0 最后一行。社区当时 1969 位贡献者、一个月 950+ commit。Coreweave H200 + IB ConnectX-7，生产形态多节点，持续约 **2.2k tokens/s/H200**（早先约 1.5k）。数字是这一天、这一套配方上的。
 

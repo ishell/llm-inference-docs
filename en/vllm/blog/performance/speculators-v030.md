@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Speculators v0.3.0: train EAGLE-3 drafts
 
-Chinese: `../../zh/vllm/blog/performance/speculators-v030.md`  
+Chinese: [zh/vllm/blog/performance/speculators-v030.md](../../../../zh/vllm/blog/performance/speculators-v030.md)  
 Later DFlash / online training: [v0.5.0](speculators-v050.md). Hidden export: [extract-hidden-states](../architecture/extract-hidden-states.md).
 
 Each verifier wants its own draft. v0.3 wires offline data → train → `vllm serve`. Data: three hidden layers, token ids, loss mask on assistant spans, verifier distribution. A custom worker intercepts prefill hidden; `.pt` files land async; `token_freq.pt` builds a small draft vocab (t2d/d2t). Training uses Eagle3 train-time-testing + FlexAttention sparse masks, concatenating sequences on the seq dim instead of padding.

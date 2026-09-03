@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Elastic Expert Parallelism：MoE 集群不必为了加减卡而重启
 
-英文对照：`en/vllm/blog/serving/elastic-ep.md`  
+英文对照：[en/vllm/blog/serving/elastic-ep.md](../../../../en/vllm/blog/serving/elastic-ep.md)  
 原文：https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism  
 2026-05-14。RFC #20323，落地 PR #34861；NIXL EP 是 PR #35627。容错方向见 RFC #30112。当时实现范围很窄，旗标以原文为准。
 

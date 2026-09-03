@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Benchmark CLI — vLLM
 
-Chinese: `../../zh/vllm/benchmarking/cli.md`  
+Chinese: [zh/vllm/benchmarking/cli.md](../../../zh/vllm/benchmarking/cli.md)  
 Official: https://docs.vllm.ai/en/stable/benchmarking/cli/
 
 The page’s own framing: this CLI is mainly **feature / regression evaluation**. For production vLLM servers they recommend **GuideLLM** (live progress, auto reports; more flexible datasets, request shapes, and traffic). `vllm bench serve` is still the in-tree client. NVIDIA’s stack uses AIPerf against the same OpenAI-compatible mouth. Names look alike; **formulas may differ — do not rank numbers across tools.**

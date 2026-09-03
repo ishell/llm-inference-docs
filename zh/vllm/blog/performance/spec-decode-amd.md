@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # AMD GPU 上的投机解码：五条草稿路
 
-英文对照：`en/vllm/blog/performance/spec-decode-amd.md`  
+英文对照：[en/vllm/blog/performance/spec-decode-amd.md](../../../../en/vllm/blog/performance/spec-decode-amd.md)  
 原文：https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus  
 MI300X / MI355X、ROCm。图和整表在原网页。数字是他们试验环境，不是你机器的承诺。
 

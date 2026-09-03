@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # EAGLE 3.1: holding attention drift
 
-Chinese: `../../zh/vllm/blog/performance/eagle-3-1.md`  
+Chinese: [zh/vllm/blog/performance/eagle-3-1.md](../../../../zh/vllm/blog/performance/eagle-3-1.md)  
 Nightly / then-upcoming v0.22.0. Kimi K2.6 NVFP4, TP4, GB200, non-disagg, SPEED-Bench coding: ~**2.03×** per-user output TPS at c=1, ~1.71× at c=4, ~1.66× at c=16.
 
 Chat templates, long context, OOD system prompts shrink EAGLE-3 accept length. **Attention drift**: deeper speculation, drafter attention leaves sink tokens and stares at its own tokens. Two causes: fused input dominated by higher-layer hidden; unnormalized residual grows magnitude across steps.

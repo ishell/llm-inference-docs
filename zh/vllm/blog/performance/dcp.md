@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Decode Context Parallelism：长上下文别再按头去切 KV
 
-英文对照：`en/vllm/blog/performance/dcp.md`  
+英文对照：[en/vllm/blog/performance/dcp.md](../../../../en/vllm/blog/performance/dcp.md)  
 原文：https://vllm.ai/blog/2026-08-07-decode-context-parallelism  
 2026-08-07。vLLM 支持 DCP 已近一年，这篇是在 agent 把上下文拉到 64K–1M 之后把它写清楚。`vllm serve` 里的 `-dcp` / `--decode-context-parallel-size`。NVIDIA TensorRT-LLM 侧相近的方向叫 Helix Parallelism。
 

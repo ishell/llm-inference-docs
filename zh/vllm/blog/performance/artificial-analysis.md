@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Artificial Analysis 榜：三只模型三只瓶颈，融合和 draft 都在 main
 
-英文对照：`en/vllm/blog/performance/artificial-analysis.md`  
+英文对照：[en/vllm/blog/performance/artificial-analysis.md](../../../../en/vllm/blog/performance/artificial-analysis.md)  
 原文：https://vllm.ai/blog/2026-05-11-vllm-tops-artificial-analysis  
 2026-05 那一周 DigitalOcean 测的。数字跟榜单当天走。
 

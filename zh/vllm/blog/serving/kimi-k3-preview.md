@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Kimi K3 preview：权重还没到，cache 先改了
 
-英文对照：`en/vllm/blog/serving/kimi-k3-preview.md`  
+英文对照：[en/vllm/blog/serving/kimi-k3-preview.md](../../../../en/vllm/blog/serving/kimi-k3-preview.md)  
 原文：https://vllm.ai/blog/2026-07-22-kimi-k3-preview  
 2026-07-22。权重计划 2026-07-27；落地数字见 [k3](kimi-k3.md)。
 

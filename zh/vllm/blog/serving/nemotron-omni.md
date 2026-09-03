@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Nemotron 3 Nano Omni：一只 30B/3B 吃图声视频，吞吐对比钉死每用户速率
 
-英文对照：`en/vllm/blog/serving/nemotron-omni.md`  
+英文对照：[en/vllm/blog/serving/nemotron-omni.md](../../../../en/vllm/blog/serving/nemotron-omni.md)  
 原文：https://vllm.ai/blog/2026-04-28-nemotron-omni  
 v0.20.0 `vllm[audio]`。256K。BF16/FP8/NVFP4。
 

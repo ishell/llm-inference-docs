@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 2024 年在 MI300X 上侍候 Llama：八个旋钮
 
-英文对照：`en/vllm/blog/architecture/mi300x-serving.md`  
+英文对照：[en/vllm/blog/architecture/mi300x-serving.md](../../../../en/vllm/blog/architecture/mi300x-serving.md)  
 原文：https://vllm.ai/blog/2024-10-23-vllm-serving-amd  
 2024-10-23。Embedded LLM / Hot Aisle。vLLM **0.6.2** 时代。数字是 8× MI300X、BF16、ShareGPT 相对 TGI 的演示。后来的 ROCm attention 路由见 [rocm-attention](rocm-attention.md)；硬件插件见 [hardware-plugin](hardware-plugin.md)。旗标是当时的，今日请以文档为准。
 

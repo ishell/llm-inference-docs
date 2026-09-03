@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Llama 3.1：128K 自动 chunked prefill；405B 单机走 FP8，多机优先 PP
 
-英文对照：`en/vllm/blog/serving/llama31.md`  
+英文对照：[en/vllm/blog/serving/llama31.md](../../../../en/vllm/blog/serving/llama31.md)  
 原文：https://vllm.ai/blog/2024-07-23-llama31  
 数字是 **早期** 参考，文内自己说几周内会再涨。
 

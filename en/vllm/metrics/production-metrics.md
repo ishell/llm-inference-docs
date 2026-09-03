@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Production metrics — vLLM
 
-Chinese: `../../zh/vllm/metrics/production-metrics.md`  
+Chinese: [zh/vllm/metrics/production-metrics.md](../../../zh/vllm/metrics/production-metrics.md)  
 How the names are computed: `design-metrics.md`. Client stopwatches (AIPerf / `vllm bench serve`) live outside the door; `/metrics` lives inside. The two clocks can disagree — compare formulas, not the three letters “TTFT”.
 
 The OpenAI-compatible API server exposes Prometheus at `/metrics`.

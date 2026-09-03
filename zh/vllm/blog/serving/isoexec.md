@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # IsoExec：同一份执行合同盖住训练和推理
 
-英文对照：`en/vllm/blog/serving/isoexec.md`  
+英文对照：[en/vllm/blog/serving/isoexec.md](../../../../en/vllm/blog/serving/isoexec.md)  
 原文：https://vllm.ai/blog/2026-08-21-isoexec  
 SkyRL × vLLM × Megatron。8×H100，Qwen3.5-35B-A3B 同步 DAPO：合同覆盖区域的平均 rollout–train logprob 差压到 **1e-6 以下**，相对当时 SkyRL 基线约 **25%** 墙钟。仓库：https://github.com/zanderjiang/SkyRL-IsoExec
 

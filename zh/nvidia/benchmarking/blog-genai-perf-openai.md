@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 用 GenAI-Perf 打 OpenAI 兼容 API
 
-英文对照：`en/nvidia/benchmarking/blog-genai-perf-openai.md`
+英文对照：[en/nvidia/benchmarking/blog-genai-perf-openai.md](../../../en/nvidia/benchmarking/blog-genai-perf-openai.md)
 
 **GenAI-Perf 已停更，新项目用 AIPerf。** 这篇是它的出生证明：为什么 LLM 不能只用普通 Web 压测交差，以及怎样用同一把客户端尺子去打 NIM、Triton、TensorRT-LLM、vLLM。
 

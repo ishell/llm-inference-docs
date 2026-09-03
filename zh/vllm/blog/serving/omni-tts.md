@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # TTS：Talker 要 TTFP，Code2Wav 要吞吐
 
-英文对照：`en/vllm/blog/serving/omni-tts.md`  
+英文对照：[en/vllm/blog/serving/omni-tts.md](../../../../en/vllm/blog/serving/omni-tts.md)  
 原文：https://vllm.ai/blog/2026-06-23-vllm-omni-tts  
 覆盖 Qwen3-TTS、VoxCPM2、Higgs Audio V3、Fish Speech S2 Pro。
 

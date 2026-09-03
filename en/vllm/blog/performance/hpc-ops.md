@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # HPC-Ops: mixed-length decode attention and small-expert MoE on H20
 
-Chinese: `../../zh/vllm/blog/performance/hpc-ops.md`  
+Chinese: [zh/vllm/blog/performance/hpc-ops.md](../../../../zh/vllm/blog/performance/hpc-ops.md)  
 Hopper, especially H20. Attention PR #46020, MoE PR #45924.
 
 Fixed split-KV: mixed lengths in one batch, wall time pinned by the heaviest CTA. HPC-Ops tiles KV at 64 tokens per step and buckets CTAs evenly; a persistent grid drains the task map. Mixed-length decode up to **2.95×** vs static split-KV, ~**2.25×** avg vs FlashInfer/FA. `HpcRopeNorm` fuses QK-Norm, RoPE, KV write (plus query quant in FP8) into one prologue.

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Quickstart — vLLM
 
-英文对照：`en/vllm/getting-started/quickstart.md`  
+英文对照：[en/vllm/getting-started/quickstart.md](../../../en/vllm/getting-started/quickstart.md)  
 旋钮顺序：`../optimization/optimization.md`。`vllm serve` 的性能相关旗标：`serve.md`（整页 CLI 不搬）。
 
 Linux；Python **3.10–3.13**。NVIDIA GPU 官方推荐 `uv`：

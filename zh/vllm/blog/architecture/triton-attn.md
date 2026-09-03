@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Triton Attention：一份源码伺候三家卡
 
-英文对照：`en/vllm/blog/architecture/triton-attn.md`  
+英文对照：[en/vllm/blog/architecture/triton-attn.md](../../../../en/vllm/blog/architecture/triton-attn.md)  
 原文：https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive  
 2026-03-04。IBM Research + Red Hat + AMD 的 office hours。kernel：`vllm/v1/attention/ops/triton_unified_attention.py`（大约 800 行；对照 FlashAttention 3 大约 7 万行）。论文：*The Anatomy of a Triton Attention Kernel*。
 

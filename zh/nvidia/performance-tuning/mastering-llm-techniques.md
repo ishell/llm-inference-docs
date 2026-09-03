@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Mastering LLM Techniques：推理优化
 
-英文全文：`en/nvidia/performance-tuning/mastering-llm-techniques.md`
+英文全文：[en/nvidia/performance-tuning/mastering-llm-techniques.md](../../../en/nvidia/performance-tuning/mastering-llm-techniques.md)
 
 后面 NIM / TensorRT-LLM / vLLM 的调优文，都默认你读过这篇。它不是某一条命令的说明书，而是一张地图：推理为什么贵，记忆为什么胀，刀可以往哪几处磨。
 

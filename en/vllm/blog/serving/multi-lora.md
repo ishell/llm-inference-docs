@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Multi-LoRA on MoE: many adapters, one GPU
 
-Chinese: `../../zh/vllm/blog/serving/multi-lora.md`  
+Chinese: [zh/vllm/blog/serving/multi-lora.md](../../../../zh/vllm/blog/serving/multi-lora.md)  
 vLLM ≥0.15.0. GPT-OSS 20B as the running example. SageMaker / Bedrock have extra tuned configs.
 
 Freeze the base; swap LoRA per request. Five customers at 10% each need one GPU, not five. Each MoE expert’s `gate_up` / `down` gets shrink+expand — **four skinny GEMMs per expert per adapter** (r typically 16–64, 100–300× smaller than hidden). Dense Multi-LoRA kernels do not know expert routing, so `fused_moe_lora` adds an extra grid dim for active adapters.

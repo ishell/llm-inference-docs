@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Arm CPU 上的 vLLM：瓶颈不在 GEMM
 
-英文对照：`en/vllm/blog/architecture/arm-cpus.md`  
+英文对照：[en/vllm/blog/architecture/arm-cpus.md](../../../../en/vllm/blog/architecture/arm-cpus.md)  
 原文：https://vllm.ai/blog/2026-07-29-optimizing-vllm-on-arm-cpus  
 2026-07-29。Arm / PyTorch / oneDNN / KleidiAI。数字是 Neoverse 上相对 2025-10 BF16 基线的演示。
 

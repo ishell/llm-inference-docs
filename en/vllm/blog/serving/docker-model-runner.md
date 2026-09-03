@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Docker Model Runner × vLLM: safetensors for throughput, GGUF still llama.cpp
 
-Chinese: `../../zh/vllm/blog/serving/docker-model-runner.md`  
+Chinese: [zh/vllm/blog/serving/docker-model-runner.md](../../../../zh/vllm/blog/serving/docker-model-runner.md)  
 Then: x86_64 + NVIDIA.
 
 ```

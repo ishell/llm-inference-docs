@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # SAAR: agents ask whether a switch is legal
 
-Chinese: `../../zh/vllm/blog/serving/semantic-router-session.md`  
+Chinese: [zh/vllm/blog/serving/semantic-router-session.md](../../../../zh/vllm/blog/serving/semantic-router-session.md)  
 2026-06-02. Ships in [Themis](semantic-router-themis.md).  Numbers are policy-matrix + ROCm demos.
 
 A prompt router may send a tool result to a cheaper model and break the loop. SAAR keeps signal → decision → selection, then wraps it. Send `x-session-id`.

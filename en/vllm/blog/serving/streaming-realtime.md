@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Streaming input and `/v1/realtime`
 
-Chinese: `../../zh/vllm/blog/serving/streaming-realtime.md`  
+Chinese: [zh/vllm/blog/serving/streaming-realtime.md](../../../../zh/vllm/blog/serving/streaming-realtime.md)  
 PR #28973.
 
 Outputs can already SSE. Inputs often wait for the full prompt — speech, simultaneous translation, realtime agents cannot. This post wires **streamable inputs** and an OpenAI-style **`/v1/realtime` WebSocket** into vLLM.

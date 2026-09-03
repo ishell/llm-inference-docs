@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Seven ROCm attention backends
 
-Chinese: `../../zh/vllm/blog/architecture/rocm-attention.md`  
+Chinese: [zh/vllm/blog/architecture/rocm-attention.md](../../../../zh/vllm/blog/architecture/rocm-attention.md)  
 Default Triton attention: [triton-attn](triton-attn.md). This post is **AITER FA’s three paths**.
 
 `ROCM_AITER_FA` splits a batch into Prefill / Extend / Decode: new sequences use `flash_attn_varlen_func` (CDNA matrix cores); continuing long context uses chunked attention + LSE merge (~32K tokens per iteration); decode uses AITER `pa_fwd_asm`. The model runner reorders to `[decode:extend:prefill]` (`reorder_batch_threshold=1`) so each kernel sees contiguous memory.

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Intel Arc Pro B：把 MoE 专家塞进一张消费级卡
 
-英文对照：`en/vllm/blog/architecture/intel-arc.md`  
+英文对照：[en/vllm/blog/architecture/intel-arc.md](../../../../en/vllm/blog/architecture/intel-arc.md)  
 原文：https://vllm.ai/blog/2025-11-11-intel-arc-pro-b  
 2025-11-11。XPU / SYCL。数字是当时 4–8 张 Arc Pro B60 上的演示。
 

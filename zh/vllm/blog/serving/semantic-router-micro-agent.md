@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Micro-agent：一个 model 名后面的有界协作
 
-英文对照：`en/vllm/blog/serving/semantic-router-micro-agent.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-micro-agent.md](../../../../en/vllm/blog/serving/semantic-router-micro-agent.md)  
 原文：https://vllm.ai/blog/2026-06-29-micro-agent-frontier-models  
 分数是他们 closed/hybrid 配方的 scorecard，不是「每个请求都该上全套闭源模型」。
 

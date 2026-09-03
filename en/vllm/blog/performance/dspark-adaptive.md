@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # DSpark adaptive verification: budget from confidence × load
 
-Chinese: `../../zh/vllm/blog/performance/dspark-adaptive.md`  
+Chinese: [zh/vllm/blog/performance/dspark-adaptive.md](../../../../zh/vllm/blog/performance/dspark-adaptive.md)  
 PR #47808, `enable_adaptive_verification`. Demo: DS-V4-Pro TP8, 8×B300.
 
 Fixed-K speculation is sweet at low concurrency; at high concurrency draft + verify saturates the GPU and system TPS falls. Each DSpark step sets the verify budget from **draft confidence × current load**: go deep when idle, shorten when crowded. Official curves stay on the Pareto frontier out to **c=256** — not “always K=7”.

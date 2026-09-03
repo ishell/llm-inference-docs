@@ -4,7 +4,7 @@
 
 建议从网页首页或下面的阅读顺序读起。怎么把压测、性能测试和调优串起来，见 [zh/GUIDE.md](zh/GUIDE.md)。
 
-目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是完整翻译。vLLM 博客全表在 `en/vllm/blog/CATALOG.md`；带日期的 **128 篇都有中英学习译文**（压缩笔记）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
+目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是完整翻译。vLLM 博客全表在 [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md)；带日期的 **128 篇都有中英学习译文**（压缩笔记）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
@@ -160,16 +160,16 @@ assets/                     # 正文图（与 zh/en 相对路径对齐）
 | blog / serving | [semantic-router](zh/vllm/blog/serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router | 学习译文 |
 | blog / serving | [semantic-router-iris](zh/vllm/blog/serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris | 学习译文 |
 | blog / serving | [vllm-omni](zh/vllm/blog/serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni | 学习译文 |
-| blog | [其余 128 篇](zh/vllm/blog/README.md) | `en/vllm/blog/CATALOG.md` | 学习译文（压缩）；全表见博客 README |
+| blog | [其余 128 篇](zh/vllm/blog/README.md) | [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md) | 学习译文（压缩）；全表见博客 README |
 
 ## 建议阅读顺序
 
 1. [zh/GUIDE.md](zh/GUIDE.md)
-2. `zh/nvidia/benchmarking/blog-01-fundamental-concepts.md`
+2. [zh/nvidia/benchmarking/blog-01-fundamental-concepts.md](zh/nvidia/benchmarking/blog-01-fundamental-concepts.md)
 3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
-4. 尺子本身：`zh/nvidia/tools/aiperf.md` → `aiperf-metrics.md` → `aiperf-load-generator.md` → `aiperf-comprehensive.md`（传统 Triton 模型再读 Perf Analyzer + Triton 调优）
-5. `zh/vllm/optimization/optimization.md` 与 `zh/vllm/getting-started/serve.md`
-6. `zh/vllm/blog/MUST-READ.md`（主线 → 第二–五波机制；其余 CATALOG 按需）
+4. 尺子本身：[zh/nvidia/tools/aiperf.md](zh/nvidia/tools/aiperf.md) → `aiperf-metrics.md` → `aiperf-load-generator.md` → `aiperf-comprehensive.md`（传统 Triton 模型再读 Perf Analyzer + Triton 调优）
+5. [zh/vllm/optimization/optimization.md](zh/vllm/optimization/optimization.md) 与 [zh/vllm/getting-started/serve.md](zh/vllm/getting-started/serve.md)
+6. [zh/vllm/blog/MUST-READ.md](zh/vllm/blog/MUST-READ.md)（主线 → 第二–五波机制；其余 CATALOG 按需）
 
 ## 刻意不做的
 

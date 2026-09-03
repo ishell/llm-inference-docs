@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # SAAR：长程 agent 问的是「现在能不能换模」
 
-英文对照：`en/vllm/blog/serving/semantic-router-session.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-session.md](../../../../en/vllm/blog/serving/semantic-router-session.md)  
 原文：https://vllm.ai/blog/2026-06-02-session-aware-agentic-routing  
 2026-06-02。数字是确定性矩阵 + AMD ROCm 现场跑，当演示。产品化写进 [Themis](semantic-router-themis.md)。
 

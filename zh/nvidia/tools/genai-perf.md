@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # GenAI-Perf
 
-英文对照：`en/nvidia/tools/genai-perf.md`
+英文对照：[en/nvidia/tools/genai-perf.md](../../../en/nvidia/tools/genai-perf.md)
 
 官方横幅：**正在停更。** 新项目用 AIPerf（`aiperf.md`）。命令几乎同构，概念仍适用。NIM Performance 页面上的老数字，有一批就是用这套仪式测出来的。换工具，不要换尺子。
 

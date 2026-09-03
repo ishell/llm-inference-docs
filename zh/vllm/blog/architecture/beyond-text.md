@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 文本之外：pooling 模型把图吐回来
 
-英文对照：`en/vllm/blog/architecture/beyond-text.md`  
+英文对照：[en/vllm/blog/architecture/beyond-text.md](../../../../en/vllm/blog/architecture/beyond-text.md)  
 原文：https://vllm.ai/blog/2025-09-05-beyond-text-generation  
 2025-09-05。IBM / TerraTorch。后来的多模态流水线见 [vllm-omni](../serving/vllm-omni.md)；插件面见 [plugin-system](plugin-system.md)。
 

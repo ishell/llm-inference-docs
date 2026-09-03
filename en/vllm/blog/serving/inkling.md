@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # TML Inkling day-0
 
-Chinese: `../../zh/vllm/blog/serving/inkling.md`  
+Chinese: [zh/vllm/blog/serving/inkling.md](../../../../zh/vllm/blog/serving/inkling.md)  
 2026-07-15. Demo: 4× GB200. 
 
 1T multimodal (text/image/audio → text), native 1M context. 66 layers: 11 full + 55 SWA GQA. Position is **relative attention**, not RoPE. Four window-4 **sconv**s per layer. MoE: 256 routed top-6 + 2 shared **expert sinks**. NVFP4 on routed experts only; 8 MTP heads in BF16. **AMD not yet** (needs a relative-attn kernel). **Not a new engine** — sconv cache is a virtual SWA KV layer.

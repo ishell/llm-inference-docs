@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Structured decoding：给会说话的模型一套不会说错格式的栅栏
 
-英文对照：`en/vllm/blog/performance/struct-decode.md`  
+英文对照：[en/vllm/blog/performance/struct-decode.md](../../../../en/vllm/blog/performance/struct-decode.md)  
 原文：https://vllm.ai/blog/2025-01-14-struct-decode-intro  
 2025-01-14。V1 当时还「即将发布」——那些路线图条目后来大部分进了 V1。JSON mode、function calling、agent 工具参数，底下往往就是这件事。
 

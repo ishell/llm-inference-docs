@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Athena v0.2：换底座，当系统脑
 
-英文对照：`en/vllm/blog/serving/semantic-router-athena.md`  
+英文对照：[en/vllm/blog/serving/semantic-router-athena.md](../../../../en/vllm/blog/serving/semantic-router-athena.md)  
 原文：https://vllm.ai/blog/2026-03-10-v0.2-vllm-sr-athena-release  
 视觉路径的坑见 [vision](semantic-router-vision.md)。
 

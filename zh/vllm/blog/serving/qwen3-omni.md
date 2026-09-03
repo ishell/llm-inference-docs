@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Qwen3-Omni：Thinker / Talker / Code2Wav 三截
 
-英文对照：`en/vllm/blog/serving/qwen3-omni.md`  
+英文对照：[en/vllm/blog/serving/qwen3-omni.md](../../../../en/vllm/blog/serving/qwen3-omni.md)  
 原文：https://vllm.ai/blog/2026-07-01-qwen3-omni-optimization  
 TTS 工程细节见 [omni-tts](omni-tts.md)。
 

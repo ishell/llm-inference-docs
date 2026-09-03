@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 韩国 Meetup 2026：V1、playground、NPU 插件、Omni 拆管线
 
-英文对照：`en/vllm/blog/serving/korea-meetup-2026.md`  
+英文对照：[en/vllm/blog/serving/korea-meetup-2026.md](../../../../en/vllm/blog/serving/korea-meetup-2026.md)  
 原文：https://vllm.ai/blog/2026-04-14-vllm-korea-meetup-2026  
 首尔，2026-04-02。Rebellions / SqueezeBits / Red Hat APAC。
 

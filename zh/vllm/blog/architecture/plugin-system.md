@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 插件系统：改 vLLM 不必养一座 fork
 
-英文对照：`en/vllm/blog/architecture/plugin-system.md`  
+英文对照：[en/vllm/blog/architecture/plugin-system.md](../../../../en/vllm/blog/architecture/plugin-system.md)  
 原文：https://vllm.ai/blog/2025-11-20-vllm-plugin-system  
 2025-11-20。先发在 Medium。和两周一次的发布节奏对着读：fork 会变成全职工作。
 

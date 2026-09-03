@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # 挂死的 kernel 对回源码行
 
-英文对照：`en/vllm/blog/architecture/cuda-debugging-source.md`  
+英文对照：[en/vllm/blog/architecture/cuda-debugging-source.md](../../../../en/vllm/blog/architecture/cuda-debugging-source.md)  
 原文：https://vllm.ai/blog/2025-12-03-improved-cuda-debugging  
 接 [core dump](cuda-debugging.md)。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Gemma 4 Day-0：NVIDIA / AMD / Intel / TPU 一起开，Apache 2.0
 
-英文对照：`en/vllm/blog/serving/gemma4.md`  
+英文对照：[en/vllm/blog/serving/gemma4.md](../../../../en/vllm/blog/serving/gemma4.md)  
 原文：https://vllm.ai/blog/2026-04-02-gemma4  
 E2B / E4B / 26B MoE / 31B Dense。菜谱在 model card 和 GKE/GCE demo。
 

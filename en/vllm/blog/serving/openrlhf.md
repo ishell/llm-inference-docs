@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # OpenRLHF × vLLM: generation is 90% of RLHF
 
-Chinese: `../../zh/vllm/blog/serving/openrlhf.md`  
+Chinese: [zh/vllm/blog/serving/openrlhf.md](../../../../zh/vllm/blog/serving/openrlhf.md)  
 April 2025. Later pause/resume APIs: [Native RL](native-rl.md).
 
 Chain-of-thought generation can be **90%** of RLHF wall time. OpenRLHF stitches vLLM generation to ZeRO-3 training on Ray: after the trainer updates weights, `ColocateWorkerExtension` **IPC-loads** them into colocated vLLM workers instead of shipping the full tensor set over TCP.

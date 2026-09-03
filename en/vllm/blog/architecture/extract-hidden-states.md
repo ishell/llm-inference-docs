@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # Extracting hidden states from vLLM
 
-Chinese: `../../zh/vllm/blog/architecture/extract-hidden-states.md`  
+Chinese: [zh/vllm/blog/architecture/extract-hidden-states.md](../../../../zh/vllm/blog/architecture/extract-hidden-states.md)  
 PR#33736, `vllm>=0.18.0`.
 
 EAGLE-3 / P-EAGLE / DFlash drafts eat verifier internals, not surface text. Training them needs lots of hidden states. The old options were ugly: generate with `transformers` (lose vLLM’s distributed path; risk mismatch with production hidden) or patch vLLM (often disable prefix cache / async / auto-batch).

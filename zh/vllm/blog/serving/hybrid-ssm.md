@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Hybrid SSM 的 P/D 分离：两种记忆，同一根 RDMA 管子
 
-英文对照：`en/vllm/blog/serving/hybrid-ssm.md`  
+英文对照：[en/vllm/blog/serving/hybrid-ssm.md](../../../../en/vllm/blog/serving/hybrid-ssm.md)  
 原文：https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg  
 2026-04-21。`vllm>=0.20.0`。Nemotron-H 这类模型：Mamba 式 SSM 层和满注意力层插花。标准 Transformer 的 NIXL P/D 按统一 KV 块来；SSM 不是那种块。这篇是加法：没有 SSM 层时旧路径不动。
 

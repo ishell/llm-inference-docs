@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # 投机解码：最多 2.8×，高 QPS 时会反过来咬人
 
-英文对照：`en/vllm/blog/performance/spec-decode.md`  
+英文对照：[en/vllm/blog/performance/spec-decode.md](../../../../en/vllm/blog/performance/spec-decode.md)  
 原文：https://vllm.ai/blog/2024-10-17-spec-decode  
 2024-10-17，整理自 Office Hours。CLI 旗标是当时的；今日请以文档 `speculative_decoding` 为准。图、幻灯、录像在原网页。
 

@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # vime：slime 训练 + vLLM rollout，CLI 用 `--vllm-` 前缀
 
-英文对照：`en/vllm/blog/serving/vime.md`  
+英文对照：[en/vllm/blog/serving/vime.md](../../../../en/vllm/blog/serving/vime.md)  
 原文：https://vllm.ai/blog/2026-06-09-announcing-vime  
 ROCm 见 [vime-rocm](vime-rocm.md)。
 

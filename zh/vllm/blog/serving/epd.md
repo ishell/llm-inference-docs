@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # Encoder 分离（EPD）：别让一张图堵住整列车
 
-英文对照：`en/vllm/blog/serving/epd.md`  
+英文对照：[en/vllm/blog/serving/epd.md](../../../../en/vllm/blog/serving/epd.md)  
 原文：https://vllm.ai/blog/2025-12-15-vllm-epd  
 2025-12-15。标题里的 EPD 是 **Encoder / Prefill-Decode 分离**，不是 Router 那篇的文本 P/D——两件事常被缩写成「分离」。原生实现 PR #25233，**v0.11.1** 起。
 

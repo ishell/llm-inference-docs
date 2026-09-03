@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Speculators v0.5.0：DFlash 与在线 hidden
 
-英文对照：`en/vllm/blog/performance/speculators-v050.md`  
+英文对照：[en/vllm/blog/performance/speculators-v050.md](../../../../en/vllm/blog/performance/speculators-v050.md)  
 原文：https://vllm.ai/blog/2026-05-28-speculators-v050  
 vLLM ≥0.20.0（PR#38300）。
 

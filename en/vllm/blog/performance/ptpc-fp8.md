@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # PTPC-FP8: closer-to-BF16 FP8 on ROCm
 
-Chinese: `../../zh/vllm/blog/performance/ptpc-fp8.md`  
+Chinese: [zh/vllm/blog/performance/ptpc-fp8.md](../../../../zh/vllm/blog/performance/ptpc-fp8.md)  
 vLLM ≥0.7.3. MI300X demos.
 
 `--quantization ptpc_fp8`: quantize HF weights **on the fly**. Per-token activation scales, per-channel weight scales — outliers sit in the same channels; per-tensor FP8 starves most values of bits.

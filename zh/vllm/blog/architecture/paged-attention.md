@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # vLLM 立项：用 PagedAttention 让 serving 便宜下来
 
-英文对照：`en/vllm/blog/architecture/paged-attention.md`  
+英文对照：[en/vllm/blog/architecture/paged-attention.md](../../../../en/vllm/blog/architecture/paged-attention.md)  
 原文：https://vllm.ai/blog/2023-06-20-vllm  
 作者：Woosuk Kwon、Zhuohan Li（UC Berkeley），2023-06-20。
 

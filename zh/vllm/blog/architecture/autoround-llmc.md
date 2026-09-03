@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # AutoRound × LLM Compressor：W4A16 进 compressed-tensors，vLLM 直接 serve
 
-英文对照：`en/vllm/blog/architecture/autoround-llmc.md`  
+英文对照：[en/vllm/blog/architecture/autoround-llmc.md](../../../../en/vllm/blog/architecture/autoround-llmc.md)  
 原文：https://vllm.ai/blog/2025-12-09-intel-autoround-llmc  
 Omni 侧见 [omni-autoround](../serving/omni-autoround.md)。
 

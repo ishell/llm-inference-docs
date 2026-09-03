@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # GenAI-Perf
 
-Chinese study note: `../../zh/nvidia/tools/genai-perf.md`
+Chinese study note: [zh/nvidia/tools/genai-perf.md](../../../zh/nvidia/tools/genai-perf.md)
 
 Official banner: **being phased out.** New work uses AIPerf (`aiperf.md`). Commands are nearly isomorphic; the concepts still apply. Some numbers on older NIM Performance pages were taken with this ritual. Change the tool; do not change the ruler.
 

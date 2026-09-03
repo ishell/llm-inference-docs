@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Shared Memory IPC Cache：大图不要在进程之间复印
 
-英文对照：`en/vllm/blog/serving/shm-ipc.md`  
+英文对照：[en/vllm/blog/serving/shm-ipc.md](../../../../en/vllm/blog/serving/shm-ipc.md)  
 原文：https://vllm.ai/blog/2025-11-13-shm-ipc-cache  
 2025-11-13。Cohere 贡献，先发在他们博客。`optimization.md` 里 `mm_processor_cache_type="shm"` 就是这篇。
 

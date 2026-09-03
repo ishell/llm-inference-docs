@@ -7,7 +7,7 @@ fetched: 2026-08-31
 
 # vLLM V1：把核心拆开重装（alpha 公告）
 
-英文对照：`en/vllm/blog/architecture/v1-alpha.md`  
+英文对照：[en/vllm/blog/architecture/v1-alpha.md](../../../../en/vllm/blog/architecture/v1-alpha.md)  
 原文：https://vllm.ai/blog/2025-01-27-v1-alpha-release  
 2025-01-27。这是 **alpha 发布稿**。文中「还不支持 LoRA / spec decode / PP」是当时的缺口，不是今天的功能表。V1 后来成了默认引擎。结构细节以 [Anatomy](anatomy.md) 为准。
 

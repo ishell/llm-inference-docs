@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # Nemotron Nano 2 VL：12B 视频/文档，EVS 砍冗余帧
 
-英文对照：`en/vllm/blog/serving/nemotron-nano-vl.md`  
+英文对照：[en/vllm/blog/serving/nemotron-nano-vl.md](../../../../en/vllm/blog/serving/nemotron-nano-vl.md)  
 原文：https://vllm.ai/blog/2025-10-31-run-multimodal-reasoning-agents-nvidia-nemotron  
 128K。CRADIOH-V2 encoder + EVS + Nano 2 LLM。当时 nightly。
 

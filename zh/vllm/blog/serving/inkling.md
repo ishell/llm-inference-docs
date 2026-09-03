@@ -7,7 +7,7 @@ fetched: 2026-09-01
 
 # TML Inkling：1T 多模，相对位置，短卷积当 KV
 
-英文对照：`en/vllm/blog/serving/inkling.md`  
+英文对照：[en/vllm/blog/serving/inkling.md](../../../../en/vllm/blog/serving/inkling.md)  
 原文：https://vllm.ai/blog/2026-07-15-inkling  
 2026-07-15。数字是 4×GB200 上的演示。
 
