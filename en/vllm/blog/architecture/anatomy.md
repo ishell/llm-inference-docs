@@ -1,18 +1,13 @@
 ---
 source: https://vllm.ai/blog/2025-09-05-anatomy-of-vllm
 lang: en
-fetched: 2026-08-30
+fetched: 2026-09-03
 ---
 
-Inside vLLM: Anatomy of a High-Throughput LLM Inference System | vLLM Blog
+# Inside vLLM: Anatomy of a High-Throughput LLM Inference System
 
-Menu
+Originally posted on Aleksa Gordić's site. Chinese: [zh/vllm/blog/architecture/anatomy.md](../../../../zh/vllm/blog/architecture/anatomy.md)
 
-Theme
-
-Table of Contents
-
-Note: Originally posted on Aleksa Gordic's website.
 
 ### From paged attention, continuous batching, prefix caching, specdec, etc. to multi-GPU, multi-node dynamic serving at scale
 
@@ -907,17 +902,3 @@ References
 9. "EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty" https://arxiv.org/abs/2401.15077 https://arxiv.org/abs/2401.15077
 10. "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads" https://arxiv.org/abs/2401.10774 https://arxiv.org/abs/2401.10774
 11. LMCache https://github.com/LMCache/LMCache https://github.com/LMCache/LMCache
-
-### From Day 0 to Production SLAs: Serving GLM-5.2 on 24 NVIDIA B300 GPUs with vLLM
-
-Jul 23, 2026·18 min readHow we took GLM-5.2-NVFP4 from 40 ms to 17 ms mean TPOT on 24 B300 GPUs with vLLM: P/D disaggregation, MTP speculative decoding, Model Runner V2, and the SLA-first trade-offs behind the final configuration.
-
-### Exploring Speculative Decoding in vLLM on AMD GPUs
-
-Aug 23, 2026·242 min readA practical guide to speculative decoding in vLLM on AMD GPUs, covering draft-and-verify mechanics, MTP, EAGLE-3, DFlash, DSpark, configuration, tuning, and benchmark results.
-
-### Adaptive Verification in vLLM: DSpark confidence-scheduled verification
-
-Aug 14, 2026·8 min readSizing the DSpark draft-verification budget from per-request confidence instead of verifying every drafted token, so one configuration holds the throughput/latency frontier from batch size 1 to 256.
-
-Table of Contents
