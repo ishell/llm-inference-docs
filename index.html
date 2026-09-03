@@ -73,6 +73,15 @@
         background: #fff;
         border: 1px solid #d6d0c4;
       }
+      .note-meta {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin: 0.15rem 0 1.4rem;
+      }
+      .note-meta a {
+        font-weight: 500;
+        word-break: break-all;
+      }
     </style>
   </head>
   <body>
@@ -98,6 +107,60 @@
           depth: 3,
           hideOtherSidebarContent: true,
         },
+        plugins: [
+          function (hook, vm) {
+            function escapeHtml(s) {
+              return String(s).replace(/[&<>"']/g, function (c) {
+                return {
+                  "&": "&amp;",
+                  "<": "&lt;",
+                  ">": "&gt;",
+                  '"': "&quot;",
+                  "'": "&#39;",
+                }[c];
+              });
+            }
+            function parseFrontMatter(content) {
+              var m = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+              if (!m) return { attrs: {}, body: content };
+              var attrs = {};
+              m[1].split(/\r?\n/).forEach(function (line) {
+                var i = line.indexOf(":");
+                if (i < 0) return;
+                attrs[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+              });
+              return { attrs: attrs, body: content.slice(m[0].length) };
+            }
+            hook.beforeEach(function (content) {
+              var parsed = parseFrontMatter(content);
+              vm.frontmatter = parsed.attrs;
+              return parsed.body;
+            });
+            hook.afterEach(function (html) {
+              var fm = vm.frontmatter || {};
+              var bits = [];
+              if (/^https?:\/\//.test(fm.source || "")) {
+                bits.push(
+                  '原文 <a href="' +
+                    escapeHtml(fm.source) +
+                    '" target="_blank" rel="noopener">' +
+                    escapeHtml(fm.source) +
+                    "</a>"
+                );
+              }
+              if (bits.length && fm.fetched)
+                bits.push("抓取 " + escapeHtml(fm.fetched));
+              if (!bits.length) return html;
+              var meta = '<p class="note-meta">' + bits.join(" · ") + "</p>";
+              if (/<h1[\s>]/.test(html)) {
+                return html.replace(/<h1[\s\S]*?<\/h1>/, function (h1) {
+                  return h1 + meta;
+                });
+              }
+              return meta + html;
+            });
+          },
+        ],
       };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
