@@ -12,10 +12,9 @@ fetched: 2026-08-31
 
 官网上那句摘要说得轻描淡写：engine、scheduler、paged attention、continuous batching、chunked prefill、prefix cache、spec decode、P/D 分离、多卡、serving、怎么 benchmark。拆开以后，它其实是在讲一件很旧的事——怎样让许多人同时说话，而不让屋子塌掉。
 
-下面按原文结构走。V0 已弃用，类名还会改，作者强调的是想法而不是签名。
+下面按原文结构走。V0 已弃用，类名还会改，作者强调的是想法而不是签名。结构草图仍是原文附图（字段名就是源码）；讲机制的换成学习图。
 
-
-本地图（原文版权仍归原站；学习对照用）：
+本地结构草图（原文版权仍归原站）：
 
 ![engine constructor](../../../../assets/vllm/blog/architecture/anatomy/01-engine_constructor.png)
 
@@ -25,33 +24,15 @@ fetched: 2026-08-31
 
 ![fwd pass](../../../../assets/vllm/blog/architecture/anatomy/04-fwd_pass.png)
 
-![chunked pt1](../../../../assets/vllm/blog/architecture/anatomy/05-chunked_pt1.png)
-
-![prefix pt1](../../../../assets/vllm/blog/architecture/anatomy/06-prefix_pt1.png)
-
-![prefix pt2](../../../../assets/vllm/blog/architecture/anatomy/07-prefix_pt2.png)
-
-![prefix pt3](../../../../assets/vllm/blog/architecture/anatomy/08-prefix_pt3.png)
-
 ![fsm](../../../../assets/vllm/blog/architecture/anatomy/09-fsm.png)
 
 ![fsm2](../../../../assets/vllm/blog/architecture/anatomy/10-fsm2.png)
-
-![specdec pt1](../../../../assets/vllm/blog/architecture/anatomy/11-specdec_pt1.png)
-
-![specdec pt2](../../../../assets/vllm/blog/architecture/anatomy/12-specdec_pt2.png)
-
-![pd](../../../../assets/vllm/blog/architecture/anatomy/13-pd.png)
 
 ![multiprocexecutor](../../../../assets/vllm/blog/architecture/anatomy/14-multiprocexecutor.png)
 
 ![server setup](../../../../assets/vllm/blog/architecture/anatomy/15-server_setup.png)
 
 ![dpenginecoreproc](../../../../assets/vllm/blog/architecture/anatomy/16-dpenginecoreproc.png)
-
-![latency diagram](../../../../assets/vllm/blog/architecture/anatomy/17-latency_diagram.png)
-
-![roofline](../../../../assets/vllm/blog/architecture/anatomy/18-roofline.png)
 
 ## LLM Engine 与 Engine Core
 
@@ -121,9 +102,13 @@ V1 能在同一步里混着做。V0 一次只能选一种——像一条一次�
 
 长 prompt 若一次 prefill 吃完整步预算，会独占一个 engine step，把别人的 TTFT 按在地板上。切成每块 n 个 token，长 prompt 走好几步，只在最后一块才采样新 token。实现上就是 cap 每步新 token；超过 `long_prefill_token_threshold` 就截成这么多。V1 里把它设成正整数即开（prompt 超过 token 预算时，即使你没设，也会被截成 chunked prefill）。这是礼貌：长客人也要给别人留座位。
 
+![Chunked prefill](../../../../assets/vllm/blog/architecture/anatomy/zh/01-chunked-prefill.png)
+
 ### Prefix caching
 
 同一段长前缀被许多问题共用——同一本手册、同一段系统提示。前缀长过一个 KV block（默认 16）才能按块缓存；对不齐 block 边界的尾巴必须重算。
+
+![Prefix cache](../../../../assets/vllm/blog/architecture/anatomy/zh/02-prefix-cache.png)
 
 第一次 `generate`：把 token 切成 16 的块，每块用「上一块的 hash + 本块 token + 可选元数据（多模态 hash、LoRA id、cache salt）」算 hash。salt 在第一块里，像一扇只给对上暗号的人开的门。`find_longest_cache_hit` 第一次当然扑空。`allocate_slots` 把新 hash 和块登记进 `cached_block_hash_to_block`，forward 把 KV 写进这些房间。
 
@@ -141,6 +126,8 @@ Prefix cache **只加速 prefill，不加速 decode**。默认开。关掉：`en
 
 自回归里，每个新 token 都要大模型完整走一轮——batch=1 时，为了一个字搬来全部权重。小 draft 模型先廉价猜 k 个字；大模型一次验证这 k 个位置（外加白送的第 k+1 个分布）；从左到右接受或拒绝。期望上，序列的分布仍等于只从大模型采样。统计上诚实，工程上可能更快。
 
+![投机解码](../../../../assets/vllm/blog/architecture/anatomy/zh/03-spec-decode.png)
+
 原文写 V1 当时不走「另训一个小 LLM 当 draft」，而用更快、更糙的提案：n-gram、EAGLE、Medusa。n-gram 在序列里找最近窗口的旧匹配，用匹配后面的 k 个 token 当草案。EAGLE 给大模型做手术，留下 embedding 和 LM head，用轻量 MLP 当 draft。Medusa 在 LM head 前加辅助线性头，并行猜后面 k 步。
 
 vLLM 流程：构造时建 drafter 与 rejection_sampler（部分 Triton）；prefill 大模型之后 `propose_draft_token_ids(k)`；下一步给这些草案留 KV 槽；大模型在 context+draft 上跑一遍；`rejection_sampler` 从左到右决定哪些字留下。
@@ -148,6 +135,8 @@ vLLM 流程：构造时建 drafter 与 rejection_sampler（部分 Triton）；pr
 ### 分离的 Prefill / Decode
 
 Prefill 吃算力，decode 吃带宽。把它们拆开，TTFT 和 ITL 才能被两只手分别按住。实践中 N 个 prefill 实例、M 个 decode 实例，按实时请求配比伸缩。Prefill 把 KV 写到专门的 KV 服务，decode 来读。长而爆发的 prefill，不再踩着对延迟敏感的 decode 的脚。
+
+![P/D 分离](../../../../assets/vllm/blog/architecture/anatomy/zh/04-pd-disagg.png)
 
 Connector 是交换 KV 的抽象，接口当时仍不稳。文中用 `SharedStorageConnector`（调试用，外部「服务」其实是本地文件系统）讲流程：scheduler 里查外部 cache、`build_connector_meta`（prefill 标记 store，decode 标记 fetch）；forward 前进 decode 的 `start_load_kv`，出来后 prefill 的 `wait_for_save`。生产里更快的是 LMCache / NIXL 一类，作者写文时仍觉得它在刀刃上。Decode 只在请求第一步拉外部 KV，之后本地走。
 
@@ -162,6 +151,8 @@ Connector 是交换 KV 的抽象，接口当时仍不稳。文中用 `SharedStor
 ## 延迟 vs 吞吐
 
 此前拆的是分子。现在问整座城市：怎样量一套推理系统？
+
+![一次请求上的三把尺子](../../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/zh/01-ttft-itl-generation.png)
 
 两个互相拉扯的量：
 
@@ -178,6 +169,8 @@ Connector 是交换 KV 的抽象，接口当时仍不稳。文中用 `SharedStor
 | Goodput | **仍满足 SLO** 的那部分吞吐。破了 TTFT/TPOT/e2e 预算的 token，不算你赢了 |
 
 简化模型（假设权重 I/O 主导、序列短）：decode 一步的 batch `B` 往 1 降，ITL 降，字不再跟人挤；`B` 往无穷升，ITL 升，但权重搬运被更多 token 摊薄，吞吐升到屋顶。Roofline：低于饱和 batch `B_sat`，步时被 HBM 带宽按住，算 1 个和 10 个 token 可能差不多久；超过以后变 compute-bound，步时近似随 B 涨。kernel 还会随形状换，达到的 `P_kernel` 会变，步时是 `FLOPs_step / P_kernel`。
+
+![Roofline](../../../../assets/vllm/blog/architecture/anatomy/zh/05-roofline.png)
 
 ### vLLM 怎么 bench
 

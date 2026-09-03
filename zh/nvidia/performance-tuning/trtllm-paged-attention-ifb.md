@@ -7,26 +7,17 @@ fetched: 2026-08-31
 
 # Paged Attention、IFB 与请求调度
 
-手册第 3 章用玩具数字把调度器演了一遍。这一页是同一套机制的功能说明：inflight batching 是什么、三个尺寸旋钮、chunked prefill、contiguous vs paged KV。
+手册第 3 章用玩具数字把调度器演了一遍。这一页是同一套机制的功能说明：inflight batching 是什么、三个尺寸旋钮、chunked prefill、contiguous vs paged KV。学习图，不是官方原图。
 
-
-本地图（原文版权仍归原站；学习对照用）：
-
-![max bs toks len](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/01-max_bs_toks_len.svg)
-
-![TRTLLM Scheduler Vis 1](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/02-TRTLLM_Scheduler_Vis_1.svg)
-
-![TRTLLM Scheduler Vis 2](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/03-TRTLLM_Scheduler_Vis_2.svg)
-
-![TRTLLM Scheduler Vis 3](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/04-TRTLLM_Scheduler_Vis_3.svg)
-
-![TRTLLM Scheduler Vis 4](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/05-TRTLLM_Scheduler_Vis_4.svg)
-
-![TRTLLM Scheduler Vis Chunked Context 1](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/06-TRTLLM_Scheduler_Vis_Chunked_Context_1.svg)
+![三个尺寸旋钮](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/01-three-knobs.png)
 
 ## In-flight batching（IFB）
 
 也叫 continuous batching、iteration-level batching。context 阶段的序列和 generation 阶段的序列，可以在**同一次** iteration 里一起跑。GPU 更满，排队更短。
+
+![调度还没开张](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/02-ifb-waiting.png)
+
+![IFB 同一拍](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/03-ifb-inflight.png)
 
 为了效率，输入必须 **packed（去 padding）**。Generation 往往每次只有一个 token，若为了对齐最长 prompt 去 pad，等于拿显存开玩笑。
 
@@ -49,6 +40,8 @@ GPU 喜欢更大的矩阵乘——把 `max_num_tokens` 适度抬高，利用率�
 ## Chunked context（chunked prefill）
 
 旧行为：一次吃完整段 prompt。打开之后，prompt 被切开，块可以和 generation token 打在同一拍，吞吐通常更好，也取消了「prompt 必须 ≤ `max_num_tokens`」。
+
+![Chunked context](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/04-chunked.png)
 
 前提：**FMHA paged KV**（手册里的 paged context attention）。除最后一块外，chunk 大小必须是 KV block 的整数倍。
 

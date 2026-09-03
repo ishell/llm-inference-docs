@@ -17,19 +17,6 @@ NVIDIA 的推理栈里有 Dynamo、TensorRT-LLM、NIM。他们一度主推 **Gen
 
 不同客户端对同一指标的定义、测量、除法常常对不齐。数字不能直接横比。在你拿着两张表互相羞辱之前，先问一句：你们说的 TTFT，是不是同一种等待？
 
-
-本地图（原文版权仍归原站；学习对照用）：
-
-![llm inference performance metrics](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/01-llm-inference-performance-metrics.png)
-
-![time to first token process](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/02-time-to-first-token-process.png)
-
-![end to end request latency](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/03-end-to-end-request-latency.png)
-
-![itl average time between consecutive token generations](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/04-itl-average-time-between-consecutive-token-generations.png)
-
-![event timeline benchmarking run](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/05-event-timeline-benchmarking-run.png)
-
 ## 压测 vs 性能基准
 
 - **Load testing（压测）**：模拟大量并发，看真实流量下的容量、弹性伸缩、网络延迟、资源占用。问的是系统。
@@ -58,15 +45,23 @@ Token 是 LLM 的最小处理单位。很多主流模型大约 1 token ≈ 0.75 
 
 ## 指标
 
+下面几张是按笔记重画的学习图，不是官方原图。TTFT / ITL / Prefill / Decode 仍用英文。英文页保留原站附图。
+
+![一次请求上的三把尺子](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/zh/01-ttft-itl-generation.png)
+
 ### TTFT
 
 从提交查询到收到**第一个非空** token。这就是用户要等多久才看见输出开始生长。GenAI-Perf 和 LLMPerf 都会丢掉空内容的初始响应——没有字的「第一包」不算第一口呼吸。
+
+![走到第一个输出 token](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/zh/02-first-token.png)
 
 TTFT ≈ 排队 + prefill + 网络。Prompt 越长，attention 越要在完整输入上建 KV cache，TTFT 越大。多请求并行时，一个请求的 prefill 可以和另一个的 generation 重叠：你的等待里，可能藏着别人的生成。
 
 ### e2e latency
 
 从发出请求到收到最后一个 token。流式模式下 detokenize 可能发生很多次，像把一句话拆成许多封短信。
+
+![e2e_latency](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/zh/03-e2e.png)
 
 ```
 e2e_latency = TTFT + generation_time
@@ -77,6 +72,8 @@ e2e_latency = TTFT + generation_time
 ### ITL / TPOT
 
 连续输出 token 之间的平均时间。**GenAI-Perf / AIPerf 不含 TTFT；LLMPerf 常常把 TTFT 算进去。** 这是两把尺子最容易打架的地方。
+
+![ITL / TPOT](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/zh/04-itl.png)
 
 GenAI-Perf：
 
@@ -89,6 +86,8 @@ ITL = (e2e_latency - TTFT) / (output_tokens - 1)
 ### TPS
 
 **系统 TPS**：所有并发请求合计的输出 token/秒。并发升高时上升，直到 GPU 饱和；再往上，有时会往下掉——像往已经满员的车厢里继续塞人。
+
+![一场基准的时间轴](../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/zh/05-bench-timeline.png)
 
 - GenAI-Perf：总输出 token /（第一个请求发出 → 最后一个请求的最后响应）
 - LLMPerf：总输出 token / 整个测试墙钟。会把造 prompt、准备请求、存响应算进去。单并发时这些开销有时能占到 **33%**。同一场戏，一种算法在给演员计时，另一种在给整座剧院计时。

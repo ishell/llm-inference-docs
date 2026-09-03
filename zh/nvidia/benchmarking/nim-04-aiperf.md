@@ -12,12 +12,6 @@ NVIDIA AIPerf 是客户端生成式基准工具，报告 TTFT、ITL、TPS、RPS�
 工具手册（安装、公式、调度、五种打法）在 `../tools/`：`aiperf.md`、`aiperf-metrics.md`、`aiperf-load-generator.md`、`aiperf-comprehensive.md`。指标定义见「指标」；参数见「参数与实践」。
 
 
-本地图（原文版权仍归原站；学习对照用）：
-
-![image6](../../../assets/nvidia/benchmarking/nim-04-aiperf/01-image6.png)
-
-![image5](../../../assets/nvidia/benchmarking/nim-04-aiperf/02-image5.png)
-
 ## 用 NIM 起一个 OpenAI 兼容的 Llama-3 服务
 
 NIM 是把 LLM 送上线较快的一条路。硬件和 NGC key 见 NIM LLM getting started。
@@ -161,6 +155,8 @@ done
 主结果在 `profile_export_aiperf.json`。
 
 收集各并发的 TPS 和 TTFT，画 **延迟–吞吐曲线**：横轴 TTFT，纵轴系统吞吐，每个点标并发。这张图是整本指南要你带回家的那张地图。
+
+![扫 concurrency](../../../assets/nvidia/benchmarking/nim-04-aiperf/zh/01-concurrency-tradeoff.png)
 
 ## 怎么读这张图
 

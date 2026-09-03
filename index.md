@@ -9,4 +9,4 @@
 3. [vLLM 调优顺序](/zh/vllm/optimization/optimization.md) — CPU 核、`-O*`、batch、并行、cache
 4. [必读博客](/zh/vllm/blog/MUST-READ.md) — 主线机制，不必按 CATALOG 逐篇读
 
-完整对照表在 [总目录](/README.md)。当初顺着一条评论里的词条整理过一遍，那段来历写在 [怎么读起](/zh/GUIDE.md)，不是这篇首页。
+完整对照表在 [总目录](/README.md)。仓库在收集什么、压测和调优怎么分开、按目的选哪条路，写在 [怎么读](/zh/GUIDE.md)。

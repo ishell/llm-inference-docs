@@ -9,20 +9,15 @@ fetched: 2026-08-31
 
 TensorRT-LLM 真正值钱的部分，往往不是某一颗更亮的 kernel，而是那个 **inflight batching** 调度器：context（prefill）和 generation 可以挤在同一次 iteration 里。谁能挤进来，由两个编译期上限决定——`max_batch_size` 和 `max_num_tokens`。拧它们，吞吐会变一张脸。
 
-数字仍是演示。环境、SKU、互联、负载会改写结局。
+数字仍是演示。环境、SKU、互联、负载会改写结局。调度示意图与 IFB 功能页同一套学习图。
 
+![三个尺寸旋钮](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/01-three-knobs.png)
 
-本地图（原文版权仍归原站；学习对照用）：
+![调度还没开张](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/02-ifb-waiting.png)
 
-![TRTLLM Scheduler Vis 1](../../../assets/nvidia/performance-tuning/trtllm-max-batch/01-TRTLLM_Scheduler_Vis_1.svg)
+![IFB 同一拍](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/03-ifb-inflight.png)
 
-![TRTLLM Scheduler Vis 2](../../../assets/nvidia/performance-tuning/trtllm-max-batch/02-TRTLLM_Scheduler_Vis_2.svg)
-
-![TRTLLM Scheduler Vis 3](../../../assets/nvidia/performance-tuning/trtllm-max-batch/03-TRTLLM_Scheduler_Vis_3.svg)
-
-![TRTLLM Scheduler Vis 4](../../../assets/nvidia/performance-tuning/trtllm-max-batch/04-TRTLLM_Scheduler_Vis_4.svg)
-
-![TRTLLM Scheduler Vis Chunked Context 1](../../../assets/nvidia/performance-tuning/trtllm-max-batch/05-TRTLLM_Scheduler_Vis_Chunked_Context_1.svg)
+![Chunked context](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/04-chunked.png)
 
 ## 调度器在干什么
 

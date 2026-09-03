@@ -14,34 +14,6 @@ fetched: 2026-08-31
 堆 Transformer 层能换来更好的精度、少样本能力，甚至在不少语言任务上接近人的「突然会了」。训练一次已经很贵；推理是反复发生的成本。今天的热门模型可以到百亿、千亿参数，RAG 一类用法还会把整篇检索塞进输入，让模型每一口都咬得更重。读者需要一点 Transformer 和 attention 的常识。可用 TensorRT-LLM 和 Nemotron 3 这类开放模型在生产级代码里试这些权衡，而不是只在黑板上。
 
 
-本地图（原文版权仍归原站；学习对照用）：
-
-![key value caching](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/01-key-value-caching_.png)
-
-![four way pipeline parallelism](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/02-four-way-pipeline-parallelism.png)
-
-![tensor parallelsim mlp self attention layers](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/03-tensor-parallelsim-mlp-self-attention-layers_.png)
-
-![transformer layer tensor and sequence parallelism](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/04-transformer-layer-tensor-and-sequence-parallelism.png)
-
-![scaled dot product attention and multi head attention](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/05-scaled-dot-product-attention-and-multi-head-attention.png)
-
-![comparison attention mechanisms](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/06-comparison-attention-mechanisms.png)
-
-![flash attention computation pattern memory hierarchy gpu](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/07-flash-attention-computation-pattern-memory-hierarchy-gpu.png)
-
-![memory wastage fragmentation inefficient kv cache](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/08-memory-wastage-fragmentation-inefficient-kv-cache.png)
-
-![quantization value distribution](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/09-quantization-value-distribution.png)
-
-![sparse matrix compressed format](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/10-sparse-matrix-compressed-format_.png)
-
-![knowledge distillation general framework](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/11-knowledge-distillation-general-framework.png)
-
-![speculative inference example](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/12-speculative-inference-example_.png)
-
-![llm optimize deploy graphic](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/13-llm-optimize-deploy-graphic.png)
-
 ## 推理分两段
 
 多数 decoder-only 模型（GPT-3 这类）按因果语言建模预训练，本质是下一个词的预言者。吃进一串 token，自回归地吐出后续 token，直到长度上限、停用词、或特殊的结束符。两段戏：
@@ -61,6 +33,8 @@ Token 是模型看见的原子。大约四个英文字符一个 token。不同�
 ## KV cache
 
 Decode 每步只产一个 token，却依赖所有过去的 K/V（含 prefill 的，以及到目前为止新算的）。每步重算全部过去，等于每说一个字就把自传重读一遍。于是把它们缓存在 GPU 里，每轮只把新算出的片段追加进去。有些实现每层一份 KV。
+
+![KV cache](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/zh/01-kv-cache.png)
 
 ## 显存两座山
 
@@ -87,6 +61,8 @@ Llama 2 7B、16-bit、batch=1、seq=4096：约 `1×4096×2×32×4096×2` ≈ **2
 
 单卡装不下，就把权重和计算分到多 GPU。训练和推理都可能必须如此。**数据并行**把权重复制多份、把全局 batch 切成微批，主要是训练期优化，推理里较少当主角。
 
+![三种切卡](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/zh/02-parallelism.png)
+
 **Pipeline parallelism（流水线）。** 模型纵向切开，每张卡跑一截层。四路 PP 则每卡大约四分之一权重。输出传到下一张卡。顺序带来空闲：**pipeline bubble**，有人在算，有人在等。微批能缩小气泡，不能消灭它。
 
 **Tensor parallelism（张量）。** 把单层横向切开。Attention 头、MLP 的矩阵都可以分。两路 TP 的 MLP 把权重矩阵劈成两半，同一批输入上独立算，再 reduction 合回来；attention 头天生可并行。每卡存的权重大致减半。
@@ -99,6 +75,8 @@ Megatron-LM、NeMo 这类框架里，这些并行都有现成实现。
 
 Scaled dot-product attention 把 Q 和 KV 映射成输出。
 
+![Attention 三副骨架](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/zh/03-attention-kv.png)
+
 **Multi-head attention（MHA）。** 多套学到的 Q/K/V 投影并行做 attention，再拼起来线性混合。每个头看不同子空间。原论文里每个头维度缩小，使总算力与单头相近。
 
 **Multi-query attention（MQA）。** 多头仍投影 Q，但 **K/V 共享**。计算量与 MHA 相当，从显存读的 K/V 少得多。Memory-bound 时更吃得满算力，KV cache 也更瘦，batch 能更大。可能掉点精度；模型最好在训练或约 5% 训练量的微调里见过 MQA。
@@ -107,11 +85,15 @@ Scaled dot-product attention 把 Q 和 KV 映射成输出。
 
 **FlashAttention。** 不改数学（exact attention，也可用于 MQA/GQA 变体），改计算顺序，迁就 GPU 的存储层次。按层依次算往往让中间结果反复进出显存。FlashAttention 用 tiling：一次把最终矩阵的一小块算完写回，而不是整表分步写中间值。已训练模型也可以换上去。
 
+![FlashAttention](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/zh/04-flash-attention.png)
+
 ## PagedAttention：按页出租记忆
 
 KV 常按「最大序列长度」静态超订。最大 2048 就人人预留 2048，哪怕只说了二十个字。连续分配，一生绑定该请求，碎片和浪费随之而来。
 
 PagedAttention 像操作系统的分页：把每个请求的 KV 切成固定 token 数的块，**不必连续**。Attention 时用块表去取。新 token 来了再分配新块。块大小固定，消除「每人一块不规则大地」的碎片，batch 才能长大，吞吐才有地方站。
+
+![连续预留 vs 按页出租](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/zh/05-paged-kv.png)
 
 ## 改模型本身：量化、稀疏、蒸馏
 
@@ -130,6 +112,8 @@ PagedAttention 像操作系统的分页：把每个请求的 KV 切成固定 tok
 **In-flight batching（continuous batching）。** LLM 的活差异极大：聊天短答、长摘要、写代码，输出长度可以差几个数量级。静态 batch 会让短的等长的。把生成拆成许多次 iteration：谁先结束谁先离场，空位立刻给新人。真实流量里，GPU 才不会靠在墙上等最慢的那位写完小说。
 
 **Speculative inference（推测解码 / assisted generation / blockwise parallel decoding）。** 自回归默认不能并行产同一序列的多个未来 token——第 n 个没出生，第 n+1 就不能合法存在。投机的办法：用更便宜的过程先起草连续 k 个 token，大模型在这些位置上并行验证。一致则收下；从第一处不一致切开，扔掉后面，再起草。草稿可以来自更小的模型、或多个未来步的头。统计上，接受规则可以让最终分布仍等于只从大模型采样。
+
+![Speculative decoding](../../../assets/nvidia/performance-tuning/mastering-llm-techniques/zh/06-speculative.png)
 
 ## 带走的东西
 

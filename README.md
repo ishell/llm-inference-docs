@@ -2,14 +2,14 @@
 
 个人学习库，**不是官方译本**。对照 NVIDIA NIM / TensorRT-LLM / AIPerf 与 vLLM 的公开文档写成压缩笔记：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。
 
-建议从网页首页或下面的阅读顺序读起。当初顺着一条评论里的词条整理过一遍，那段来历在 [zh/GUIDE.md](zh/GUIDE.md)，不是站点说明。
+建议从网页首页或下面的阅读顺序读起。怎么把压测、性能测试和调优串起来，见 [zh/GUIDE.md](zh/GUIDE.md)。
 
 目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是完整翻译。vLLM 博客全表在 `en/vllm/blog/CATALOG.md`；带日期的 **128 篇都有中英学习译文**（压缩笔记）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。即便标过「全译」的章节，也是压缩后的对照笔记，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
 
-正文图下在 `assets/`（按笔记相对路径），中英笔记里用 Markdown 引用。版权仍归原站，只作学习对照；站点 logo、作者头像、封面库存图不收。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。
+正文图下在 `assets/`（按笔记相对路径），中英笔记里用 Markdown 引用。版权仍归原站，只作学习对照；站点 logo、作者头像、封面库存图不收。中文页里讲机制的图是另画的学习图（说明用中文，TTFT / ITL / Prefill / Decode 留英文），不是在官方原图上盖字；英文页仍用原站附图。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。
 
 ## 目录
 

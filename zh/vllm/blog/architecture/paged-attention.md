@@ -15,10 +15,7 @@ LLM 答应改写所有行业。真正把模型端上桌，却常常慢得像在�
 
 两个月里，它已经在 Chatbot Arena 和 Vicuna Demo 上值班。LMSYS 那种算力并不宽裕的研究组，靠它才付得起「让几百万人排队说话」。
 
-数字是 2023 年那一轮：ShareGPT 采样长度，LLaMA-7B on A10G、LLaMA-13B on A100-40GB。
-
-
-本地图（原文版权仍归原站；学习对照用）：
+数字是 2023 年那一轮：ShareGPT 采样长度，LLaMA-7B on A10G、LLaMA-13B on A100-40GB。吞吐图是当时的实测，下面动画改成学习图。
 
 ![perf a100 n1 light](../../../../assets/vllm/blog/architecture/paged-attention/01-perf_a100_n1_light.png)
 
@@ -27,14 +24,6 @@ LLM 答应改写所有行业。真正把模型端上桌，却常常慢得像在�
 ![perf a100 n3 light](../../../../assets/vllm/blog/architecture/paged-attention/03-perf_a100_n3_light.png)
 
 ![perf a10g n3 light](../../../../assets/vllm/blog/architecture/paged-attention/04-perf_a10g_n3_light.png)
-
-![annimation0](../../../../assets/vllm/blog/architecture/paged-attention/05-annimation0.gif)
-
-![annimation1](../../../../assets/vllm/blog/architecture/paged-attention/06-annimation1.gif)
-
-![annimation2](../../../../assets/vllm/blog/architecture/paged-attention/07-annimation2.gif)
-
-![annimation3](../../../../assets/vllm/blog/architecture/paged-attention/08-annimation3.gif)
 
 ![lmsys traffic](../../../../assets/vllm/blog/architecture/paged-attention/09-lmsys_traffic.png)
 
@@ -56,6 +45,8 @@ LLM 答应改写所有行业。真正把模型端上桌，却常常慢得像在�
 ## PagedAttention：把操作系统的分页搬进注意力
 
 经典 OS：进程看见连续的虚拟地址，物理页可以东一块西一块。PagedAttention 把这个比喻写进注意力：
+
+![分页比喻](../../../../assets/vllm/blog/architecture/paged-attention/zh/01-os-metaphor.png)
 
 | OS | PagedAttention |
 |---|---|
