@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2025-02-17-distributed-inference
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-04
 ---
 
 # 分布式推理：一张卡装不下以后
@@ -28,7 +28,7 @@ fetched: 2026-08-31
 
 沿 Megatron-LM（Shoeybi et al., 2019）的路，为推理改过。列并行切权重的列、算完拼接；行并行切行、算完相加。
 
-Llama 的 MLP 是一张很好懂的说明书：up-projection **列并行** → SILU 在分片上做 → down-projection **行并行** + **all-reduce**。权重切开等于多卡一起啃显存带宽，decode 这种 memory-bound 的活，延迟可以降下来。走廊必须快：NVLink / InfiniBand。走廊慢，all-reduce 会把那点带宽红利吃光。
+Llama 的 MLP 是一张很好懂的说明书：up-projection **列并行** → SILU 在分片上做 → down-projection **行并行** + **all-reduce**。权重切开等于多卡一起啃显存带宽，Decode 这种 memory-bound 的活，延迟可以降下来。走廊必须快：NVLink / InfiniBand。走廊慢，all-reduce 会把那点带宽红利吃光。张量并行那张示意图，原文标明来源：[Sebastian Raschka, 2023](https://sebastianraschka.com/blog/2023/pytorch-memory-optimization.html)。
 
 TP 还有一件训练里不那么显眼、推理里却致命的副作用：MLA 一类架构上，latent 投影容易在每个 shard 上复制。那时不该再加 TP，该换 EP + DP Attention——见 Wide-EP 那篇。
 
@@ -52,4 +52,6 @@ TP 还有一件训练里不那么显眼、推理里却致命的副作用：MLA �
 - **投机解码** 让每步要采的 token 不再是 1，draft 与 target 的并行度、显存预算都更难排。
 - **控制面**：谁决定这一步哪些 rank 参与、微批怎么切、失败怎么收。CPU 若跟不上，GPU 再快也是在等端菜的人。
 
-延伸阅读：Megatron-LM、Orca（iteration-level scheduling）、DeepSpeed、FasterTransformer。当时点名往后看 MoE 的 expert parallelism 和更多量化。读完这一篇，应当能分清：TP 是为了带宽和 KV 房间，PP 是为了层放得下，EP 是为了稀疏专家别被 TP 误伤。集群盘子（production-stack / AIBrix）和认得 KV 的路由器，是在这张切卡地图上面再盖的楼。
+延伸阅读：Megatron-LM、[Orca](https://www.usenix.org/conference/osdi22/presentation/yu)（iteration-level scheduling）、DeepSpeed、FasterTransformer。当时点名往后看 MoE 的 expert parallelism 和更多量化；收场还把 **chunked prefill** 和 TP/PP 并列为「把大模型端上桌」的配方。部分插图来自 Sangbin Cho（xAI）。
+
+读完这一篇，应当能分清：TP 是为了带宽和 KV 房间，PP 是为了层放得下，EP 是为了稀疏专家别被 TP 误伤。集群盘子（production-stack / AIBrix）和认得 KV 的路由器，是在这张切卡地图上面再盖的楼。

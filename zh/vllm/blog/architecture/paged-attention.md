@@ -2,14 +2,14 @@
 source: https://vllm.ai/blog/2023-06-20-vllm
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-04
 ---
 
 # vLLM 立项：用 PagedAttention 让 serving 便宜下来
 
 英文对照：[en/vllm/blog/architecture/paged-attention.md](../../../../en/vllm/blog/architecture/paged-attention.md)  
 原文：https://vllm.ai/blog/2023-06-20-vllm  
-作者：Woosuk Kwon、Zhuohan Li（UC Berkeley），2023-06-20。
+作者：Woosuk Kwon、Zhuohan Li（UC Berkeley），2023-06-20。论文稍后：[arXiv:2309.06180](https://arxiv.org/pdf/2309.06180.pdf)。原文页上还有 GitHub 和当时的 Read the Docs。
 
 LLM 答应改写所有行业。真正把模型端上桌，却常常慢得像在昂贵的硬件上散步。vLLM 把这件事说成一件开源库的事：快的推理，和能给人用的 serving。核心不是换模型结构，而是一种管 KV 的注意力算法——**PagedAttention**。立项时他们写：相对 HuggingFace Transformers，吞吐最高大约 **24×**；相对当时的 SOTA HuggingFace TGI，最高大约 **3.5×**。
 
@@ -65,7 +65,7 @@ LLM 答应改写所有行业。真正把模型端上桌，却常常慢得像在�
 
 2023 年 4 月，LMSYS 放出 Vicuna，FastChat 最初用 HF Transformers 当后端。流量翻了几倍，HF 成了门厅里的堵车。FastChat-vLLM 接上之后，内部微基准相对最初的 HF 后端可以到 **30×** 吞吐；线上高峰大约 **5×** 的请求被接住。
 
-4 月中到 5 月，Arena 上最热的 Vicuna、Koala、LLaMA，前端 FastChat、后端 vLLM。大学赞助的那几张卡，撑住了百万用户。GPU 用量砍掉大约 **50%**。日均约 **3 万** 请求，峰值 **6 万**。一半以上的 Arena 请求，走的是 vLLM。
+4 月中到 5 月，Arena 上最热的 Vicuna、Koala、LLaMA，前端 FastChat、后端 vLLM。大学赞助的那几张卡，撑住了百万用户。GPU 用量砍掉大约 **50%**。日均约 **3 万** 请求，峰值 **6 万**。一半以上的 Arena 请求，走的是 vLLM。LMSYS 当时还在把 Dolly、OpenAssistant、StableLM 接进来；更多模型支持写在「即将到来」。
 
 ## 怎么用（立项时的那两行）
 
@@ -88,6 +88,17 @@ outputs = llm.generate(prompts)
 python -m vllm.entrypoints.openai.api_server --model lmsys/vicuna-7b-v1.3
 ```
 
-`curl` 格式跟 OpenAI completions 一样。
+```bash
+curl http://localhost:8000/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "lmsys/vicuna-7b-v1.3",
+    "prompt": "San Francisco is a",
+    "max_tokens": 7,
+    "temperature": 0
+  }'
+```
+
+当时的安装 / quickstart 在文档站。Hao Zhang 写了 FastChat 对接那一节。致谢：Siyuan Zhuang、Ying Sheng、Lianmin Zheng、Cody Yu、Joey Gonzalez、Hao Zhang、Ion Stoica。
 
 下一篇必读是 [Anatomy](anatomy.md)：同一张页表，长成了一整座城。立项文只负责告诉你，城墙为什么要按页来砌。

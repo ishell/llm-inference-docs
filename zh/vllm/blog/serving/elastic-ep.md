@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-04
 ---
 
 # Elastic Expert Parallelism：MoE 集群不必为了加减卡而重启
@@ -98,6 +98,23 @@ vllm serve deepseek-ai/DeepSeek-V2-Lite-Chat \
     --gpu-memory-utilization 0.8
 ```
 
-新节点先 `ray start --address="${HEAD_NODE_IP}:6379"`，再 `POST /scale_elastic_ep` 把 `new_data_parallel_size` 改成 16 或改回 8。NIXL 路径把 `--all2all-backend` 换成 `nixl_ep`（先 `uv pip install nixl`）。
+新节点先 `ray start --address="${HEAD_NODE_IP}:6379"`，再 `POST /scale_elastic_ep` 把 `new_data_parallel_size` 改成 16 或改回 8。
+
+NIXL 路径（先 `uv pip install nixl`）：
+
+```bash
+vllm serve deepseek-ai/DeepSeek-V2-Lite-Chat \
+    --trust-remote-code \
+    --tensor-parallel-size 1 \
+    --data-parallel-size 2 \
+    --data-parallel-backend ray \
+    --api-server-count 1 \
+    --enable-expert-parallel \
+    --enable-elastic-ep \
+    --enable-eplb \
+    --all2all-backend nixl_ep
+```
+
+安装与传输配置见 [NIXL](https://github.com/ai-dynamo/nixl)。RFC / PR：#20323、#34861、#35627、容错 #30112、DP Attention #16037。致谢：Yongji Wu；NVIDIA 的 Itay Alroy、Moein Khazraee、Omri Kahalon、Tzu-Ling Kan、Ron Tourgeman；Red Hat 的 Tyler Michael Smith；Anyscale 的 Rui Qiao。
 
 必读 serving 线在 Wide-EP 之后接到这里：先学会把专家铺开，再学会**不停机地改变铺开的宽度**。Agent 与 RL 的流量不是一条平线，卡也不该永远按高峰来买。

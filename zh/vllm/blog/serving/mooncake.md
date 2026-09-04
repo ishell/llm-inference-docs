@@ -2,14 +2,14 @@
 source: https://vllm.ai/blog/2026-05-06-mooncake-store
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-04
 ---
 
 # vLLM × Mooncake：agent 的前缀，不该每回合重读一遍
 
 英文对照：[en/vllm/blog/serving/mooncake.md](../../../../en/vllm/blog/serving/mooncake.md)  
 原文：https://vllm.ai/blog/2026-05-06-mooncake-store  
-2026-05-06。Mooncake 仓库与 KVConnector 实现见原文链接。数字是 Codex / SWE-bench Pro 轨迹上的演示。
+2026-05-06。Mooncake 仓库与 [`MooncakeConnector`](https://docs.vllm.ai/en/stable/features/mooncake_connector_usage/) 见原文。落地 [PR #40900](https://github.com/vllm-project/vllm/pull/40900)。数字是 Codex / SWE-bench Pro 轨迹上的演示。标题里的成绩：**3.8×** 吞吐、**46×** 更低 TTFT、**8.6×** 更低端到端，扩到 **60** 张 GB200 仍接近线性。
 
 Agent 来了以后，推理负载换了一种脾气。不再是一问一答的短会话，而是长地平线上的循环：想一想，调用工具，把工具吐回来的东西接进上下文，再想。Jensen 在 GTC 2026 里说的「从聊天机器人走向会自己做事的系统」，落到 serving 上就是一件很具体的事——**同一段前缀被反复看见**。
 
@@ -30,7 +30,7 @@ Agent 来了以后，推理负载换了一种脾气。不再是一问一答的�
 
 ## 一张 agent 轨迹的解剖
 
-他们收集了 Codex 与 GPT-5.4 在 SWE-bench Pro 上的轨迹，并开源了数据集。610 条，中位约 **33** 回合。到第 30 回合，上下文中位大约 **80K** token，最长可以超过 **180K**。可每一回合真正新进来的，常常只有几百到几千 token。其余全是已经读过的：系统提示、skills / memory、先前各轮。
+他们收集了 Codex 与 GPT-5.4 在 SWE-bench Pro 上的轨迹，并开源了数据集 [Inferact/codex_swebenchpro_traces](https://huggingface.co/datasets/Inferact/codex_swebenchpro_traces)。610 条，中位约 **33** 回合。到第 30 回合，上下文中位大约 **80K** token，最长可以超过 **180K**。可每一回合真正新进来的，常常只有几百到几千 token。其余全是已经读过的：系统提示、skills / memory、先前各轮。
 
 整份数据上：
 
@@ -80,6 +80,6 @@ Kimi-2.5 NVFP4，GB200，P/D 分离：prefill **TP4**，decode **DP8 + EP**。�
 
 ## 下一步（文中当时）
 
-分布式盘卸载（NVMe、分布式文件系统）；混合注意力模型的分层缓存策略；**cache-aware routing**（先送到已经握着前缀的实例，池子当退路）；NVLink 多节点 + RDMA 的多路径传输。实现受 vLLM-Ascend 启发。
+分布式盘卸载（NVMe、分布式文件系统）；混合注意力模型的分层缓存策略；**cache-aware routing**（先送到已经握着前缀的实例，池子当退路）；NVLink 多节点 + RDMA 的多路径传输；类似 [DualPath](https://arxiv.org/abs/2602.21548) 的从 Prefill 与 Decode 同时加载。实现受 [vLLM-Ascend](https://github.com/vllm-project/vllm-ascend) 启发（Ant Group 的 Chao Lei 初版；Inferact 的 Zijing Liu 做轨迹）。
 
 读完 [Router](router.md) 和 [大规模 serving](large-scale.md) 再读这一篇：认得 KV 的路由器解决「下一句话去哪」；分布式 KV 池解决「去了另一台也不必重读」。Agent 把 ISL/OSL 拉到 131:1 以后，这两件事是同一句话的上下半句。

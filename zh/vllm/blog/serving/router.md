@@ -2,14 +2,14 @@
 source: https://vllm.ai/blog/2025-12-13-vllm-router-release
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-04
 ---
 
 # vLLM Router：认得 KV、认得 Prefill/Decode 的负载均衡
 
 英文对照：[en/vllm/blog/serving/router.md](../../../../en/vllm/blog/serving/router.md)  
 原文：https://vllm.ai/blog/2025-12-13-vllm-router-release  
-2025-12-13。仓库在 GitHub 的 vllm-router。Rust，尽量轻。坐在客户端和一队 vLLM worker 之间，K8s 或裸金属都行。从 **SGLang model gateway** fork 再简化；他们说可能并进 vLLM 主仓，大规模 gateway 功能也可能再和 SGLang 对齐。
+2025-12-13。仓库：[vllm-project/router](https://github.com/vllm-project/router)。Rust，尽量轻。坐在客户端和一队 vLLM worker 之间，K8s 或裸金属都行。从 **[SGLang model gateway](https://github.com/sgl-project/sglang/tree/main/sgl-model-gateway)** fork 再简化；他们说可能并进 vLLM 主仓，大规模 gateway 功能也可能再和 SGLang 对齐。
 
 普通负载均衡把 LLM 当无状态 HTTP。KV 是有状态的——下一句还想住在上一句住过的房间里。Prefill/Decode 分离更不是「所有 pod 长得一样」：一边是 compute-bound 的阅读，一边是 memory-bound 的说话。Router 要办的就是这两件事。production-stack 里的 prefix-aware routing 是同一直觉的 Helm 版；这一篇把它收成一只独立网关。
 
@@ -42,12 +42,14 @@ K8s label selector 自动发现 pod。重试（指数退避 + jitter）+ 熔断�
 
 ## 当时的基准（演示）
 
-排除了 vLLM 自带 DP/EP coordinator（当时吞吐只有别人的 1/8，已知问题）。对手：llm-d（默认 queue-aware）、K8s 原生 round-robin（**不认 P/D**）。
+排除了 vLLM 自带 DP/EP coordinator（文档里的 [external load balancing](https://docs.vllm.ai/en/stable/serving/data_parallel_deployment.html#external-load-balancing)；当时吞吐只有别人的 1/8，已知问题 [#24461](https://github.com/vllm-project/vllm/issues/24461)）。对手：[llm-d](https://github.com/llm-d/llm-d)（默认 queue-aware）、K8s 原生 round-robin（**不认 P/D**）。
 
 Llama 3.1 8B，8 prefill + 8 decode pod：Router 的 req/s 比 llm-d 高约 **25%**，比 K8s 原生高约 **100%**；TTFT 接近原生，比 llm-d 快约 **1200 ms**。
 
 DeepSeek V3，1 prefill TP8 + 1 decode TP8：req/s 接近 llm-d，比原生高约 **100%**；TTFT 比两者快约 **2000 ms**。
 
 数字是这一天、这一套拓扑上的。K8s 原生 RR 不认 P/D，当反面教材很合适，拿去羞辱 2026 年的 llm-d 不合适。
+
+致谢：Phi 与 AWS 提供集群；Naman Lalit 做性能与正确性基准；SGLang Model Gateway 团队提供可 fork 的 API / 服务框架；Tyler Michael Smith、Robert Shaw 分享 llm-d 经验，把基准从卡住里救出来。
 
 读完 production-stack / AIBrix 再读这一篇：集群里真正决定「下一句话去哪张卡」的，是这只认得记忆的路由器。P/D 的编排从这里开始；下一篇 EPD 把**视觉编码器**也拆出去。
