@@ -149,7 +149,20 @@ LLAMA_STACK_DIR=. PYTHONPATH=. python -m llama_stack.cli.llama stack run \
 /tmp/test-vllm-llama-stack/vllm-llama-stack-run.yaml
 ```
 
-Or `podman run` with the same env, mounting the YAML and source, entrypoint `python -m llama_stack.distribution.server.server --yaml-config /app/config.yaml`, image `localhost/distribution-myenv:dev`.
+Or `podman run` with the same env:
+
+```
+podman run --security-opt label=disable -it --network host \
+  -v /tmp/test-vllm-llama-stack/vllm-llama-stack-run.yaml:/app/config.yaml \
+  -v /tmp/test-vllm-llama-stack/llama-stack:/app/llama-stack-source \
+--env INFERENCE_MODEL=$INFERENCE_MODEL \
+--env VLLM_URL=http://$INFERENCE_ADDR:$INFERENCE_PORT/v1 \
+--env VLLM_MAX_TOKENS=8192 \
+--env VLLM_API_TOKEN=fake \
+--env LLAMA_STACK_PORT=$LLAMA_STACK_PORT \
+--entrypoint='["python", "-m", "llama_stack.distribution.server.server", "--yaml-config", "/app/config.yaml"]' \
+localhost/distribution-myenv:dev
+```
 
 Client:
 
@@ -188,17 +201,82 @@ Kind cluster for the demo:
 kind create cluster --image kindest/node:v1.32.0 --name llama-stack-test
 ```
 
-vLLM as Pod + Service (replace `<YOUR-HF-TOKEN>`; the post’s Secret `data.token` field is shown as that placeholder):
-
-PVC `vllm-models` 50Gi; Secret `hf-token-secret`; Pod `vllm-server` image `localhost/vllm-cpu-env:latest`, downloads the model then:
+vLLM as Pod + Service (replace `<YOUR-HF-TOKEN>`; the post’s Secret `data.token` is that placeholder):
 
 ```
-python3 -m vllm.entrypoints.openai.api_server --model $MODEL_PATH --served-model-name $MODEL --port 8000
+cat <<EOF |kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vllm-models
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hf-token-secret
+type: Opaque
+data:
+  token: "<YOUR-HF-TOKEN>"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vllm-server
+  labels:
+    app: vllm
+spec:
+  containers:
+  - name: llama-stack
+    image: localhost/vllm-cpu-env:latest
+    command:
+        - bash
+        - -c
+        - |
+          MODEL="meta-llama/Llama-3.2-1B-Instruct"
+          MODEL_PATH=/app/model/$(basename $MODEL)
+          huggingface-cli login --token $HUGGING_FACE_HUB_TOKEN
+          huggingface-cli download $MODEL --local-dir $MODEL_PATH --cache-dir $MODEL_PATH
+          python3 -m vllm.entrypoints.openai.api_server --model $MODEL_PATH --served-model-name $MODEL --port 8000
+    ports:
+      - containerPort: 8000
+    volumeMounts:
+      - name: llama-storage
+        mountPath: /app/model
+    env:
+      - name: HUGGING_FACE_HUB_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: hf-token-secret
+            key: token
+  volumes:
+  - name: llama-storage
+    persistentVolumeClaim:
+      claimName: vllm-models
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-server
+spec:
+  selector:
+    app: vllm
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: NodePort
+EOF
 ```
 
-Service `vllm-server` port 8000. Logs (model download can take minutes): Uvicorn on `http://0.0.0.0:8000`.
+Logs (`kubectl logs vllm-server`; download can take minutes): Uvicorn on `http://0.0.0.0:8000`.
 
-Stack run YAML for K8s — the only inference URL that matters:
+Copy the earlier run YAML to `/tmp/test-vllm-llama-stack/vllm-llama-stack-run-k8s.yaml` and set the inference provider. The URL is the only piece Stack has to fill:
 
 ```
 providers:
@@ -211,7 +289,70 @@ providers:
       api_token: fake
 ```
 
-Build an image that clones Stack source and `ADD`s that YAML. Deploy Pod `llama-stack-pod` + Service `llama-stack-service` ClusterIP **5000**. The post’s log check command is `kubectl logs vllm-server` (same name as the vLLM pod); expected Stack lines: Uvicorn on port **5000**.
+```
+cat >/tmp/test-vllm-llama-stack/Containerfile.llama-stack-run-k8s <<EOF
+FROM distribution-myenv:dev
+
+RUN apt-get update && apt-get install -y git
+RUN git clone https://github.com/meta-llama/llama-stack.git /app/llama-stack-source
+
+ADD ./vllm-llama-stack-run-k8s.yaml /app/config.yaml
+EOF
+podman build -f /tmp/test-vllm-llama-stack/Containerfile.llama-stack-run-k8s \
+  -t llama-stack-run-k8s /tmp/test-vllm-llama-stack
+```
+
+```
+cat <<EOF |kubectl apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: llama-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: llama-stack-pod
+  labels:
+    app: llama-stack
+spec:
+  containers:
+  - name: llama-stack
+    image: localhost/llama-stack-run-k8s:latest
+    imagePullPolicy: IfNotPresent
+    command: ["python", "-m", "llama_stack.distribution.server.server", "--yaml-config", "/app/config.yaml"]
+    ports:
+      - containerPort: 5000
+    volumeMounts:
+      - name: llama-storage
+        mountPath: /root/.llama
+  volumes:
+  - name: llama-storage
+    persistentVolumeClaim:
+      claimName: llama-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-stack-service
+spec:
+  selector:
+    app: llama-stack
+  ports:
+  - protocol: TCP
+    port: 5000
+    targetPort: 5000
+  type: ClusterIP
+EOF
+```
+
+The post’s log check is `kubectl logs vllm-server` (same name as the vLLM pod); expected Stack lines: Uvicorn on port **5000**.
 
 ```bash
 kubectl port-forward service/llama-stack-service 5000:5000

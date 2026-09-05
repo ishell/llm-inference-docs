@@ -4,134 +4,104 @@ lang: en
 fetched: 2026-09-04
 ---
 
-# Modular LoRA: stop running a full model per classifier
+# From Monolithic to Modular: Scaling Semantic Routing with Extensible LoRA
 
 Chinese: [zh/vllm/blog/serving/semantic-router-modular.md](../../../../zh/vllm/blog/serving/semantic-router-modular.md)
 
-2025-10-27. **Ivar Flakstad (Hugging Face), OneZero-Y, Huamin Chen (Red Hat), Xunzhuo Liu (Tencent)**. Repo: [vllm-project/semantic-router](https://github.com/vllm-project/semantic-router). Launch: [semantic-router.md](semantic-router.md). Shared-base LoRA lands in [Iris](semantic-router-iris.md). Signal spine: [semantic-router-signal.md](semantic-router-signal.md). Later: [athena](semantic-router-athena.md), [amd](semantic-router-amd.md), [mom-amd](semantic-router-mom-amd.md), [vision](semantic-router-vision.md), [themis](semantic-router-themis.md). Do not confuse with the in-engine [router.md](router.md). Flash Attention 2 speedups (ModernBERT ~**3×**, Qwen3 ~**4×**, 14B 70–110 vs 30–35 tok/s) are **citations**, not a vLLM-SR cluster run. LoRA “**<1%** params” and the 10-thread / 30-classification test are theirs.
+2025-10-27. **Ivar Flakstad (Hugging Face), OneZero-Y, Huamin Chen (Red Hat), Xunzhuo Liu (Tencent)**. Repo: [vllm-project/semantic-router](https://github.com/vllm-project/semantic-router). Launch: [semantic-router.md](semantic-router.md). Shared-base LoRA lands in [Iris](semantic-router-iris.md). Spine: [signal-decision](semantic-router-signal.md). HaluGate uses the same Candle door: [halugate](halugate.md). Later mmBERT refresh: [athena](semantic-router-athena.md). Do not confuse with the in-engine [router.md](router.md). Flash Attention 2× / tok/s citations are **literature**, not a vLLM-SR cluster run.
 
-Siblings: [session](semantic-router-session.md), [fusion](semantic-router-fusion.md), [micro-agent](semantic-router-micro-agent.md), [mom](semantic-router-mom.md).
+Siblings: [amd](semantic-router-amd.md), [mom-amd](semantic-router-mom-amd.md), [vision](semantic-router-vision.md), [themis](semantic-router-themis.md), [session](semantic-router-session.md), [fusion](semantic-router-fusion.md), [micro-agent](semantic-router-micro-agent.md), [mom](semantic-router-mom.md).
 
-Semantic routing hits a scaling wall when each classification request runs several fine-tuned models independently: cost grows **linearly** with the number of models. This post is the Rust classification-layer refactor: architectural modularity, LoRA, concurrency.
+When each classification request runs several fine-tuned models independently, cost grows **linearly** with the number of models. This post is the Rust classification-layer refactor: architectural modularity, LoRA, concurrency.
 
 Local figures (copyright remains with the original site; study copies):
 
 ![modular](../../../../assets/vllm/blog/serving/semantic-router-modular/01-modular.png)
 
-**Figure 1.** Layered candle-binding: core independent of any one architecture.
+**Figure 1.** Layered candle-binding: core independent of a specific architecture; `DualPathUnifiedClassifier` picks fine-tuned vs LoRA.
 
-## Background: from BERT to a modular system
+## Background: BERT toward a modular system
 
-Previous implementation leaned on BERT and ModernBERT for intent and jailbreak. ModernBERT is strong for English classification. Limits they name:
+Previously: BERT / ModernBERT for intent and jailbreak. ModernBERT is strong on English classification, with limits they name:
 
-- **Language coverage**: original ModernBERT’s multilingual support is thinner than models trained on more diverse data. Note on the page: [mmBERT](https://huggingface.co/blog/mmbert) (1800+ languages) shipped **after** this refactoring started — an alternative multilingual path, not what this patch trains.
-- **Context length**: ModernBERT to **8,192** tokens with RoPE ([Transformers docs](https://huggingface.co/docs/transformers/v4.49.0/en/model_doc/modernbert)). Qwen3-Embedding they cite at **32,768**.
-- **Model coupling**: classification logic tied to specific architectures; hard to add new models.
+- **Language coverage:** original ModernBERT multilingual support is thinner than models trained on more diverse data. Note on the page: [mmBERT](https://huggingface.co/blog/mmbert) (1800+ languages) shipped **after** this refactoring began — an alternative to the multilingual problem, later centered in [Athena](semantic-router-athena.md).
+- **Context length:** ModernBERT to **8,192** tokens via RoPE; Qwen3-Embedding cited at **32,768**.
+- **Model coupling:** classification logic tied to specific architectures; hard to add new models.
 
-The modular architecture is how newer models (mmBERT, Qwen3-Embedding, EmbeddingGemma) can sit side by side; the router picks per task.
+Modular architecture: newer models (mmBERT included) can sit beside Qwen3-Embedding and EmbeddingGemma; the router picks per task.
 
 ## Architectural restructuring
 
-Layered architecture in the **candle-binding** crate. Core stays independent of a specific model; new architectures plug in without rewriting existing code. `DualPathUnifiedClassifier` chooses between traditional fine-tuned models and LoRA-adapted models from the task.
+Layered architecture in the **candle-binding** crate. Core stays independent of a given model; new architectures without rewriting existing code. `DualPathUnifiedClassifier` selects traditional fine-tuned vs LoRA-adapted based on the task.
 
 ## Long-context embedding models
 
 ### Qwen3-Embedding
 
-Context up to **32,768** tokens ([Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B)). RoPE for longer-distance frequency resolution. Trained on text from **100+** languages (same model card) — the multilingual gap ModernBERT-only routing hit.
+Up to **32,768** tokens ([Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B)). RoPE for extended context. Trained on text from **100+** languages (model card citation) — multilingual routing where ModernBERT-only struggled.
 
 ### EmbeddingGemma-300M
 
-Google’s smaller embedding model. Context **2,048** tokens. **Matryoshka** representation: embeddings truncatable to **768 / 512 / 256 / 128** dimensions without retraining ([google/embeddinggemma-300m](https://huggingface.co/google/embeddinggemma-300m)).
-
-**MQA**: 3 query heads, 1 key-value head — less memory bandwidth. Distinctive dense bottleneck after the transformer blocks: **768 → 3072 → 768**, tied to the Matryoshka training story.
+Smaller, quality-focused. Context **2,048**. Matryoshka: truncate embeddings to **768 / 512 / 256 / 128** without retraining ([embeddinggemma-300m](https://huggingface.co/google/embeddinggemma-300m)). Multi-Query Attention: **3** query heads, **1** KV head. Dense bottleneck after transformer blocks: **768 → 3072 → 768**.
 
 ## LoRA for multi-task classification
 
-Naive path: intent + PII + jailbreak = **three full BERT forwards**.
+Naive: intent + PII + jailbreak = three full fine-tuned forwards.
 
 ![full params](../../../../assets/vllm/blog/serving/semantic-router-modular/02-full-params.png)
 
-**Figure 2.** Three independent fine-tunes: O(n) full forwards for n tasks.
-
-Each model pays the expensive base transformer. Complexity **O(n)** in the number of classification tasks.
+**Figure 2.** Each task pays a full base transformer. O(n) in the number of tasks.
 
 LoRA shares the base pass:
 
 ![lora](../../../../assets/vllm/blog/serving/semantic-router-modular/03-lora.png)
 
-**Figure 3.** One base forward, then cheap adapters. LoRA typically **<1%** of parameters.
+**Figure 3.** One base forward; adapters typically **<1%** of parameters.
 
-Base model once → intermediate representations. Each LoRA adapter applies task-specific low-rank updates. Adapters typically modify **<1%** of parameters; that last step is much cheaper than a full model.
-
-`parallel_engine.rs` uses [Rayon](https://github.com/rayon-rs/rayon) for data parallelism across adapters. Three classifications: one full pass + three lightweight adapter applications, not three full forwards.
-
-**LoRA wins on multi-task, not single-task.** Single-task: no base sharing; a traditional fine-tune may be faster. Speedup depends on base-compute vs adapter-compute ratio.
+`parallel_engine.rs` uses [Rayon](https://github.com/rayon-rs/rayon) so adapters run concurrently. Three classifications: one full pass + three light adapters, not three full models. LoRA wins on **multi-task**, not single-task (fine-tuned may be faster when there is nothing to share).
 
 ## Concurrency through `OnceLock`
 
-Previous global classifier state: `lazy_static` — lock contention under concurrent load. Refactor: [`OnceLock`](https://doc.rust-lang.org/std/sync/struct.OnceLock.html) from std.
+`lazy_static` for global classifier state → lock contention under concurrent load. Replaced with [`OnceLock`](https://doc.rust-lang.org/std/sync/struct.OnceLock.html): lock-free reads after init (pointer reads, no sync). Tests in `oncelock_concurrent_test.rs`: **10** threads, **30** classifications; throughput claimed to scale linearly with thread count. Concurrent requests no longer queue behind a mutex.
 
-After first init, reads are lock-free pointer reads. Test file they name: `oncelock_concurrent_test.rs` — **10** concurrent threads, **30** total classifications; they report throughput scales linearly with thread count. With `lazy_static`, concurrent requests queued on a mutex. With `OnceLock`, they run without that contention.
+### Flash Attention for GPU acceleration
 
-### Optional Flash Attention 2
+Flash Attention 2 optional for CUDA builds; Ampere+ (compute capability ≥ 8.0). Blocked attention in on-chip SRAM vs repeated DRAM reads.
 
-Optional Cargo feature for CUDA builds. Requires **Ampere+** (compute capability **≥ 8.0**). Blocked attention in on-chip SRAM; fewer DRAM round-trips.
+Citations on the page (not a vLLM-SR cluster measurement):
 
-Cited (not a vLLM-SR cluster measurement):
+- ModernBERT: up to **~3×** faster self-attention, less memory; alternating global (every third layer) vs local sliding-window
+- Qwen3: FlashAttention-2 up to **~4×** on attention; 14B variant **70–110** vs **30–35** tok/s without it, more pronounced at long context
 
-- **ModernBERT**: up to **3×** faster self-attention, less memory ([source they link](https://medium.com/@alpernebikanli/some-berts-and-modernbert-39b261b1ce83)). Alternating attention: global every third layer, local sliding-window otherwise ([Answer.AI](https://www.answer.ai/posts/2024-12-19-modernbert.html)).
-- **Qwen3**: FlashAttention-2 up to **4×** on attention. 14B variant: **70–110** tok/s vs **30–35** without it, more pronounced at long context ([source they link](https://qwen3lm.com/qwen3-flashattention2-inference-guide/)).
-
-Rust keeps Flash Attention optional so hosts without compatible GPUs still run; gains only when the hardware supports it.
+Cargo feature: deploy without compatible GPUs; turn it on when hardware supports it.
 
 ## Cross-language integration
 
-Rust classification engine + **Go FFI**. Cloud-native deployments are Go-shaped; the hot path is not.
+Rust classification engine + **Go FFI**.
 
-### Why Rust for ML inference
+**Why Rust:** near-C performance; memory safety; ownership vs data races with Rayon; no GC pauses. Candle on that stack.
 
-- Near-C performance, zero-cost abstractions, low-latency
-- Memory safety at compile time
-- Ownership system + Rayon: data-race-free parallelism
-- No GC pauses
+**Why Go FFI:** Envoy `ext_proc` filter is Go — FFI lets the filter call Rust classification without rewriting the Envoy layer. Kubernetes operators (controller-runtime) can embed classification instead of another network hop. Service meshes (Istio, Linkerd, Consul) and API gateways with Go components can keep ML classification without extra microservices.
 
-Candle sits on those Rust properties with an ML-shaped API.
+**Deployment flexibility:**
 
-### Why Go FFI
+- **Embedded:** Go links the Rust lib via CGO
+- **Process isolation:** separate process, gRPC or Unix sockets
+- **Mixed:** Go networking / orchestration + Rust inference
 
-Go owns the cloud-native control plane. FFI is the bridge:
+Main routing, config, cache in Go; compute-intensive classification in Rust.
 
-- **Envoy**: semantic router as an [Envoy `ext_proc` filter](https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/ext_proc_filter) in Go; FFI lets the filter call Rust classification without rewriting the Envoy layer
-- **Kubernetes operators**: typically Go / controller-runtime; embed classification instead of another network hop
-- **Service meshes**: Istio, Linkerd, Consul — Go; ML classification without breaking mesh control planes
-- **API gateways**: Kong, Tyk and other Go components; semantic routing at the gateway without a new microservice
+## Performance characteristics (as they list)
 
-### Deployment flexibility
+- **Single vs multi-task:** LoRA little help if there is no sharing; multi-task on the same input is where adapters pay off. Speedup = base compute vs adapter compute.
+- **Long context:** Qwen3-Embedding to 32K without truncation vs ModernBERT 8K. FA2 on compatible GPUs helps more as length grows.
+- **Multilingual:** routing for languages where ModernBERT training was thin.
+- **High concurrency:** `OnceLock` removes lock contention; classification throughput with CPU cores.
+- **GPU:** FA2 **3–4×** on attention (citation), more at long sequences.
 
-- **Embedded**: Go links the Rust library via CGO — lower latency, simpler deploy
-- **Process isolation**: classification as a separate process (gRPC or Unix sockets)
-- **Mixed**: Go for networking/orchestration, Rust for ML inference
+## Future directions
 
-Main routing logic, config, cache: **Go**. Compute-intensive classification: **Rust**. Clean FFI boundary.
-
-## Performance characteristics (their qualitative table)
-
-- **Single vs multi-task**: LoRA little help on single-task. Clear win when several classifications share one input.
-- **Long-context**: Qwen3-Embedding routes on documents up to **32K** without truncation (beyond ModernBERT **8K**). Flash Attention 2 on compatible GPUs: advantage grows with context.
-- **Multilingual**: routing where ModernBERT training data was thin.
-- **High concurrency**: `OnceLock` removes lock contention; classification throughput can scale with CPU cores (their claim from the test above).
-- **GPU**: Flash Attention 2 **3–4×** on attention is the **citation band**, more pronounced at long sequences.
-
-## Future directions (named, not shipped here)
-
-- More embedding models via a `CoreModel` trait
-- Flash Attention 3 when Candle has it
-- Quantization (4-bit, 8-bit)
-- Custom LoRA adapters for domain-specific routing
-- FFI for Python, Java, C++
-
-Foundation: new research without an architecture rewrite. FFI stays a stable interface so Rust can evolve under existing Go deployments.
+Add embeddings by implementing the `CoreModel` trait; Flash Attention 3 when Candle has it; 4-bit / 8-bit quantization; custom LoRA for domain routing; FFI for Python / Java / C++. Modular foundation so research can land without an architectural rewrite; FFI stays stable while Rust evolves under Go deployments.
 
 ## Resources
 
