@@ -1,7 +1,7 @@
 ---
 source: https://docs.vllm.ai/en/stable/usage/metrics/
 lang: en
-fetched: 2026-09-01
+fetched: 2026-09-05
 ---
 
 # Production metrics — vLLM
@@ -37,7 +37,11 @@ Prefix `vllm:`, labelled `model_name`. Histogram buckets will keep evolving — 
 
 The repo ships a Grafana example. The subset it plots is the official “important” list: e2e, TTFT, ITL, KV%, running/waiting, token histograms, queue / prefill / decode time. Wire that subset first; collect the full table later.
 
-The full table (spec-decode counters, LoRA, parallelism, tokenizer, …) lives on the official page and changes by release. Deprecated metrics have a hide-then-delete policy — see **Deprecation Policy**. Copying the whole table into git becomes a lie in three months.
+The full table (spec-decode counters, LoRA, parallelism, tokenizer, …) lives on the official page and changes by release. Copying the generated table into git becomes a lie in three months.
+
+## Deprecation Policy
+
+A metric deprecated in `X.Y` is **hidden** in `X.Y+1` (re-enable with `--show-hidden-metrics-for-version=X.Y`) and **removed** in `X.Y+2`. Why the long fuse: [design-metrics.md](design-metrics.md) (`vllm:avg_prompt_throughput_toks_per_s` was gone before a user noticed).
 
 ## Nearby families
 

@@ -2,7 +2,7 @@
 source: https://docs.vllm.ai/en/stable/usage/metrics/
 lang: zh
 voice: literary-study
-fetched: 2026-09-01
+fetched: 2026-09-05
 ---
 
 # 生产指标 — vLLM
@@ -38,7 +38,11 @@ curl http://0.0.0.0:8000/metrics
 
 仓库里有 Grafana 示例仪表盘。它画的那一子集就是官方眼里的「重要」：e2e、TTFT、ITL、KV%、running/waiting、token 直方图、排队 / prefill / decode 时间。先把这一子集接上，再去收藏完整表。
 
-完整表（投机解码计数、LoRA、并行、tokenizer 等）在原页，会随版本增减。过期指标有隐藏 / 删除策略——原页 **Deprecation Policy**。复制一整张表进仓库，过三个月就是谎言。
+完整表（投机解码计数、LoRA、并行、tokenizer 等）在原页，会随版本增减。复制一整张生成表进仓库，过三个月就是谎言。
+
+## Deprecation Policy
+
+`X.Y` 废弃的指标，在 `X.Y+1` **隐藏**，可用 `--show-hidden-metrics-for-version=X.Y` 再看见，到 `X.Y+2` **删除**。为什么要这么慢，见 [design-metrics.md](design-metrics.md)（`vllm:avg_prompt_throughput_toks_per_s` 删完才有人发现）。
 
 ## 旁边几族
 

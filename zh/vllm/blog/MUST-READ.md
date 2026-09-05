@@ -119,7 +119,7 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 
 ## 其余 CATALOG（已齐，按需）
 
-带日期的博客 **129/129** 都有压缩学习译文。全表：[README.md](README.md)。不必按波次读完。下面几簇机制含量高，主线走完再抽：
+带日期的博客 **129/129** 都有按原文分节写完的学习译文。全表：[README.md](README.md)。不必按波次读完。下面几簇机制含量高，主线走完再抽：
 
 - Omni / TTS / 扩散 RL：`minimax-h3`、`omni-tts`、`omni-diffusion-cache`、`omni-autoround`、`qwen3-omni`、`omni-layerwise-offload`、`verl-omni`、`verl-omni-v020`
 - RL 对齐：`vime`、`vime-rocm`、`openrlhf`（第四波已列）

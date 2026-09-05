@@ -5,7 +5,7 @@
 - 机器可读全表（英文）：[en/vllm/blog/CATALOG.md](../../../en/vllm/blog/CATALOG.md)  
   来源 https://vllm.ai/llms.txt · 索引 https://vllm.ai/blog · RSS https://vllm.ai/blog/rss.xml
 
-CATALOG 带日期的博客 **129/129** 都有中英学习译文（压缩笔记，不是官方全文）。标签页 / RSS 不算文章。
+CATALOG 带日期的博客 **129/129** 都有中英学习译文（按原文分节写完，不是官方 HTML）。标签页 / RSS 不算文章。
 
 | 主题 | 文件 | 原文 |
 |---|---|---|

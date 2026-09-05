@@ -13,7 +13,7 @@ Automatic Prefix Caching (APC) caches the KV cache of existing queries. A new qu
 
 ## Enabling APC
 
-Set `enable_prefix_caching=True` in the vLLM engine, or `--enable-prefix-caching` on `vllm serve`. Hash default `sha256` (`--prefix-caching-hash-algo`). Cross-environment reproducibility: `sha256_cbor`. `xxhash` / `xxhash_cbor` are faster with weaker collision isolation — multi-tenant readers should see the security note on the [design page](prefix-caching-design.md).
+Set `enable_prefix_caching=True` in the vLLM engine, or `--enable-prefix-caching` on `vllm serve`. Hash default `sha256` (`--prefix-caching-hash-algo`). Cross-environment reproducibility: `sha256_cbor`. `xxhash` / `xxhash_cbor` are faster with weaker collision isolation — multi-tenant readers should see the security note on the [design page](prefix-caching-design.md). Offline example in the official tree: `examples/features/automatic_prefix_caching/automatic_prefix_caching_offline.py`.
 
 ## Example workloads
 

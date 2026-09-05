@@ -2,7 +2,7 @@
 source: https://docs.vllm.ai/en/stable/configuration/optimization/
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-05
 ---
 
 # 优化与调优 — vLLM V1
@@ -104,23 +104,68 @@ MoE 专用：不同 expert 分到不同 GPU。`enable_expert_parallel=True` 后�
 
 ### 多路 NUMA 绑定
 
-多 socket GPU 服务器上，worker 的 CPU/内存若漂到离 GPU 远的 NUMA 节点会掉速。`--numa-bind` 在 Python 子进程起来前用 `numactl` 钉住。默认自动检测 GPU→NUMA。自定义 CPU：`--numa-bind-cpus`。只作用于 GPU 执行进程，不作用于 CPU backend 的线程亲和，也不绑 API server / DP coordinator。容器里可能需要 `--cap-add SYS_NICE`。Python API 启用时要设 `VLLM_WORKER_MULTIPROC_METHOD=spawn`。
+多 socket GPU 服务器上，worker 的 CPU/内存若漂到离 GPU 远的 NUMA 节点会掉速。`--numa-bind` 在 Python 子进程起来前用 `numactl` 钉住，让解释器、import、早期 allocator 一开始就站在对的节点上。默认自动检测 GPU→NUMA，用 `--cpunodebind= --membind=`。自定义 CPU：加 `--numa-bind-cpus`，改成 `--physcpubind= --membind=`。
+
+只作用于 GPU 执行进程（EngineCore、multiprocessing worker）。不作用于 CPU backend 的线程亲和，也不绑 API server / DP coordinator。自动检测目前写在 CUDA/NVML 与 ROCm；别的 GPU backend 要用这些旗标，得自己给绑定列表。`--numa-bind-nodes` 按可见 GPU 顺序各给一个非负 NUMA 下标；`--numa-bind-cpus` 按同样顺序各给一份 `numactl --physcpubind` 列表，例如 `0-3`、`0,2,4-7`、`16-31,48-63`。
+
+```
+vllm serve meta-llama/Llama-3.1-8B-Instruct \
+  --tensor-parallel-size 4 \
+  --numa-bind
+vllm serve meta-llama/Llama-3.1-8B-Instruct \
+  --tensor-parallel-size 4 \
+  --numa-bind \
+  --numa-bind-nodes 0 0 1 1
+vllm serve meta-llama/Llama-3.1-8B-Instruct \
+  --tensor-parallel-size 4 \
+  --numa-bind \
+  --numa-bind-nodes 0 0 1 1 \
+  --numa-bind-cpus 0-3 4-7 48-51 52-55
+```
+
+CLI 会把 multiprocessing 强制成 `spawn`。Python API 自己开 NUMA 绑定时，也要设 `VLLM_WORKER_MULTIPROC_METHOD=spawn`。自动检测靠宿主 NVML 与 NUMA；看不准就显式传 `--numa-bind-nodes`。vLLM 只做少量校验，真正语义仍是 `numactl` 的。容器里可能需要 `--cap-add SYS_NICE`。
 
 ### CPU backend 线程亲和
 
-CPU backend 不走 `--numa-bind`，而是 `VLLM_CPU_OMP_THREADS_BIND` 等环境变量。默认 `auto`。
+CPU backend 不走 `--numa-bind`，而是环境变量：`VLLM_CPU_OMP_THREADS_BIND`、`VLLM_CPU_NUM_OF_RESERVED_CPU`、`CPU_VISIBLE_MEMORY_NODES`。默认 `VLLM_CPU_OMP_THREADS_BIND=auto`，按每个 CPU worker 可见的 CPU/NUMA 拓扑放 OpenMP。要覆盖自动策略，按 CPU backend 文档的 CPU list 写；`nobind` 关掉这件事。GPU 侧的 `--numa-bind*` 不管 CPU worker。
 
 ### 多模态 Encoder 的 batch-level DP
 
 默认 encoder 也用 TP 切权重。Encoder 很小，TP 收益小、每层 all-reduce 开销大。改用 TP 切 **batch 数据**（本质是 batch-level DP）在 `TP=8` 上吞吐/TTFT 大约 +10%；未优化的 Conv3D vision encoder 相对普通 TP 还可再 +40%。权重会在每个 TP rank 复制，勉强能装下的模型可能 OOM。
 
-`mm_encoder_tp_mode="data"`。这不是请求级 DP（请求级由 `data_parallel_size` 控制）。需要模型实现 `supports_encoder_tp_data = True`。已知支持：Qwen2-VL 及以上、Llama4、InternVL、Kimi-VL、GLM-4.1V+、MiniCPM-V-2.5+ 等。
+```python
+from vllm import LLM
+llm = LLM(
+    model="Qwen/Qwen2.5-VL-72B-Instruct",
+    tensor_parallel_size=4,
+    mm_encoder_tp_mode="data",
+)
+```
+
+`mm_encoder_tp_mode="data"` 时，vision encoder 用 TP=4（不是 DP=1）去切输入，TP size 变成有效 DP size；这和 expert parallel 里语言 decoder 的请求级 DP 无关。语言 decoder 仍按 TP 切权重。
+
+这不是请求级 DP（请求级由 `data_parallel_size` 控制）。需要模型实现 `supports_encoder_tp_data = True`，引擎参数里仍要显式打开。已知支持（带对应 PR）：
+
+- dots_ocr（#25466）
+- GLM-4.1V 及以上（#23168）
+- InternVL（#23909）
+- Kimi-VL（#23817）
+- Llama4（#18368）
+- MiniCPM-V-2.5 及以上（#23327、#23948）
+- Qwen2-VL 及以上（#22742、#24955、#25445）
+- Step3（#22697）
+
+语言 decoder 仍按 TP 切权重，与 encoder 这一档无关。
 
 ## 输入处理
 
 ### fastokens
 
-默认用 Hugging Face `tokenizers`。BPE tokenizer（Qwen、Llama、DeepSeek、GPT-OSS 等）可切到 Rust 的 fastokens：`VLLM_USE_FASTOKENS=1`（v0.23.0+）。需安装 `fastokens>=0.2.0`。对长共享前缀、短 prompt 突发、批量 detokenize 最明显。瓶颈在 GPU prefill/decode 时，换 tokenizer 端到端几乎看不出。
+默认用 Hugging Face `tokenizers`。BPE tokenizer（Qwen、Llama、DeepSeek、GPT-OSS 等）可切到 Rust 的 fastokens：`VLLM_USE_FASTOKENS=1`（v0.23.0+）。装的 vLLM 若不认这个环境变量，先升级再开。离线 API 等价于启动前 `os.environ["VLLM_USE_FASTOKENS"] = "1"`。
+
+需安装 `fastokens>=0.2.0`；没装会在 tokenizer load 时抛清晰的 `ImportError`。覆盖作用于最终会加载 HF fast tokenizer 的 `--tokenizer-mode`（`hf`、`deepseek_v32`、`deepseek_v4` …）。不用 HF fast tokenizer 的模型（`mistral`、`kimi_audio`）会忽略该旗标。
+
+对长共享前缀、短 prompt 突发、批量 detokenize 最明显。瓶颈在 GPU prefill/decode 时，换 tokenizer 端到端几乎看不出。
 
 ### API server 横向扩展
 
@@ -137,11 +182,33 @@ vllm serve Qwen/Qwen2.5-VL-3B-Instruct --api-server-count 4 -dp 2
 
 避免多轮对话里同一张图反复传、反复处理。
 
-- Processor cache：默认开，避免重复处理同一多模态输入
-- IPC cache：API 与 engine 一对一时默认开，避免 P0↔P1 反复传
+- Processor cache：默认开，避免 `BaseMultiModalProcessor` 重复处理同一多模态输入
+- IPC cache：API（`P0`）与 engine core（`P1`）一对一时默认开，避免反复传
 - 默认 key-replicated：key 在 P0 和 P1，数据只在 P1
-- TP>1 时共享内存更高效：`mm_processor_cache_type="shm"`
-- 大小：`mm_processor_cache_gb`（默认 4 GiB）；设 0 全关
+- TP>1 时共享内存更高效：`mm_processor_cache_type="shm"`。此时 key 在 P0，数据在所有进程都能摸到的共享内存
+- 大小：`mm_processor_cache_gb`（默认 4 GiB）；设 0 把 IPC 和 processor cache 一起关
+
+```python
+llm = LLM(model="Qwen/Qwen2.5-VL-3B-Instruct", mm_processor_cache_gb=8)
+llm = LLM(
+    model="Qwen/Qwen2.5-VL-3B-Instruct",
+    tensor_parallel_size=2,
+    mm_processor_cache_type="shm",
+    mm_processor_cache_gb=8,
+)
+llm = LLM(model="Qwen/Qwen2.5-VL-3B-Instruct", mm_processor_cache_gb=0)
+```
+
+按配置，P0 / P1 上放什么：
+
+| mm_processor_cache_type | Cache Type | `P0` Cache | `P1` Engine Cache | `P1` Worker Cache | Max. Memory |
+| --- | --- | --- | --- | --- | --- |
+| lru | Processor Caching | K + V | N/A | N/A | `mm_processor_cache_gb * data_parallel_size` |
+| lru | Key-Replicated Caching | K | K + V | N/A | `mm_processor_cache_gb * api_server_count` |
+| shm | Shared Memory Caching | K | N/A | V | `mm_processor_cache_gb * api_server_count` |
+| N/A | Disabled | N/A | N/A | N/A | `0` |
+
+K：多模态 item 的 hash。V：处理后的 tensor。
 
 ## GPU 部署的 CPU 资源
 

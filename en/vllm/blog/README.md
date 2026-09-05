@@ -5,7 +5,7 @@
 - Full machine table: [CATALOG.md](CATALOG.md) from https://vllm.ai/llms.txt  
   Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
-Dated CATALOG posts **129/129** have Chinese + English study notes (compressed, not official HTML). Tag pages / RSS are not articles.
+Dated CATALOG posts **129/129** have Chinese + English study notes (section-complete extracts, not official HTML). Tag pages / RSS are not articles.
 
 | Folder | File | Source |
 |---|---|---|

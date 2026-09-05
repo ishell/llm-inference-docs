@@ -2,14 +2,14 @@
 source: catalog of NVIDIA + vLLM official URLs
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-05
 ---
 
 # 怎么读这份笔记
 
 这里收集的是已经公开的 LLM **推理**资料，写成对照笔记，方便以后自己查。覆盖两块：NVIDIA 一侧（NIM、TensorRT-LLM、AIPerf / GenAI-Perf、Triton 尺子），以及 vLLM 一侧（文档页、`vllm serve` 性能旗标、带日期的博客）。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。完整对照表在 [总目录](../README.md)。
 
-**不是官方译本，也不是教材。** 原页版权仍归原站。篇幅和版权都不允许把 HTML 原样搬进来。中文是压缩后的学习重写：愿意把「等待第一个 token」当成人的事情来写，但不改公式、不改 CLI、不改指标名。文件头的 `source:` 指向原文；`en/` 是英文摘录或抓取，和 `zh/` 成对。
+**不是官方译本，也不是教材。** 原页版权仍归原站。篇幅和版权都不允许把 HTML 原样搬进来。中文是学习重写：愿意把「等待第一个 token」当成人的事情来写，但不改公式、不改 CLI、不改指标名。NVIDIA 一侧多为压缩对照；vLLM 带日期的博客按原文分节写完（数字、API、caveat 都在），不是压缩 stub。文件头的 `source:` 指向原文；`en/` 是英文摘录或抓取，和 `zh/` 成对。
 
 读之前先记住三件事：**load testing（压测）**、**performance benchmarking（性能测试）**、**performance improvement（调优）**。这份库围着这三件事转，不讲训练、不讲「大模型是什么」。
 
@@ -20,7 +20,7 @@ fetched: 2026-08-31
 - 指标先对齐，再谈数字。TTFT、ITL、TPS、RPS 在不同工具里除法不同，横比之前先问「你们说的是不是同一种等待」。
 - 最短路径几篇配了另画的学习图（说明用中文，Prefill / Decode 等词留英文）。其余附图仍是原站图，只作对照；logo、头像、封面库存图不收。
 
-刻意不做的：`vllm serve` 每一个旗标、AIPerf 整页 CLI、官方网页全文。即便标过「全译」，也是压缩笔记，往往短于英文原页。
+刻意不做的：`vllm serve` 每一个旗标、AIPerf 整页 CLI、官方网页全文。NVIDIA 笔记仍是压缩对照，往往短于英文原页。vLLM 带日期的博客按原文分节写完；短公告本身就短，笔记也不注水。
 
 ## 目录怎么走
 
@@ -100,7 +100,7 @@ IFB（in-flight / continuous batching）是同一拍里 Prefill 和 Decode 挤�
 
 ## vLLM 博客（必读线）
 
-文档页告诉你旋钮的礼貌顺序。博客告诉你这些旋钮是怎么长出来的。完整顺序在 [MUST-READ](vllm/blog/MUST-READ.md)。CATALOG 里 129 篇带日期的都有中英压缩笔记，但 **不必按全表逐篇读**；day-0 和活动文不是这条线。
+文档页告诉你旋钮的礼貌顺序。博客告诉你这些旋钮是怎么长出来的。完整顺序在 [MUST-READ](vllm/blog/MUST-READ.md)。CATALOG 里 129 篇带日期的都有中英对照学习笔记（按原文分节写完），但 **不必按全表逐篇读**；day-0 和活动文不是这条线。
 
 V1 / spec-decode 文中的「还不支持」是当时的缺口，不是今天的功能表。EPD 那篇是 **视觉编码器**拆出去；文本 Prefill/Decode 分离在 Router 与大规模两篇。Mooncake 是跨实例 KV 池（agent 前缀）；Elastic EP 是运行时改 DP 宽度。
 

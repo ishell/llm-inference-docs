@@ -1,14 +1,10 @@
 ---
 source: https://docs.vllm.ai/en/stable/configuration/optimization/
 lang: en
-fetched: 2026-08-30
+fetched: 2026-09-05
 ---
 
-Optimization and Tuning - vLLM
-
-Provide feedback Edit this page
-
-# Optimization and Tuning¶
+# Optimization and Tuning
 
 This guide covers optimization strategies and performance tuning for vLLM V1.
 
@@ -16,7 +12,7 @@ Tip
 
 Running out of memory? Consult this guide on how to conserve memory.
 
-## Optimization Levels¶
+## Optimization Levels
 
 vLLM provides 4 optimization levels (`-O0`,`-O1`,`-O2`,`-O3`) that allow users to trade off startup time for performance:
 
@@ -27,7 +23,7 @@ vLLM provides 4 optimization levels (`-O0`,`-O1`,`-O2`,`-O3`) that allow users t
 
 For more information, see the optimization level documentation.
 
-## Faster Startup¶
+## Faster Startup
 
 Beyond the optimization levels, three mechanisms reduce time-to-first-token on repeated boots of the same (model, config, hardware) combination:
 
@@ -35,7 +31,7 @@ Beyond the optimization levels, three mechanisms reduce time-to-first-token on r
 - Skip memory profiling with`--kv-cache-memory`. On startup, vLLM logs the exact`--kv-cache-memory` value that reproduces the current allocation. Passing it back on the next boot skips the memory-profiling measurement and the CUDA-graph memory estimation pass. Note that this has performance implications: the KV cache is sized to exactly the given value instead of being measured, so a conservative value caps batch concurrency (and therefore throughput), while an optimistic one fails at allocation time. The value is only valid on the same GPU with the same initial free memory; if a boot OOMs after hardware or co-tenant changes, remove the flag to re-profile.
 - Serve without CUDA graphs using`--enforce-eager`. Skips both compilation and CUDA-graph capture for the fastest possible startup, at the cost of steady-state decode performance. Useful for development loops and for measuring how much of a boot is compile/capture.
 
-## Preemption¶
+## Preemption
 
 Due to the autoregressive nature of transformer architecture, there are times when KV cache space is insufficient to handle all batched requests. In such cases, vLLM can preempt requests to free up KV cache space for other requests. Preempted requests are recomputed when sufficient KV cache space becomes available again. When this occurs, you may see the following warning:
 
@@ -55,7 +51,7 @@ You can monitor the number of preemption requests through Prometheus metrics exp
 
 In vLLM V1, the default preemption mode is`RECOMPUTE` rather than`SWAP`, as recomputation has lower overhead in the V1 architecture.
 
-## Chunked Prefill¶
+## Chunked Prefill
 
 Chunked prefill allows vLLM to process large prefills in smaller chunks and batch them together with decode requests. This feature helps improve both throughput and latency by better balancing compute-bound (prefill) and memory-bound (decode) operations.
 
@@ -66,7 +62,7 @@ This policy has two benefits:
 - It improves inter-token latency (ITL) and generation decode because decode requests are prioritized.
 - It helps achieve better GPU utilization by locating compute-bound (prefill) and memory-bound (decode) requests to the same batch.
 
-### Performance Tuning with Chunked Prefill¶
+### Performance Tuning with Chunked Prefill
 
 You can tune the performance by adjusting`max_num_batched_tokens`:
 
@@ -88,11 +84,11 @@ llm = LLM(model="meta-llama/Llama-3.1-8B-Instruct", max_num_batched_tokens=16384
 
 See related papers for more details (https://arxiv.org/pdf/2401.08671 or https://arxiv.org/pdf/2308.16369).
 
-## Parallelism Strategies¶
+## Parallelism Strategies
 
 vLLM supports multiple parallelism strategies that can be combined to optimize performance across different hardware configurations.
 
-### Tensor Parallelism (TP)¶
+### Tensor Parallelism (TP)
 
 Tensor parallelism shards model parameters across multiple GPUs within each model layer. This is the most common strategy for large model inference within a single node.
 
@@ -110,7 +106,7 @@ llm = LLM(model="meta-llama/Llama-3.3-70B-Instruct", tensor_parallel_size=4)
 
 For models that are too large to fit on a single GPU (like 70B parameter models), tensor parallelism is essential.
 
-### Pipeline Parallelism (PP)¶
+### Pipeline Parallelism (PP)
 
 Pipeline parallelism distributes model layers across multiple GPUs. Each GPU processes different parts of the model in sequence.
 
@@ -132,7 +128,7 @@ llm = LLM(
 
 ```
 
-### Expert Parallelism (EP)¶
+### Expert Parallelism (EP)
 
 Expert parallelism is a specialized form of parallelism for Mixture of Experts (MoE) models, where different expert networks are distributed across GPUs.
 
@@ -143,7 +139,7 @@ When to use:
 
 Expert parallelism is enabled by setting`enable_expert_parallel=True`, which will use expert parallelism instead of tensor parallelism for MoE layers. It will use the same degree of parallelism as what you have set for tensor parallelism.
 
-### Data Parallelism (DP)¶
+### Data Parallelism (DP)
 
 Data parallelism replicates the entire model across multiple GPU sets and processes different batches of requests in parallel.
 
@@ -155,7 +151,7 @@ When to use:
 
 Data parallelism can be combined with the other parallelism strategies and is set by`data_parallel_size=N`. Note that MoE layers will be sharded according to the product of the tensor parallel size and data parallel size.
 
-### NUMA Binding for Multi-Socket GPU Nodes¶
+### NUMA Binding for Multi-Socket GPU Nodes
 
 On multi-socket GPU servers, GPU worker processes can lose performance if their CPU execution and memory allocation drift away from the NUMA node nearest to the GPU. vLLM can pin each worker with`numactl` before the Python subprocess starts, so the interpreter, imports, and early allocator state are created with the desired NUMA policy from the beginning.
 
@@ -192,7 +188,7 @@ Notes:
 - The current implementation binds GPU execution processes such as EngineCore and multiprocessing workers. It does not apply NUMA binding to frontend API server processes or the DP coordinator.
 - In containerized environments, NUMA policy syscalls may require extra permissions, such as`--cap-add SYS_NICE` when running via`docker run`.
 
-### CPU Backend Thread Affinity¶
+### CPU Backend Thread Affinity
 
 The CPU backend uses a different mechanism from`--numa-bind`. CPU execution is configured through CPU-specific environment variables such as`VLLM_CPU_OMP_THREADS_BIND`,`VLLM_CPU_NUM_OF_RESERVED_CPU`, and`CPU_VISIBLE_MEMORY_NODES`, rather than the GPU-oriented`--numa-bind*` CLI options.
 
@@ -205,7 +201,7 @@ For the current CPU backend setup and tuning guidance, see:
 
 The GPU-only`--numa-bind`,`--numa-bind-nodes`, and`--numa-bind-cpus` options do not configure CPU worker affinity.
 
-### Batch-level DP for Multi-Modal Encoders¶
+### Batch-level DP for Multi-Modal Encoders
 
 By default, TP is used to shard the weights of multi-modal encoders just like for language decoders, in order to reduce the memory and compute load on each GPU.
 
@@ -250,9 +246,9 @@ Known supported models (with corresponding benchmarks):
 - Qwen2-VL or above (Pull Request #22742, Pull Request #24955, Pull Request #25445)
 - Step3 (Pull Request #22697)
 
-## Input Processing¶
+## Input Processing
 
-### fastokens Backend¶
+### fastokens Backend
 
 By default vLLM uses the standard Hugging Face`tokenizers` library to power the fast tokenizer. For BPE tokenizers (Qwen, Llama, DeepSeek, GPT-OSS, etc.) you can switch to the fastokens Rust backend, a drop-in replacement that's substantially faster on encode/decode and on streaming detokenization.`VLLM_USE_FASTOKENS` is available in vLLM v0.23.0 and later. If your installed vLLM version does not recognize the environment variable, upgrade vLLM before enabling the override:
 
@@ -275,7 +271,7 @@ The`fastokens` Python package (>= 0.2.0) must be installed; if it isn't, vLLM ra
 
 Tokenizer-bound workloads — long shared prefixes, bursty short prompts, batch detokenization — see the largest wins. If your bottleneck is GPU prefill/decode, the tokenizer change is unlikely to be visible end-to-end.
 
-### Parallel Processing¶
+### Parallel Processing
 
 You can run input processing in parallel via API server scale-out. This is useful when input processing (which is run inside the API server) becomes a bottleneck compared to model execution (which is run inside engine core) and you have excess CPU capacity.
 
@@ -303,27 +299,27 @@ API server scale-out disables multi-modal IPC caching because it requires a one-
 
 This does not impact multi-modal processor caching.
 
-## Multi-Modal Caching¶
+## Multi-Modal Caching
 
 Multi-modal caching avoids repeated transfer or processing of the same multi-modal data, which commonly occurs in multi-turn conversations.
 
-### Processor Caching¶
+### Processor Caching
 
 Multi-modal processor caching is automatically enabled to avoid repeatedly processing the same multi-modal inputs in BaseMultiModalProcessor.
 
-### IPC Caching¶
+### IPC Caching
 
 Multi-modal IPC caching is automatically enabled when there is a one-to-one correspondence between API (`P0`) and engine core (`P1`) processes, to avoid repeatedly transferring the same multi-modal inputs between them.
 
-#### Key-Replicated Cache¶
+#### Key-Replicated Cache
 
 By default, IPC caching uses a key-replicated cache, where cache keys exist in both the API (`P0`) and engine core (`P1`) processes, but the actual cache data resides only in`P1`.
 
-#### Shared Memory Cache¶
+#### Shared Memory Cache
 
 When multiple worker processes are involved (e.g., when TP > 1), a shared-memory cache is more efficient. This can be enabled by setting`mm_processor_cache_type="shm"`. In this mode, cache keys are stored on`P0`, while the cache data itself lives in shared memory accessible by all processes.
 
-### Configuration¶
+### Configuration
 
 You can adjust the size of the cache by setting the value of`mm_processor_cache_gb`(default 4 GiB).
 
@@ -352,7 +348,7 @@ llm = LLM(
 
 ```
 
-### Cache Placement¶
+### Cache Placement
 
 Based on the configuration, the content of the multi-modal caches on`P0` and`P1` are as follows:
 
@@ -365,11 +361,11 @@ Based on the configuration, the content of the multi-modal caches on`P0` and`P1`
 
 K: Stores the hashes of multi-modal items V: Stores the processed tensor data of multi-modal items
 
-## CPU Resources for GPU Deployments¶
+## CPU Resources for GPU Deployments
 
 vLLM V1 uses a multi-process architecture (see V1 Process Architecture) where each process requires CPU resources. Underprovisioning CPU cores is a common source of performance degradation, especially in virtualized environments.
 
-### Minimum CPU Requirements¶
+### Minimum CPU Requirements
 
 For a deployment with`N` GPUs, there are at minimum:
 
@@ -389,7 +385,7 @@ Important
 
 Please note we are referring to physical CPU cores here. If your system has hyperthreading enabled, then 1 vCPU = 1 hyperthread = 1/2 physical CPU core, so you need`2 x (2 + N)` minimum vCPUs.
 
-### Data Parallel and Multi-API Server Deployments¶
+### Data Parallel and Multi-API Server Deployments
 
 When using data parallelism or multiple API servers, the CPU requirements increase:
 
@@ -405,7 +401,7 @@ where`A` is the API server count (defaults to`DP`),`DP` is the data parallel siz
 
 ```
 
-### Performance Impact¶
+### Performance Impact
 
 CPU underprovisioning particularly impacts:
 
@@ -415,12 +411,8 @@ CPU underprovisioning particularly impacts:
 
 If you observe that GPU utilization is lower than expected, CPU contention may be the bottleneck. Increasing the number of available CPU cores and even the clock speed can significantly improve end-to-end performance.
 
-## Attention Backend Selection¶
+## Attention Backend Selection
 
 vLLM supports multiple attention backends optimized for different hardware and use cases. The backend is automatically selected based on your GPU architecture, model type, and configuration, but you can also manually specify one for optimal performance.
 
 For detailed information on available backends, their feature support, and how to configure them, see the Attention Backend Feature Support documentation.
-
----
-
-Addons documentation― Hosted by Read the Docs

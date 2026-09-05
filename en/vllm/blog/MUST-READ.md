@@ -119,7 +119,7 @@ After wave 4. Order: AMD spec → RDT weights → IsoExec → bitwise RL → tok
 
 ## Rest of CATALOG (complete; optional)
 
-Dated posts **129/129** have compressed study notes. Full table: [README.md](README.md). Do not read them as another must-read wave. High-signal clusters after the main line:
+Dated posts **129/129** have section-complete study notes. Full table: [README.md](README.md). Do not read them as another must-read wave. High-signal clusters after the main line:
 
 - Omni / TTS / diffusion RL: `minimax-h3`, `omni-tts`, `omni-diffusion-cache`, `omni-autoround`, `qwen3-omni`, `omni-layerwise-offload`, `verl-omni`, `verl-omni-v020`
 - RL alignment: `vime`, `vime-rocm`

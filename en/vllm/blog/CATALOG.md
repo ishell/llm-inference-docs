@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/llms.txt
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # vLLM
