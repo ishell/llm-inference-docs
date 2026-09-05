@@ -5,7 +5,7 @@
 - Full machine table: [CATALOG.md](CATALOG.md) from https://vllm.ai/llms.txt  
   Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
-Dated CATALOG posts **128/128** have Chinese + English study notes (compressed, not official HTML). Tag pages / RSS are not articles.
+Dated CATALOG posts **129/129** have Chinese + English study notes (compressed, not official HTML). Tag pages / RSS are not articles.
 
 | Folder | File | Source |
 |---|---|---|
@@ -87,6 +87,7 @@ Dated CATALOG posts **128/128** have Chinese + English study notes (compressed, 
 | serving | [llama-stack.md](serving/llama-stack.md) | https://vllm.ai/blog/2025-01-27-intro-to-llama-stack-with-vllm |
 | serving | [llama31.md](serving/llama31.md) | https://vllm.ai/blog/2024-07-23-llama31 |
 | serving | [llama4.md](serving/llama4.md) | https://vllm.ai/blog/2025-04-05-llama4 |
+| serving | [minimax-h3.md](serving/minimax-h3.md) | https://vllm.ai/blog/2026-09-01-minimax-h3-production-serving |
 | serving | [minimax-m1.md](serving/minimax-m1.md) | https://vllm.ai/blog/2025-06-30-minimax-m1 |
 | serving | [minimax-m3.md](serving/minimax-m3.md) | https://vllm.ai/blog/2026-06-12-minimax-m3-vllm |
 | serving | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |

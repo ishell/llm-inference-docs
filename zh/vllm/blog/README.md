@@ -5,7 +5,7 @@
 - 机器可读全表（英文）：[en/vllm/blog/CATALOG.md](../../../en/vllm/blog/CATALOG.md)  
   来源 https://vllm.ai/llms.txt · 索引 https://vllm.ai/blog · RSS https://vllm.ai/blog/rss.xml
 
-CATALOG 带日期的博客 **128/128** 都有中英学习译文（压缩笔记，不是官方全文）。标签页 / RSS 不算文章。
+CATALOG 带日期的博客 **129/129** 都有中英学习译文（压缩笔记，不是官方全文）。标签页 / RSS 不算文章。
 
 | 主题 | 文件 | 原文 |
 |---|---|---|
@@ -87,6 +87,7 @@ CATALOG 带日期的博客 **128/128** 都有中英学习译文（压缩笔记�
 | serving | [llama-stack.md](serving/llama-stack.md) | https://vllm.ai/blog/2025-01-27-intro-to-llama-stack-with-vllm |
 | serving | [llama31.md](serving/llama31.md) | https://vllm.ai/blog/2024-07-23-llama31 |
 | serving | [llama4.md](serving/llama4.md) | https://vllm.ai/blog/2025-04-05-llama4 |
+| serving | [minimax-h3.md](serving/minimax-h3.md) | https://vllm.ai/blog/2026-09-01-minimax-h3-production-serving |
 | serving | [minimax-m1.md](serving/minimax-m1.md) | https://vllm.ai/blog/2025-06-30-minimax-m1 |
 | serving | [minimax-m3.md](serving/minimax-m3.md) | https://vllm.ai/blog/2026-06-12-minimax-m3-vllm |
 | serving | [mooncake.md](serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store |

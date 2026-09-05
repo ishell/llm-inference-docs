@@ -119,9 +119,9 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 
 ## 其余 CATALOG（已齐，按需）
 
-带日期的博客 **128/128** 都有压缩学习译文。全表：[README.md](README.md)。不必按波次读完。下面几簇机制含量高，主线走完再抽：
+带日期的博客 **129/129** 都有压缩学习译文。全表：[README.md](README.md)。不必按波次读完。下面几簇机制含量高，主线走完再抽：
 
-- Omni / TTS / 扩散 RL：`omni-tts`、`omni-diffusion-cache`、`omni-autoround`、`qwen3-omni`、`omni-layerwise-offload`、`verl-omni`、`verl-omni-v020`
+- Omni / TTS / 扩散 RL：`minimax-h3`、`omni-tts`、`omni-diffusion-cache`、`omni-autoround`、`qwen3-omni`、`omni-layerwise-offload`、`verl-omni`、`verl-omni-v020`
 - RL 对齐：`vime`、`vime-rocm`、`openrlhf`（第四波已列）
 - Pareto / 硬件：`qwen35-25k-tps`、`glm52-b300`、`hpc-ops`、`gb300-deepseek`、`gpt-oss-optimizations`、`blackwell-inferencemax`、`artificial-analysis`、`eagle3-amd`
 - Day-0 / 社区：Nemotron 3 系、Gemma 4、Llama 3.1/4、gpt-oss 上手、meetup、playground、vllm.ai 网站

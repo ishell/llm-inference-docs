@@ -100,7 +100,7 @@ IFB（in-flight / continuous batching）是同一拍里 Prefill 和 Decode 挤�
 
 ## vLLM 博客（必读线）
 
-文档页告诉你旋钮的礼貌顺序。博客告诉你这些旋钮是怎么长出来的。完整顺序在 [MUST-READ](vllm/blog/MUST-READ.md)。CATALOG 里 128 篇带日期的都有中英压缩笔记，但 **不必按全表逐篇读**；day-0 和活动文不是这条线。
+文档页告诉你旋钮的礼貌顺序。博客告诉你这些旋钮是怎么长出来的。完整顺序在 [MUST-READ](vllm/blog/MUST-READ.md)。CATALOG 里 129 篇带日期的都有中英压缩笔记，但 **不必按全表逐篇读**；day-0 和活动文不是这条线。
 
 V1 / spec-decode 文中的「还不支持」是当时的缺口，不是今天的功能表。EPD 那篇是 **视觉编码器**拆出去；文本 Prefill/Decode 分离在 Router 与大规模两篇。Mooncake 是跨实例 KV 池（agent 前缀）；Elastic EP 是运行时改 DP 宽度。
 

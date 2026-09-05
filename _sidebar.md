@@ -133,6 +133,7 @@
   - [Llama Stack × vLLM：inference 是可换的 Provid…](/zh/vllm/blog/serving/llama-stack.md)
   - [Llama 3.1：128K 自动 chunked prefill；405B 单…](/zh/vllm/blog/serving/llama31.md)
   - [Llama 4：Scout 16E / Maverick 128E，iRoPE …](/zh/vllm/blog/serving/llama4.md)
+  - [MiniMax H3：整条栈削薄之后，FastH3 比播放还快](/zh/vllm/blog/serving/minimax-h3.md)
   - [MiniMax-M1：Lightning Attention + MoE，当时 …](/zh/vllm/blog/serving/minimax-m1.md)
   - [MiniMax M3：1M 上下文靠 MSA 选 128-token 块，不是满…](/zh/vllm/blog/serving/minimax-m3.md)
   - [vLLM × Mooncake：agent 的前缀，不该每回合重读一遍](/zh/vllm/blog/serving/mooncake.md)

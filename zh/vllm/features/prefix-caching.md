@@ -2,7 +2,7 @@
 source: https://docs.vllm.ai/en/stable/features/automatic_prefix_caching/
 lang: zh
 voice: literary-study
-fetched: 2026-08-31
+fetched: 2026-09-04
 ---
 
 # 自动前缀缓存（Automatic Prefix Caching）
@@ -13,7 +13,7 @@ fetched: 2026-08-31
 
 已经算过的 KV 不必再算。新请求若和旧请求共享同一段前缀，引擎直接把那几块房间的钥匙递过去，prefill 从分叉处接着干。V1 里这件事接近零额外开销——V0 时代 prefix cache 是要付记账税的。
 
-打开：`enable_prefix_caching=True`，或 `vllm serve` 的 `--enable-prefix-caching`。哈希默认 `sha256`（`--prefix-caching-hash-algo`）；`xxhash` 更快，碰撞隔离更弱。
+打开：`enable_prefix_caching=True`，或 `vllm serve` 的 `--enable-prefix-caching`。哈希默认 `sha256`（`--prefix-caching-hash-algo`）。跨环境要可复现用 `sha256_cbor`；`xxhash` / `xxhash_cbor` 更快，碰撞隔离更弱——多租户先读 [设计页](prefix-caching-design.md) 的安全注。
 
 ## 谁会发光
 
