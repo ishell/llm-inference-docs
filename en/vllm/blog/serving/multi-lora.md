@@ -4,66 +4,84 @@ lang: en
 fetched: 2026-09-04
 ---
 
-# Efficiently serve dozens of fine-tuned models with vLLM on Amazon SageMaker AI and Amazon Bedrock
+# Multi-LoRA on MoE: many adapters, one GPU
 
 Chinese: [zh/vllm/blog/serving/multi-lora.md](../../../../zh/vllm/blog/serving/multi-lora.md)
 
-2026-02-26. **Danielle Maddix Robinson, Florian Saupe, George Novack, Haipeng Li, Mani Kumar Adari, Xiang Song, Yu Gong (AWS AI Team)**. Also on [AWS Blogs](https://aws.amazon.com/blogs/machine-learning/efficiently-serve-dozens-of-fine-tuned-models-with-vllm-on-amazon-sagemaker-ai-and-amazon-bedrock/). **vLLM ≥ 0.15.0** for the open-source path. Running example: **GPT-OSS 20B**. Cousin: [gpt-oss.md](gpt-oss.md). Numbers are **their** load (1600 in / 600 out, LoRA rank **32**, **8** adapters in parallel) — not your SLA.
+2026-02-26. **AWS AI Team** (Danielle Maddix Robinson, Florian Saupe, George Novack, Haipeng Li, Mani Kumar Adari, Xiang Song, Yu Gong). vLLM ≥**0.15.0**. Running example: [gpt-oss](gpt-oss.md) 20B. SageMaker / Bedrock have extra tuned configs. Also on AWS Blogs. 1600/600, rank 32, 8 adapters — **their** load, not your SLA.
 
-Idle GPUs when many custom models each see little traffic. Multi-LoRA: freeze base weights, swap small adapters per request. Pitch: five customers at 10% of a GPU each share **one** GPU.
+**TL;DR from the page:**
 
-Works for MoE families: GPT-OSS, Qwen3-MoE, DeepSeek, Llama MoE. Dense also benefits (Llama 3.3 70B, Qwen3 32B). SageMaker AI / Bedrock host extra Amazon-tuned configs: they quote **+19% OTPS** and **−8% TTFT** vs stock vLLM 0.15.0 on GPT-OSS 20B.
+- Freeze the base; swap LoRA per request. Five customers at 10% each → one GPU, not five.
+- MoE families: GPT-OSS, Qwen3-MoE, DeepSeek, Llama MoE. Dense also improved (Llama3.3 70B, Qwen3 32B).
+- First cut: TTFT ~**10×** worse than the base. `do_not_specialize` reused the Triton binary.
+- Open-source path: **144 OTPS** / **135 ms TTFT**. AWS-tuned: **171 OTPS** / **124 ms TTFT**. vs 0.11.1rc3: OTPS **+454%**, TTFT **−87%**. Dense Qwen3-32B OTPS ~**+99%**.
+
+## Why Multi-LoRA
+
+Idle GPUs when each custom model cannot saturate its own endpoint. Multi-LoRA: keep original weights frozen, inject small trainable adapters, swap adapters per request on a shared GPU.
+
+Amazon-specific extras over vLLM 0.15.0 for GPT-OSS 20B: **19%** higher OTPS, **8%** lower TTFT — on [SageMaker AI](https://aws.amazon.com/sagemaker/ai/) or [Bedrock](https://aws.amazon.com/bedrock/).
+
+## Implementing multi-LoRA inference for MoE models in vLLM
+
+MoE: specialized experts; a router sends each token to the relevant ones; sparse — only a fraction of parameters fire. Each expert is a small FFN in two stages:
+
+- `gate_up` expands hidden (e.g. **4096**) into intermediate (e.g. **11008**) — room to disentangle and gate.
+- `down` compresses back. Bottleneck: keep only useful features.
+
+vLLM `fused_moe`: those projections as Group GEMM — one GEMM per expert assigned to a token.
+
+LoRA: freeze `W` (e.g. `W_gate_up`); train `A` (`h_in × r`) and `B` (`r × h_out`); `y = xW + xAB`. Rank `r` typically **16–64**. Shrink: `z = xA` (`h_in → r`). Expand: `z B` (`r → h_out`).
 
 Local figures (copyright remains with the original site; study copies):
 
 ![moe schematic](../../../../assets/vllm/blog/serving/multi-lora/01-moe_schematic.png)
 
+**Figure 1.** MoE-LoRA with hidden 4096, intermediate 11008, LoRA rank `r = 32`.
+
+Each expert has `gate_up` and `down`. Each adapter adds shrink+expand to **each** projection → **four** LoRA kernel ops per expert per adapter per request. One dimension (`r`) is **100–300×** smaller than hidden / intermediate. Square GEMM kernels hate skinny matrices.
+
+Two extra problems: (1) dense Multi-LoRA kernels do not know expert routing; (2) compound sparsity — expert routing **and** adapter selection. Fix: `fused_moe_lora` inside `fused_moe`. Same logic as `fused_moe`, plus an extra grid dimension for the active adapters.
+
+## Improving multi-LoRA inference performance in vLLM
+
+Nsight Systems: `fused_moe_lora` was the highest-latency piece. Nsight Compute: profile `gate_up_shrink`, `gate_up_expand`, `down_shrink`, `down_expand`. Then execution opts, kernel opts, tuned configs.
+
+### Execution optimizations
+
+Initial Multi-LoRA TTFT ~**10×** worse than the public GPT-OSS 20B base. Triton treated input-length-dependent variables as compile-time constants → recompile `fused_moe_lora` for every new context length.
+
 ![exec opt](../../../../assets/vllm/blog/serving/multi-lora/02-exec_opt.png)
+
+**Figure 2.** Before the fix: `cuModuleLoadData` before each `fused_moe_lora` (new binary, not cache); large gaps = GPU idle during recompile. That idle drove the 10× TTFT. Fix: `do_not_specialize` — compile once, reuse across context lengths.
+
+### Kernel optimizations
+
+**Split-K.** LoRA shrink is `xA` with `x` `1×h_in`, `A` `h_in×r`. Each of `r` outputs sums `h_in` multiplies. Standard GEMM parallelizes across outputs; each thread group still walks `h_in` sequentially. Split-K splits K (`h_in`) across thread groups; partial sums combine with atomic add. Pure add, no extra logic → `sem="relaxed"`.
+
+**CTA swizzling** on `lora_shrink`. Neighboring columns of `A` share rows / cache lines. Reorder so nearby columns run together → more L2 reuse.
+
+**EVEN_K.** Triton loads fixed-size blocks; leftover K needs masks on every load. `EVEN_K` is true when K divides `BLOCK_SIZE_K` — skip masks and extra dots.
+
+**Fuse** LoRA + base add into the expand kernel — one less launch.
+
+After these: **144 OTPS** / **135 ms TTFT** for GPT-OSS 20B (open-source path).
+
+### Tuning kernel configurations for Amazon SageMaker AI and Amazon Bedrock
+
+Triton knobs: `BLOCK_SIZE_M/N/K`, `GROUP_SIZE_M` (cache locality), `SPLIT_K`. Defaults from standard fused MoE ignored the extra LoRA-index grid dim and adapter sparsity. Users can load a custom folder; see vLLM LoRA Tuning docs. Four ops tuned together (they share `BLOCK_SIZE_M`). SageMaker / Bedrock load these automatically → **171 OTPS** / **124 ms TTFT** for GPT-OSS 20B.
+
+## Results & conclusion
+
+Open-sourced Multi-LoRA for GPT-OSS, Qwen3 MoE, DeepSeek, Llama MoE. vs vLLM 0.11.1rc3 → 0.15.0: OTPS **+454%**, TTFT **−87%** on GPT-OSS 20B. Kernel tuning + CTA swizzle also helped dense: Qwen3 32B OTPS **+99%**. Local: ≥0.15.0. Amazon extras: **19%** OTPS / **8%** TTFT vs 0.15.0 on that same model. Hosting docs: [SageMaker](https://docs.aws.amazon.com/sagemaker/latest/dg/deploy-model.html), [Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/fine-tuning-openai-apis.html).
 
 ![otps](../../../../assets/vllm/blog/serving/multi-lora/03-otps.png)
 
-**Fig 1:** MoE-LoRA with example hidden **4096**, intermediate **11008**, rank **r = 32**.  
-**Fig 2:** Nsys before `do_not_specialize` — `cuModuleLoadData` before every `fused_moe_lora`, GPU idle while Triton recompiles.  
-**Fig 3:** OTPS / TTFT: (1) first impl on vLLM **0.11.1rc3**; (2) vLLM **0.15.0**; (3) 0.15.0 + AWS kernel tuning.
+**Figure 3.** OTPS and TTFT for GPT-OSS 20B Multi-LoRA: (1) initial 0.11.1rc3; (2) 0.15.0; (3) 0.15.0 + AWS custom kernel tuning. **1600** input / **600** output, rank **32**, **8** adapters in parallel.
 
-## Why MoE LoRA is four skinny GEMMs
+Also published on [AWS Blogs](https://aws.amazon.com/blogs/machine-learning/efficiently-serve-dozens-of-fine-tuned-models-with-vllm-on-amazon-sagemaker-ai-and-amazon-bedrock/).
 
-MoE: router sends each token to a few experts. Each expert is FFN: `gate_up` expands (e.g. 4096 → 11008), `down` compresses back. vLLM `fused_moe` runs those as Group GEMM — one GEMM per expert on that token.
+## Acknowledgments
 
-LoRA: freeze `W`, train `A` (`h_in × r`) and `B` (`r × h_out`), `y = xW + xAB`. **Shrink** `z = xA`; **expand** `zB`. Rank typically **16–64**.
-
-Each expert has two projections × shrink+expand = **four LoRA ops per expert per adapter per request**. One dimension (`r`) is **100–300×** smaller than hidden/intermediate. Square GEMM kernels hate that.
-
-Two problems they name:
-
-1. Dense multi-LoRA kernels **do not know expert routing**
-2. Compound sparsity: expert routing **and** which adapter the request uses
-
-Fix: `fused_moe_lora` inside `fused_moe`. Same logic, **extra grid dimension = active LoRA adapters**. Shrink/expand GEMMs for `gate_up` and `down`.
-
-## Execution: the 10× TTFT bug
-
-First Multi-LoRA TTFT was **10× worse** than base GPT-OSS 20B. Triton treated **input-length-dependent** variables as compile-time constants → **recompile `fused_moe_lora` for every new context length**. Fig 2: `cuModuleLoadData` + idle gaps.
-
-Fix: Triton `do_not_specialize` on those variables — compile once, reuse across context lengths.
-
-## Kernel work
-
-- **Split-K** on shrink (`xA` is `1×h_in` × `h_in×r`): split the long K reduction across thread groups, atomic add with `sem="relaxed"`
-- **CTA swizzling** on `lora_shrink` so neighboring columns of `A` run together (L2 reuse)
-- **`EVEN_K`**: skip masking/dot work when `K` divides `BLOCK_SIZE_K`
-- Fuse LoRA+base add into the **expand** kernel (fewer launches)
-
-After these: **144 OTPS**, **135 ms TTFT** on GPT-OSS 20B (their load).
-
-## Amazon tuned configs
-
-Default fused-MoE Triton blocks were wrong for multi-LoRA (extra LoRA-index grid + compound sparsity). Users can load a folder of custom configs (vLLM LoRA Tuning docs). They tuned `gate_up_shrink` / `gate_up_expand` / `down_shrink` / `down_expand` together (`BLOCK_SIZE_M` shared). SageMaker / Bedrock load these automatically: **171 OTPS**, **124 ms TTFT**.
-
-## Headline deltas they print
-
-Open-source path, GPT-OSS 20B, 0.15.0 vs 0.11.1rc3: **+454% OTPS**, **−87% TTFT**. Dense Qwen3 32B OTPS **+99%** from some of the same tricks (tuning + CTA swizzle). Amazon extras vs 0.15.0: **+19% OTPS**, **−8% TTFT**.
-
-## Acknowledgements
-
-vLLM: Jie Li, Chen Wu, Varun Sundar Rabindranath, Simon Mo, Robert Shaw. AWS: Xin Yang, Sadaf Fardeen, Ashish Khetan, George Karypis.
+vLLM community: Jie Li, Chen Wu, Varun Sundar Rabindranath, Simon Mo, Robert Shaw. AWS: Xin Yang, Sadaf Fardeen, Ashish Khetan, George Karypis.
