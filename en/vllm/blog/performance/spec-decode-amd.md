@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Speculative decoding on AMD GPUs: five draft paths
@@ -16,11 +16,11 @@ Accept math is still [spec-decode.md](spec-decode.md). How the draft is grown: [
 
 ## Introduction
 
-Serving still starts from standard autoregressive decoding: generate one token, append it, generate the next. Simple, and the loop advances one committed token at a time because outputs are left-to-right.
+Large language models support a wide range of applications, but serving them at scale still needs careful optimization. The baseline used by most LLM serving systems is standard autoregressive decoding: generate one token, append it, generate the next. Simple and reliable, and the loop still advances one committed token at a time because outputs must be produced left-to-right.
 
 Speculative decoding [[1]](#ref-1) keeps that output behavior and splits the loop into **draft** and **verify**. A lightweight draft component proposes candidate future tokens; the original model, as **target**, checks them before they are committed. When several drafts survive, several output tokens come out of one target verification step.
 
-This post reviews the autoregressive baseline and the draft-and-verify process, then five drafting approaches that differ in what they take from the target and whether candidates are sequential, autoregressive, parallel, or hybrid: **Native MTP**, **Gemma 4 MTP**, **EAGLE-3**, **DFlash**, **DSpark**. Then CLI, pretrained drafts, measurements on Instinct **MI300X** and **MI355X**, tuning, and a short training sketch.
+This post explores how speculative decoding works in vLLM and shares measurements from their test environment. It first reviews the autoregressive baseline and the draft-and-verify process, then five drafting approaches that differ in what they take from the target and whether candidates are sequential, autoregressive, parallel, or hybrid: **Native MTP**, **Gemma 4 MTP**, **EAGLE-3**, **DFlash**, **DSpark**. Then how to enable the methods they tested, measurements on Instinct **MI300X** and **MI355X** with ROCm, and practical tuning and observability.
 
 ## The autoregressive decoding baseline
 
@@ -203,7 +203,9 @@ Native MTP does not load a separate draft checkpoint and may share the embedding
 
 ## Where to find the pretrained draft models
 
-Hugging Face publishers named on the page:
+Several organizations publish pretrained drafts on Hugging Face. Google ships MTP assistants for Gemma 4; Z-Lab maintains a DFlash collection. Red Hat AI covers EAGLE-3, DFlash, and DSpark; DeepSeek's DeepSpec collection matches all three methods. LightSeek focuses on EAGLE drafts for Kimi; Inferact publishes drafts for MiniMax and Kimi.
+
+Publishers named on the page:
 
 | Draft-model publisher | Methods | Representative models and targets |
 | --- | --- | --- |
@@ -218,7 +220,7 @@ Hugging Face publishers named on the page:
 
 After enabling, the practical question is whether extra drafting work improves end-to-end serving. Candidates need not be correct at every position; the target checks before commit. Performance depends on how many proposals are accepted and whether saved target Decode work outweighs draft + verify cost.
 
-They evaluate on **task-grounded** benchmarks, not random token sequences. Acceptance depends on structure and predictability of real outputs.
+They evaluate model quality and serving performance on **task-grounded** benchmarks, not random token sequences. Acceptance depends on the structure and predictability of actual outputs, so task prompts give a more representative view of practical performance.
 
 Main indicators:
 
@@ -248,7 +250,7 @@ Read each result inside its test config: architecture, active-parameter count, d
 
 Generated tokens per second vs a standard autoregressive baseline; sweep speculative token count `N` to see how speculation depth moves end-to-end serving TPS.
 
-**Figure 4** on the original page is an interactive Plotly bar chart (selector by target model; hover for speedup and selected `N`). Not reproduced here. The numeric claims below are the ones written in the post body.
+**Figure 4** on the original page is an interactive Plotly bar chart of measured output throughput by method and experiment, with the non-speculative baseline as a reference. Use the selector to switch target models; hover over bars to see speedup and selected proposal length `N`. Not reproduced here. The numeric claims below are the ones written in the post body.
 
 ### Main observations
 
@@ -276,7 +278,7 @@ These observations are for the hardware, software, target, draft checkpoint, wor
 
 Treat speculative decoding as a runtime optimization, not one `N` that works for every workload. Best `num_speculative_tokens` depends on how many proposals are accepted and whether avoided target Decode outweighs draft + verify cost.
 
-A model-card recommendation is a start; pick the final setting from representative workloads and end-to-end measurements. Useful signals: throughput, mean accepted length, overall acceptance rate, **per-position** acceptance rate.
+Observability therefore matters. A model-card recommendation is a start; pick the final setting from representative workloads and end-to-end measurements. Useful signals: throughput, mean accepted length, overall acceptance rate, **per-position** acceptance rate.
 
 A larger proposal window gives more chances to commit several tokens in one verification. Acceptance often drops at later draft positions. Extra candidates then add work and little accept → TPS flattens or regresses.
 
@@ -299,14 +301,19 @@ In these measurements, native-MTP `N` at largest throughput:
 
 Gemma 4 MTP and EAGLE-3 also add sequential drafting as `N` grows. A short sweep is useful even when the checkpoint recommends a config. In these Gemma 4 and EAGLE-3 runs, measured TPS generally increased over the first few `N` then plateaued.
 
-DFlash: start from proposal lengths the checkpoint recommends or supports. Many DFlash checkpoints train with a fixed `block_size`. Example:
+DFlash: start from proposal lengths the checkpoint recommends or supports. Many DFlash checkpoints train with a fixed `block_size`. For example, when `block_size = 16`, the maximum proposal length is normally:
 
 ```text
-block_size = 16
 num_speculative_tokens = 15
 ```
 
-First position is the confirmed anchor; the other 15 are draft candidates. That is the **maximum supported** proposal length, not necessarily the highest-TPS setting. The post suggests testing smaller values: `N = 3, 7, 11, 15`. Across their DFlash experiments, **N=7** was frequently among the higher-throughput settings; for some workloads the largest measured TPS was at **N=11**.
+because the first position is the confirmed anchor and the remaining 15 positions are draft candidates. That is the **maximum supported** proposal length, not necessarily the highest-TPS setting. In practice it is useful to test smaller values:
+
+```text
+N = 3, 7, 11, 15
+```
+
+Across their DFlash experiments, **N=7** was frequently among the higher-throughput settings; for some workloads the largest measured TPS was at **N=11**.
 
 DSpark: `num_speculative_tokens` is how many candidates each speculative round generates. In these vLLM experiments the **full** configured proposal was submitted for verification, so compare N=3 vs N=7 (and so on) with end-to-end TPS.
 
@@ -341,7 +348,9 @@ The winner need not have the longest proposal, the highest accept rate, or the l
 
 ## Training a speculator for a new target model
 
-This guide does not cover training in depth. Workflow below is a sketch from vLLM Speculators and DeepSpec [[13]](#ref-13) [[14]](#ref-14) [[15]](#ref-15). Hidden export through vLLM: [extract-hidden-states.md](../architecture/extract-hidden-states.md).
+This guide does not cover speculator training in depth. The workflow below summarizes practical considerations from vLLM Speculators and DeepSpec [[13]](#ref-13) [[14]](#ref-14) [[15]](#ref-15). Hidden export through vLLM: [extract-hidden-states.md](../architecture/extract-hidden-states.md).
+
+A typical workflow is:
 
 1. Prepare representative prompts.
 2. Generate responses with the **exact** target model.
@@ -350,9 +359,15 @@ This guide does not cover training in depth. Workflow below is a sketch from vLL
 5. Train the speculator.
 6. Test acceptance and serving throughput.
 
-Prompts should match the expected workload (chat, math, code, tool use, multilingual). Keep a held-out eval set. Tokenizer, chat template, thinking mode, and generation config should match deployment. Applying the target tokenizer or chat template to **existing** responses does not make the data target-specific; the responses themselves must come from the target.
+### Prepare representative prompts
+
+Start with prompts that reflect the expected workload: chat, mathematics, code generation, tool use, or multilingual tasks. Keep a separate evaluation set.
+
+Responses used for training should be generated by the exact target the speculator will support. Tokenizer, chat template, thinking mode, and generation config should match the intended deployment. The vLLM documentation emphasizes that applying the target tokenizer or chat template to **existing** responses does not make the data target-specific; the responses themselves must come from the target.
 
 ### Choose how to obtain hidden states
+
+The speculator receives internal hidden states from the target during training. The vLLM Speculators workflow supports three ways to provide them:
 
 | Training mode | How it works | Main consideration |
 | --- | --- | --- |
@@ -360,35 +375,48 @@ Prompts should match the expected workload (chat, math, code, tool use, multilin
 | Offline | Hidden generated and stored before training | Frees all GPUs for training afterward; needs substantial storage |
 | Hybrid | Hidden generated and cached in the first epoch, then reused | Pays generation cost once without a separate preprocess stage |
 
-Mode changes where hidden come from; the rest of training is largely the same.
+The selected mode changes where the hidden states come from; the remaining training workflow is largely the same.
 
-A vLLM server can run the target and expose hidden from the layers the drafting method needs. Custom layer picks must match the speculator-training config.
+### Collect target-model information
 
-- EAGLE-3: selected-layer hidden for autoregressive drafting [[4]](#ref-4).
-- DFlash: target features to train a parallel block predictor [[16]](#ref-16).
-- DSpark: light sequential and confidence heads on a DFlash-style net [[6]](#ref-6).
-- MTP: fine-tunes the target’s own MTP component — the target must already have compatible MTP layers [[13]](#ref-13).
+A vLLM server can run the target and expose hidden from the layers the drafting method needs. When custom target layers are chosen, the same layer selections must also be used in the speculator-training configuration.
 
-After training, inspect the checkpoint and serve it with the target in vLLM. Training loss is not enough: measure accepted length, acceptance rate, draft latency, GPU memory, and end-to-end serving TPS. Weak accept on a workload → change prompt mix or training config and repeat. Same target, same generation mode, same representative workload.
+The information collected depends on the method:
+
+- EAGLE-3 uses hidden states from selected target layers for autoregressive drafting [[4]](#ref-4).
+- DFlash uses target features to train a network that predicts a block of future positions in parallel [[16]](#ref-16).
+- DSpark adds lightweight sequential and confidence heads to a DFlash-style draft network [[6]](#ref-6).
+- MTP training fine-tunes the target’s own MTP component and therefore requires a target that already contains compatible MTP layers [[13]](#ref-13).
+
+### Train and test the speculator
+
+The speculator configuration must match the target’s hidden size, vocabulary, tokenizer, and selected target layers. Method-specific settings such as draft-network depth, block size, sequence length, and learning rate must also be selected.
+
+After training, inspect the checkpoint and serve it together with the target in vLLM. Training loss alone is not enough; the important measurements are accepted length, acceptance rate, draft latency, GPU memory, and end-to-end serving TPS. The vLLM Speculators tutorial covers the path from data preparation and hidden-state extraction to checkpoint testing and serving.
+
+When acceptance is weak for a particular workload, the prompt mixture or training configuration can be adjusted and the process repeated. The main principle is to use the same target, generation mode, and representative workload the speculator is expected to support.
 
 ## Summary
 
-Draft proposes; target verifies; nothing is committed until the target says so.
+This post treats speculative decoding in vLLM as a draft-and-verify approach for LLM serving. A draft component proposes candidate future tokens; the target evaluates the proposal before any tokens are committed.
 
-Five drafting approaches differ in how they use target information and whether candidates are sequential, parallel, or parallel-plus-light sequential correction.
+Five drafting approaches — native MTP, Gemma 4 MTP, EAGLE-3, DFlash, and DSpark — differ mainly in how they use information from the target and whether candidates are sequential, parallel, or parallel plus lightweight sequential correction.
 
-Experiments: selected Gemma, Qwen, MiniMax, and Kimi models on Instinct **MI300X** and **MI355X**, ROCm. Measured TPS moved with target, draft checkpoint, workload, `N`, and serving config.
+The experiments covered selected Gemma, Qwen, MiniMax, and Kimi models on Instinct **MI300X** and **MI355X** with ROCm. Measured throughput varied across target models, draft checkpoints, workloads, proposal lengths, and serving configurations.
 
-Some settings were small or **below** the non-speculative baseline. Several model–workload combinations were **above 2×**. Upper end written on the page: **2.87×** DFlash on `gemma-4-26B-A4B-it`, **2.83×** Gemma 4 MTP on the same target, **2.68×** DFlash on Kimi-K2.5.
+Across the tested configurations, some settings produced smaller changes or throughput **below** the non-speculative baseline, while several model–workload combinations produced ratios **above 2×**. Examples at the upper end of the observed range: **2.87×** DFlash on `gemma-4-26B-A4B-it`, **2.83×** Gemma 4 MTP on the same target, **2.68×** DFlash on Kimi-K2.5.
 
-`N` mattered. Increasing `num_speculative_tokens` sometimes helped for the first few settings, then plateaued or fell. Checkpoint recommendations are starting points; pick a deploy config from representative workload measurements and acceptance metrics.
+Proposal length was also an experimental variable. Increasing `num_speculative_tokens` sometimes increased throughput over the first few settings; larger values could plateau or fall. Checkpoint recommendations can provide starting points, but representative workload measurements and acceptance metrics are needed when selecting a deployment configuration.
 
 ## Future work
 
-- Non-learned approaches such as n-gram speculation and suffix decoding, especially for repeated-token workloads (code editing, agentic loops).
-- Broader eval across concurrency, prompt/output lengths, batch sizes, and sampling settings.
-- How speculator training data moves accept across code, math, chat, multilingual, tool use, and structured output.
-- Deeper profiling of draft generation, target verification, KV-cache behavior, graph execution, and scheduling.
+Future benchmarking could include non-learned approaches such as n-gram speculation and suffix decoding, particularly for workloads with repeated token patterns such as code editing and agentic loops.
+
+Broader evaluation across concurrency levels, prompt and output lengths, batch sizes, and sampling settings would also help show how speculative decoding behaves under different serving conditions.
+
+Another useful direction is to study how speculator training data affects acceptance across code, mathematics, chat, multilingual prompts, tool use, and structured output. That could give clearer guidance when choosing or training a draft checkpoint for a specific workload.
+
+Finally, deeper profiling of draft generation, target verification, KV-cache behavior, graph execution, and scheduling would help explain the performance differences observed across target models and workloads.
 
 ## References
 
@@ -409,68 +437,474 @@ Some settings were small or **below** the non-speculative baseline. Several mode
 15. <a id="ref-15"></a> DeepSeek-AI DeepSpec GitHub — https://github.com/deepseek-ai/DeepSpec
 16. <a id="ref-16"></a> DFlash paper — https://arxiv.org/pdf/2602.06036
 
-## Appendix: interactive heatmap (not copied)
+## Appendix: per-position acceptance heatmap (not copied) + nine serve recipes
 
-The original appendix is an **interactive HTML heatmap** over **9** targets × methods × experiments (per-position acceptance by proposal length `N`; each row also shows measured speedup and output tok/s). That widget is CSS/JS on the page. This note does not dump it. Per-position accept **percentages** were not printed as a static table in the cleaned extract — do not invent them. Use the original page to hover a cell.
+The appendix focuses on acceptance by draft position. The original page is an interactive HTML widget: pick a target model, drafting method, and experiment to view one larger per-position acceptance heatmap. Rows are proposal lengths `N`; columns are draft positions; darker cells indicate higher acceptance. Each row also includes measured speedup and output throughput for context. **That widget is CSS/JS on the page. This note does not paste Plotly, heatmap HTML, or invent a static per-position percentage table.** Hover a cell on the original post.
 
-Nine targets (same coverage table as above):
+**MAL** means mean accepted length (draft tokens committed per speculative round, on average). **AR** means acceptance rate (fraction of proposed draft tokens accepted). Each heatmap row’s small print is typically `speedup | tok/s` plus `MAL … | AR …%`.
 
-1. `google/gemma-4-26B-A4B-it`
-2. `google/gemma-4-31B-it`
-3. `Qwen/Qwen3-8B`
-4. `Qwen/Qwen3.5-27B`
-5. `Qwen/Qwen3.5-122B-A10B`
-6. `Qwen/Qwen3.6-27B`
-7. `Qwen/Qwen3.6-35B-A3B`
-8. `moonshotai/Kimi-K2.5`
-9. `MiniMaxAI/MiniMax-M3-MXFP8`
+### Baseline output tok/s printed in heatmap captions
 
-Each heatmap row, as described on the page: per-position acceptance by `N`, plus that run’s **speedup** and **output tok/s**.
+These numbers are the non-speculative baselines printed in the appendix heatmap captions, not the per-position cells. MiniMax-M3-MXFP8 ran on MI355X; the others used this study’s MI300X configuration.
 
-**Baseline tok/s printed in the cleaned captions** (all `google/gemma-4-26B-A4B-it`; same four baselines reused across Gemma 4 MTP / EAGLE-3 / DFlash captions):
+| Target | GSM8K | MATH500 | HumanEval | MBPP |
+| --- | ---: | ---: | ---: | ---: |
+| `google/gemma-4-26B-A4B-it` | 2,344 | 2,181 | 1,854 | 2,163 |
+| `google/gemma-4-31B-it` | 1,631 | 1,365 | 1,228 | 1,519 |
+| `Qwen/Qwen3-8B` | 3,698 | 3,530 | 3,226 | 3,268 |
+| `Qwen/Qwen3.5-27B` | 1,555 | 1,500 | 1,256 | 1,418 |
+| `Qwen/Qwen3.5-122B-A10B` | 1,494 | 1,446 | 1,105 | 1,459 |
+| `Qwen/Qwen3.6-27B` | 1,521 | 1,514 | 1,481 | 1,495 |
+| `Qwen/Qwen3.6-35B-A3B` | 2,275 | 2,235 | 2,193 | 2,258 |
+| `moonshotai/Kimi-K2.5` | 324 | 310 | 301 | 311 |
+| `MiniMaxAI/MiniMax-M3-MXFP8` | 2,086 | 2,468 | 2,317 | 2,277 |
 
-| Dataset | Baseline output tok/s |
-| --- | ---: |
-| GSM8K | 2,344 |
-| MATH500 | 2,181 |
-| HumanEval | 1,854 |
-| MBPP | 2,163 |
 
-**Numeric speedups written in the post** (relisted; nothing beyond the body). Summary also names **2.83×** Gemma 4 MTP on `gemma-4-26B-A4B-it` as an upper-end example (the GSM8K/MBPP pair in “Main observations” is 2.74× / 2.62×).
+### Example `vllm serve` commands used in the experiments
 
-| Target | Method | Written speedup | Notes |
-| --- | --- | --- | --- |
-| gemma-4-26B-A4B-it | Gemma 4 MTP | 2.74× GSM8K, 2.62× MBPP; 2.83× named in Summary | |
-| gemma-4-26B-A4B-it | DFlash | 2.87× MATH500, 2.79× HumanEval | |
-| gemma-4-26B-A4B-it | EAGLE-3 | 2.11×–2.27× across four datasets | |
-| gemma-4-31B-it | Gemma 4 MTP | 2.00× GSM8K, 1.99× MBPP | |
-| gemma-4-31B-it | DFlash | 2.34× MATH500, 2.05× HumanEval | |
-| gemma-4-31B-it | EAGLE-3, DSpark | above baseline, four datasets | exact × not written |
-| Qwen3-8B | DSpark | 1.15× MATH500 … 1.63× GSM8K | |
-| Qwen3-8B | DFlash | 1.08×–1.27× | |
-| Qwen3-8B | EAGLE-3 | above baseline on GSM8K / HumanEval / MBPP; MATH500 **below** baseline | exact × not written |
-| Qwen3.5-27B / 122B-A10B / Qwen3.6-27B | Native MTP vs DFlash | native-MTP max > DFlash max; **2.20×** Qwen3.5-122B-A10B MATH500 | native MTP N=4–7 |
-| Qwen3.6-35B-A3B | DFlash | 1.77×–2.06× at N=7 | |
-| Qwen3.6-35B-A3B | Native MTP | 1.28×–1.49× at N=6 | |
-| MiniMax-M3-MXFP8 | EAGLE-3 | 2.09× HumanEval at N=4 | MI355X |
-| Kimi-K2.5 | EAGLE-3 | up to 2.33×, generally N=4 | |
-| Kimi-K2.5 | DFlash | up to 2.68×, N=7 | |
+The source wraps nine targets in a `<details>` block: baseline first, then each method they actually ran. CLI is copied as shipped. Gemma 4 MTP assistants still use the MTP path even when they arrive through `model`, and often omit an extra `"method"` field. `num_speculative_tokens` here is the recipe example, not necessarily the throughput-sweep winner.
+
+### `google/gemma-4-26B-A4B-it`
+
+Baseline:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768
+```
+
+Gemma 4 MTP:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --speculative-config '{"model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}'
+```
+
+EAGLE-3:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.8 \
+  --speculative-config '{"model":"RedHatAI/gemma-4-26B-A4B-it-speculator.eagle3","num_speculative_tokens":1,"method":"eagle3"}'
+```
+
+DFlash:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --attention-backend triton_attn \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.8 \
+  --speculative-config '{"method":"dflash","model":"z-lab/gemma-4-26B-A4B-it-DFlash","num_speculative_tokens":15,"attention_backend":"triton_attn"}'
+```
+
+### `google/gemma-4-31B-it`
+
+Baseline:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768
+```
+
+Gemma 4 MTP:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --speculative-config '{"model":"google/gemma-4-31B-it-assistant","num_speculative_tokens":1}'
+```
+
+EAGLE-3:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --speculative-config '{"model":"RedHatAI/gemma-4-31B-it-speculator.eagle3","num_speculative_tokens":3,"method":"eagle3"}'
+```
+
+DFlash:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --attention-backend triton_attn \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"method":"dflash","model":"z-lab/gemma-4-31B-it-DFlash","num_speculative_tokens":15,"attention_backend":"triton_attn"}'
+```
+
+DSpark:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --attention-backend triton_attn \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"RedHatAI/gemma-4-31B-it-speculator.dspark","num_speculative_tokens":7,"method":"dspark","attention_backend":"triton_attn"}'
+```
+
+### `Qwen/Qwen3-8B`
+
+Baseline:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85
+```
+
+EAGLE-3:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"RedHatAI/Qwen3-8B-Thinking-speculator.eagle3","num_speculative_tokens":5,"method":"eagle3"}'
+```
+
+DFlash:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"z-lab/Qwen3-8B-DFlash-b16","method":"dflash","num_speculative_tokens":7}'
+```
+
+DSpark:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"deepseek-ai/dspark_qwen3_8b_block7","method":"dspark","num_speculative_tokens":11}'
+```
+
+### `Qwen/Qwen3.5-27B`
+
+Baseline:
+
+```bash
+vllm serve Qwen/Qwen3.5-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768
+```
+
+Native MTP:
+
+```bash
+vllm serve Qwen/Qwen3.5-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":1}'
+```
+
+DFlash:
+
+```bash
+vllm serve Qwen/Qwen3.5-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.5-27B-DFlash","num_speculative_tokens":15}'
+```
+
+### `Qwen/Qwen3.5-122B-A10B`
+
+Baseline:
+
+```bash
+vllm serve Qwen/Qwen3.5-122B-A10B \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --max-num-batched-tokens 32768
+```
+
+Native MTP:
+
+```bash
+vllm serve Qwen/Qwen3.5-122B-A10B \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":7}'
+```
+
+DFlash:
+
+```bash
+vllm serve Qwen/Qwen3.5-122B-A10B \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.5-122B-A10B-DFlash","num_speculative_tokens":15}'
+```
+
+### `Qwen/Qwen3.6-27B`
+
+Baseline:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve Qwen/Qwen3.6-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768
+```
+
+Native MTP:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve Qwen/Qwen3.6-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":3}'
+```
+
+DFlash:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve Qwen/Qwen3.6-27B \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.6-27B-DFlash","num_speculative_tokens":15}'
+```
+
+### `Qwen/Qwen3.6-35B-A3B`
+
+Baseline:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+vllm serve Qwen/Qwen3.6-35B-A3B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_xml \
+  --mm-encoder-tp-mode data \
+  --max-num-batched-tokens 16384
+```
+
+Native MTP:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+vllm serve Qwen/Qwen3.6-35B-A3B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_xml \
+  --mm-encoder-tp-mode data \
+  --max-num-batched-tokens 16384 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":3,"moe_backend":"triton"}'
+```
+
+DFlash:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+vllm serve Qwen/Qwen3.6-35B-A3B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_xml \
+  --mm-encoder-tp-mode data \
+  --max-num-batched-tokens 16384 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.6-35B-A3B-DFlash","num_speculative_tokens":15}'
+```
+
+### `moonshotai/Kimi-K2.5`
+
+Baseline:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+vllm serve moonshotai/Kimi-K2.5 \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --language-model-only \
+  --reasoning-parser kimi_k2 \
+  --enable-auto-tool-choice \
+  --tool-call-parser kimi_k2
+```
+
+EAGLE-3:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+vllm serve moonshotai/Kimi-K2.5 \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --language-model-only \
+  --reasoning-parser kimi_k2 \
+  --enable-auto-tool-choice \
+  --tool-call-parser kimi_k2 \
+  --speculative-config '{"model":"lightseekorg/kimi-k2.5-eagle3-mla","method":"eagle3","num_speculative_tokens":3}'
+```
+
+DFlash:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+vllm serve moonshotai/Kimi-K2.5 \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --language-model-only \
+  --reasoning-parser kimi_k2 \
+  --enable-auto-tool-choice \
+  --tool-call-parser kimi_k2 \
+  --speculative-config '{"model":"z-lab/Kimi-K2.5-DFlash","method":"dflash","num_speculative_tokens":7}'
+```
+
+### `MiniMaxAI/MiniMax-M3-MXFP8`
+
+Baseline:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_USE_AITER_FUSION_SHARED_EXPERTS=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+VLLM_USE_BREAKABLE_CUDAGRAPH=0 \
+VLLM_ROCM_USE_AITER_MOE=1 \
+vllm serve MiniMaxAI/MiniMax-M3-MXFP8 \
+  --tensor-parallel-size 8 \
+  --block-size 128 \
+  --attention_config.indexer_kv_dtype fp8 \
+  --linear-backend emulation \
+  --attention-backend TRITON_ATTN \
+  --language-model-only \
+  --reasoning-parser minimax_m3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser minimax_m3
+```
+
+EAGLE-3:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_USE_AITER_FUSION_SHARED_EXPERTS=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+VLLM_USE_BREAKABLE_CUDAGRAPH=0 \
+VLLM_ROCM_USE_AITER_MOE=1 \
+vllm serve MiniMaxAI/MiniMax-M3-MXFP8 \
+  --tensor-parallel-size 8 \
+  --block-size 128 \
+  --attention_config.indexer_kv_dtype fp8 \
+  --linear-backend emulation \
+  --attention-backend TRITON_ATTN \
+  --language-model-only \
+  --reasoning-parser minimax_m3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser minimax_m3 \
+  --speculative-config '{"method":"eagle3","model":"Inferact/MiniMax-M3-EAGLE3","num_speculative_tokens":3,"attention_backend":"TRITON_ATTN"}'
+```
 
 ## Acknowledgements
 
-Hongxia Yang and Peng Sun (AMD); Pin Siang Tan, Jun Kang Chow, and Ye Hur Cheong (Embedded LLM).
+Thanks to everyone who contributed to this collaboration, including Hongxia Yang and Peng Sun from AMD, and Pin Siang Tan, Jun Kang Chow, and Ye Hur Cheong from Embedded LLM.
 
 ## Disclaimer
 
-Measurements on AMD Instinct™ MI300X and MI355X with the configurations below.
+Measurements were run on AMD Instinct™ MI300X and MI355X platforms using the configurations below.
 
-**Hardware**
+**Hardware Configuration**
 
-- Hardware 1: **8×** AMD Instinct™ **MI300X** (gfx942) with **2×** AMD EPYC™ **9654** 96-Core.
-- Hardware 2: **8×** AMD Instinct™ **MI355X** (gfx950) with **2×** AMD EPYC™ **9575F** 64-Core. Used for the **MiniMax-M3-MXFP8** experiment.
+- Hardware 1: **8×** AMD Instinct™ **MI300X** GPUs (gfx942) with **2×** AMD EPYC™ **9654** 96-Core Processor.
+- Hardware 2: **8×** AMD Instinct™ **MI355X** GPUs (gfx950) with **2×** AMD EPYC™ **9575F** 64-Core processors. This platform was used for the **MiniMax-M3-MXFP8** experiment.
 
-**Software**
+**Software Configuration**
 
 Ubuntu **22.04.5** LTS, ROCm/HIP runtime **7.2.53211**, vLLM **0.23.1rc1.dev1120+g0f0f28b53**, PyTorch **2.11.0+gitd0c8b1f**, Transformers **5.13.1**, Python **3.12.13**.
 
-Server manufacturers may vary configurations. Performance may vary with configuration, software, vLLM version, and drivers / optimizations.
+Server manufacturers may vary configurations, yielding different results. Performance may vary based on configuration, software, vLLM version, and the use of the latest drivers and optimizations.

@@ -2,46 +2,16 @@
 source: https://vllm.ai/blog/2026-07-27-k3
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
-# Kimi K3 day-0：2.8T 怎么端上桌
+# Kimi K3 day-0：2.8T hybrid MoE，KDA prefix cache 和 DSpark 一起转
 
 英文对照：[en/vllm/blog/serving/kimi-k3.md](../../../../en/vllm/blog/serving/kimi-k3.md)  
 原文：https://vllm.ai/blog/2026-07-27-k3  
-2026-07-27。署名 **vLLM Team and Inferact**。数字是 GB300 NVL72 上的演示。KDA 前缀缓存设计见 [preview](kimi-k3-preview.md)。tool-calling 握手那篇：[kimi-k2-accuracy.md](kimi-k2-accuracy.md)。投机亲戚：[dspark-adaptive](../performance/dspark-adaptive.md)、[spec-decode](../performance/spec-decode.md)。缓存池：[mooncake.md](mooncake.md)、[kv-offload.md](kv-offload.md)。当时只能 Docker（含预发布 FlashInfer）。**引擎骨架没换**；换的是 hybrid cache、kernel、配方。
+2026-07-27。vLLM Team and Inferact。权重 [`moonshotai/Kimi-K3`](https://huggingface.co/moonshotai/Kimi-K3)。DSpark [`Inferact/Kimi-K3-DSpark`](https://huggingface.co/Inferact/Kimi-K3-DSpark)。菜谱 [recipes.vllm.ai/moonshotai/Kimi-K3](https://recipes.vllm.ai/moonshotai/Kimi-K3)。预告 [kimi-k3-preview.md](kimi-k3-preview.md)。模型文 [kimi.com/blog/kimi-k3](https://www.kimi.com/blog/kimi-k3)。FlashKDA、Flash-Flash-KDA。因复杂依赖，**当时只有 Docker 能用**；镜像含若干预发布依赖，包括 [FlashInfer](https://github.com/flashinfer-ai/flashinfer)。跳过社交预览图和页上 GIF/MP4。本地图版权仍归原站。
 
-`moonshotai/Kimi-K3`：2.8T MoE，896 expert 里激活 16，1M 上下文，原生视觉，权重 MXFP4。注意力是 Kimi Delta Attention（KDA，定长 recurrent）夹 periodic full attention，再加 AttnRes、Stable LatentMoE。聊天模板是 Python 渲 token，不是 Jinja。
-
-**Figure（social preview，未收录）：** “Kimi K3 day-0 support on vLLM.”
-
-本地图（原文版权仍归原站；学习对照用）：
-
-![architecture](../../../../assets/vllm/blog/serving/kimi-k3/01-architecture.png)
-
-![hybrid cache](../../../../assets/vllm/blog/serving/kimi-k3/02-hybrid-cache.png)
-
-![dspark acceptance rates](../../../../assets/vllm/blog/serving/kimi-k3/03-dspark-acceptance-rates.png)
-
-![dspark schematic](../../../../assets/vllm/blog/serving/kimi-k3/04-dspark-schematic.png)
-
-![sequence parallelism](../../../../assets/vllm/blog/serving/kimi-k3/05-sequence-parallelism.jpg)
-
-![pd disaggregation animation](../../../../assets/vllm/blog/serving/kimi-k3/06-pd-disaggregation-animation.gif)
-
-![interval cache retention](../../../../assets/vllm/blog/serving/kimi-k3/07-interval-cache-retention.png)
-
-![selective cache retention](../../../../assets/vllm/blog/serving/kimi-k3/08-selective-cache-retention.gif)
-
-![kda decode](../../../../assets/vllm/blog/serving/kimi-k3/09-kda-decode.png)
-
-![kda metadata builder](../../../../assets/vllm/blog/serving/kimi-k3/10-kda-metadata-builder.png)
-
-![latent moe tail fusion](../../../../assets/vllm/blog/serving/kimi-k3/11-latent-moe-tail-fusion.png)
-
-![serving performance](../../../../assets/vllm/blog/serving/kimi-k3/12-serving-performance.png)
-
-![pareto gb300](../../../../assets/vllm/blog/serving/kimi-k3/13-pareto-gb300.png)
+上周 [preview](https://vllm.ai/blog/2026-07-22-kimi-k3-preview) 讲生产级集成；今天权重公开，支持上线。最兴奋的挑战：让 KDA、MXFP4 MoE、KV cache、P/D 拆分、speculative decoding、长上下文 recipes 在能跑的 serving 引擎里一起转。Preview 讲 kernel 和 cache，尤其 recurrent state 上的 prefix caching。这篇是实用指南：vLLM 怎么适配架构、数字背后的 kernel、day 0 什么能用。
 
 ## Quick start
 
@@ -57,190 +27,220 @@ vllm serve moonshotai/Kimi-K3 \
   --reasoning-parser kimi_k3
 ```
 
-最省事：**8 张 NVIDIA B300** 或 **8 张 AMD MI355X**。Inferact 还开了 [DSpark speculator](https://huggingface.co/Inferact/Kimi-K3-DSpark)：
+最省事：8 张 NVIDIA B300 或 8 张 AMD MI355X，上面这条。
+
+Inferact 还训并开源了 [DSpark speculator](https://huggingface.co/Inferact/Kimi-K3-DSpark)。serve 命令加：
 
 ```bash
 --speculative-config '{"model":"Inferact/Kimi-K3-DSpark","method":"dspark","num_speculative_tokens":7,"attention_backend":"FLASHINFER_MLA","draft_sample_method":"probabilistic","rejection_sample_method":"block"}'
 ```
 
-菜谱与 Docker：[recipes.vllm.ai/moonshotai/Kimi-K3](https://recipes.vllm.ai/moonshotai/Kimi-K3)。当时 **只有 Docker 能跑**，里面绑着若干预发布依赖，包括 [FlashInfer](https://github.com/flashinfer-ai/flashinfer)。
+更多平台 Docker 和部署策略见 [recipes](https://recipes.vllm.ai/moonshotai/Kimi-K3)。复杂依赖，**当时只有 Docker 能用**。
 
 ## TL;DR
 
-- **2.8T 多模态 MoE：** 每 token 激活 16/896，上下文到 1M，KDA + AttnRes + LatentMoE，原生 MXFP4。
-- **单用户最高 370 tok/s：** 无投机 118 tok/s，DSpark **370 tok/s（3.14×）**，测在 **16 张 NVIDIA GB300 NVL72**。
-- **上线就带生产件：** 投机解码、Prefill/Decode 分离、Mooncake 上的 agentic KV、tool calling、reasoning、structured output。NVIDIA Hopper/Blackwell 与 AMD MI355X。
-- **开源 DSpark：** block-diffusion 投机，用 vLLM 和 [TorchSpec](https://github.com/lightseekorg/TorchSpec) 训，Inferact 发。
-- **Hybrid 前缀缓存：** 为 recurrent KDA 状态重做；现在同类 hybrid 线性模型都能用。
+- **2.8T 多模态 MoE：** 每 token 激活 16/896；上下文到 1M；KDA、AttnRes、LatentMoE、原生 MXFP4。
+- **每用户最高 370 tok/s：** 无 speculative 118 tok/s；DSpark 370 tok/s（**3.14×**），16× NVIDIA GB300 NVL72。对着 K3 架构做了大量优化。
+- **生产特性：** speculative decoding、P/D 拆分、Mooncake agentic KV、tool calling、reasoning、structured output。Launch 覆盖 NVIDIA Hopper/Blackwell 和 AMD MI355X。
+- **开源 DSpark：** block-diffusion speculative decoding；用 vLLM + TorchSpec 训，Inferact 开源。
+- **Hybrid prefix caching：** recurrent + full-attention 逼着重设计 hybrid prefix cache。现在每个类似的 hybrid linear 模型都受益。
 
-## Kimi K3 的架构，以及 vLLM 怎么伺候它
+## Kimi K3 的架构，vLLM 怎么 serve
 
-**Figure.** 架构创新，出处 [Kimi K3 发布博](https://www.kimi.com/blog/kimi-k3)。内部细节在 [preview](kimi-k3-preview.md)；这篇是落地指南。
+![Kimi K3 architecture](../../../../assets/vllm/blog/serving/kimi-k3/01-architecture.png)
 
-### Kimi Delta Attention：recurrent 夹满 attention
+_架构创新来自 [Moonshot 原文](https://www.kimi.com/blog/kimi-k3)。_
 
-**新在哪：** 大多数层是 KDA——线性注意力，**定长 recurrent state**，KV 不随序列涨——中间周期性插入 **full attention**，保住精确全局回忆。1M 上下文靠这个才买得起。
+K3 在几处离开标准 Transformer，每一处都改 serving 引擎要做的事。Preview 写内部；这里复述新点，盯 vLLM 怎么适配。
 
-**vLLM 怎么做：** 一个 hybrid KV-cache manager，同一调度器下两套内存：满 attention 用 paged KV，KDA 用紧凑 recurrent 块。KDA backend：Prefill 走 **FlashKDA**；Decode 走 fused CUDA（投机解码时也可 Flash-Linear-Attention/Triton）。
+### Kimi Delta Attention: hybrid recurrent + full-attention
 
-最难的是前缀缓存。满 attention 按 token 存 KV；KDA 每步改 recurrent 和 convolution，**不能**在每个前缀边界拍快照。vLLM 把大块物理 KDA 状态和细粒度前缀匹配拆开，块内登记快照，**往前延伸前先拷**，长共享 prompt 才能同时复用 KDA 状态和 paged KV。这是 core，不是 K3 私房。
+**新在哪：** 多数层是 KDA——线性注意力，固定大小 recurrent state，而不是增长的 KV；周期性 full-attention 层保住精确全局回忆。1M 上下文才付得起。
 
-**Figure.** Hybrid cache：KDA 与周期性满 attention 交错；recurrent 与 paged KV 一起管。
+**vLLM 怎么 serve：** 一个 hybrid KV-cache manager 在同一 scheduler 下并排两份内存：full-attention 的 paged KV，KDA 的紧凑 recurrent-state blocks。专用 KDA attention backend：prefill 走 FlashKDA；decode 走 fused CUDA（speculative decoding 时走 Flash-Linear-Attention / Triton）。
 
-### Attention Residuals：沿深度学着混残差
+最难的是 hybrid cache 上的 prefix caching：full-attention 存 per-token KV；KDA 每 token 更新 recurrent 和 convolution state，却付不起在每个可能前缀边界留快照。vLLM 把大块物理 KDA state 和细粒度 prefix matching 拆开，在块内登记快照，扩展前先拷，长共享 prompt 才能同时复用 KDA state 和 paged KV。这套 hybrid-cache 是 [vLLM core 新基础设施](https://vllm.ai/blog/2026-07-22-kimi-k3-preview)，现在每个类似 K3 的 hybrid 模型都受益。笔记 [kimi-k3-preview.md](kimi-k3-preview.md)。
 
-**新在哪：** Block AttnRes 不用普通残差累加，改成 **depth-wise attention**：每个 Transformer 子层用学来的 pseudo-query，给前面层块里 RMS-normalized 的残差状态加权。
+![hybrid KDA and full-attention cache](../../../../assets/vllm/blog/serving/kimi-k3/02-hybrid-cache.png)
 
-**vLLM 怎么做：** Triton / CUDA 把 depth-wise logits、softmax、hidden 聚合焊成 **一次 fused op**。残差更新和输出 RMSNorm 能进同一 kernel 就进。
+_K3 把 KDA 和周期性 full-attention 交错；vLLM 的 hybrid cache 一起管 recurrent state 和 paged KV。_
 
-### Stable LatentMoE：分位数均衡的 16/896 潜空间专家
+### Attention Residuals: 跨深度学着混 residual
 
-**新在哪：** NVIDIA 的 [LatentMoE](https://research.nvidia.com/labs/nemotron/LatentMoE/) 把派发激活投到更窄的 latent 维做 routed-expert，再投回来——专家权重带宽和 all-to-all 都轻，同样代价能养更多专家。Kimi 的 [Stable LatentMoE](https://www.kimi.com/blog/kimi-k3) 拉到 **896 专家、激活 16**，用 [Quantile Balancing](https://kexue.fm/archives/11619) 替代启发式均衡。
+**新在哪：** 每个 token，Block AttnRes 用深度方向的 attention 替换普通 residual 累加：每个 Transformer sublayer 用学到的 pseudo-query，给前面 layer blocks 的 RMS-normalized residual states 加权，再把对应加权组合当输入。
 
-**vLLM 怎么做：** expert parallelism 切专家。两套 MoE backend：TP > 1 用 **TRT-LLM-Gen**；DEP 用 **MegaMoE**。可选 EPLB。权重在 MoE 路径上 **原生 MXFP4**。
+**vLLM 怎么 serve：** 优化过的 Triton / CUDA kernel，把深度方向的 attention logits、softmax、hidden-state aggregation 收进一次 fused 操作。支持处把 residual updates 和 output RMSNorm 折进同一 kernel，prefill 和 decode 都少中间流量和 launch。
 
-### Chat template：一段渲程序，不是 Jinja
+### Stable LatentMoE: 16/896，quantile-balanced latent experts
 
-**新在哪：** system / user / assistant、多模态、工具定义和工具结果都要用精确 control token。K2 是 [Jinja](https://huggingface.co/moonshotai/Kimi-K2.7-Code/blob/main/chat_template.jinja)；K3 是 **Python 程序直接造 token 序列**。输出还得分 reasoning、答案、tool call 三块。
+**新在哪。** NVIDIA 的 [LatentMoE](https://research.nvidia.com/labs/nemotron/LatentMoE/)：把 dispatch 出去的 token activations 投到更窄的 latent 维做 routed-expert 计算，再投回模型宽度——减 expert-weight 带宽和 all-to-all，才能在相近推理成本下用更多 experts。K3 的 [Stable LatentMoE](https://www.kimi.com/blog/kimi-k3) 扩到 896 experts、每 token 16 active，用 [Quantile Balancing](https://kexue.fm/archives/11619) 从 router-score quantiles 推导 expert 分配，而不是启发式 balancing 更新。
 
-**vLLM 怎么做：** Python 和 Rust frontend 都实现输入渲染和流式解析。用户/工具给的文本当普通内容。[XGrammar](https://xgrammar.mlc.ai/) 约束 structured 区域，API 里 reasoning、content、tool-call 分字段返回。
+**vLLM 怎么 serve：** Experts 用 expert parallelism 切。两套 MoE backend：TRT-LLM-Gen 对着 TP > 1；MegaMoE 对着拆分 / DEP。可选 Expert-Parallel Load Balancing (EPLB)，让各 rank 算力接近。权重在 MoE 路径上原生 MXFP4。
 
-## 为生产而做
+### Chat template: 渲染程序，不是 Jinja
 
-### 超低延迟：DSpark 投机解码
+**新在哪：** K3 的 chat template 要用精确 control tokens 编 system / user / assistant、多模态、tool 定义、tool 结果。常见做法是 [Jinja](https://huggingface.co/moonshotai/Kimi-K2.7-Code/blob/main/chat_template.jinja) 先渲成文本再 tokenize；K3 用 **Python 程序直接建 prompt token 序列**。输出里 reasoning、answer、tool calls 分区，必须解析进 API。
 
-Day-0 就接 DSpark；draft 用 vLLM + TorchSpec 训，投机推理和训练数值对齐。block-diffusion 骨架从 K3 中间状态一次并行出多 token，块加深，起草代价仍平。块内依赖靠 low-rank Markov head；confidence head 估接受概率。Draft **原生 MLA**，跟 K3 注意力同构，KV 布局才能跟高级 KV 管理和 P/D 兼容。
+**vLLM 怎么 serve：** Python 和 Rust 前端都实现 input renderer 和 streaming output parser，保住 control-token 边界，把用户和工具给的文本当普通内容。Tool calls 和 structured outputs 把 K3 格式接到 [XGrammar](https://xgrammar.mlc.ai/)，解码时约束 structured regions，再拆成 reasoning / content / tool-call 字段。K2 的 Jinja 握手坑：[kimi-k2-accuracy.md](kimi-k2-accuracy.md)。
 
-**Figure.** 各数据集上的 DSpark 位置接受率。
+## Built for production
 
-SPEED Bench、单用户：**3.14×**，**118 tok/s → 370 tok/s**。编码/低熵约 **4.73** accept/step；高熵（创意写作）约 **2.61**。用 confidence head 排优先级、剪弱草稿——**还在做**。Draft 模型和推理支持都开源。
+Serve 好 2.8T hybrid MoE：单用户要快，多会话要省，agent 要能扩。vLLM 三头都按 day 0 准备。
 
-**Figure.** 轻量 DSpark 提候选，K3 一次并行核验。
+### Ultra-low latency: DSpark
 
-### Sequence parallelism 给 TEP Prefill
+2.8T 上要超低延迟又不丢精度，speculative decoding 是自然选择。所以 day 0 就支持 DSpark，并训、放了 [DSpark speculator](https://huggingface.co/Inferact/Kimi-K3-DSpark)。Draft 用 vLLM + [TorchSpec](https://github.com/lightseekorg/TorchSpec) 训，speculator 推理和训练数值对齐。笔记 [dspark-adaptive.md](../features/dspark-adaptive.md)。
 
-**Figure.** 按 token 所有权切分；AttnRes 在分片上做；一次 all-gather 在下一层 QKV 前把 batch 拼回来。
+DSpark 用 block-diffusion backbone，基于 K3 丰富的中间状态，一次并行出多个 speculative tokens，draft 成本随 block 加深保持平坦。Low-rank Markov head 提供块内依赖；confidence head 预测每条 draft 被接受的可能。Draft 做成 MLA-native，镜像 K3 自己的 attention，draft 和 target 共享相近 KV layout，好兼容高级 KV 管理和 P/D 拆分。
 
-Prefill 把 attention 的 tensor parallelism 和 MoE 的 expert parallelism 绑成 **TEP**。相对纯 TP：通信少，专家整块留在 rank 上，GEMM 形状更好。
+![DSpark positional acceptance](../../../../assets/vllm/blog/serving/kimi-k3/03-dspark-acceptance-rates.png)
 
-朴素 TEP：**每层两次 all-reduce**（attention `o_proj` 后一次、MoE 后一次）——每个 rank 都物化整 batch，AttnRes 也白算一遍。Sequence parallelism（[arXiv:2205.05198](https://arxiv.org/abs/2205.05198)）：`o_proj` 后改 **reduce-scatter**；AttnRes 按分片；MoE all-to-all dispatch/combine；下一层 QKV 前 **一次 all-gather**。
+_各数据集上的 positional acceptance。_
 
-两处好处：
+DSpark：单用户 **3.14×**，118 → 370 tok/s，SPEED Bench。编码和低熵任务大约 **4.73** accepted tokens / step；创意写作等高熵大约 **2.61**。
 
-- **理论上通信更便宜**（reduce-scatter + A2A dispatch + A2A combine + all-gather 对两次 all-reduce）。NCCL 的 reduce-scatter / all-gather **不适合** Prefill 那种消息尺寸，于是自写 kernel，比 NCCL **1.7×–4.5×**，小到中等消息尤其明显。
-- **AttnRes 跟着分片：** 每个 rank 只养自己那份 token。AttnRes 把残差变成跨层常驻状态，这件事特别贵。
+Confidence-based scheduling 是当时进行中的活。打开后用 DSpark 自带的 confidence head 预测每条 drafted token 被接受的可能，优先强提案、剪弱的，verification 不花在活不下来的 token 上。
 
-TP + MegaMoE，或 TP + DP + EP，默认开。**没有额外 flag。**
+Draft 和推理支持随这篇开源。部署见下。
 
-### 大规模：Prefill/Decode 分离
+![DSpark draft-and-verify](../../../../assets/vllm/blog/serving/kimi-k3/04-dspark-schematic.png)
 
-高吞吐：跨节点 EP + DP，P/D 分 replica。验证过的一套：**TEP8 Prefill → DEP16 Decode**，KV 走 **NIXL**。
+_轻量 DSpark draft 提候选，K3 一次并行 verify，加速单流 decode。_
 
-Hybrid 模型的 P/D 不留情：recurrent KDA、满 attention 的 paged KV、block table 都得对上。NIXL 把共享页看成两套逻辑视图——token 级 MLA cache，和 request 级 KDA 状态（convolution + recurrent）。握手先换 MLA/KDA metadata，再为各次传输建 **分开的 descriptor**。
+### Sequence parallelism for TEP prefill
 
-异构 TP 下，hybrid allocator 给 Prefill 和 Decode 用不同 block size。NIXL 跟踪 logical→physical，**没传完的尾巴清零**，免得旧请求的脏数据从 padding 里漏出来。
+![sequence parallelism](../../../../assets/vllm/blog/serving/kimi-k3/05-sequence-parallelism.jpg)
 
-**Figure（GIF）。** Prefill/Decode 分离流程。
+_Sequence parallelism 按 rank 切 token 所有权；attention residual 按 shard 施；一次 all-gather 在下一层 QKV 前重建整 batch。_
 
-### 部分块命中和 KV offload 怎么和解
+Prefill 把 attention tensor parallelism 和 MoE expert parallelism 合在一起（TEP）。相对纯 TP，TEP 减通信、整专家留在各 rank，expert GEMM 形状更有效。
 
-细粒度前缀命中可能停在物理块 **内部**（[preview](kimi-k3-preview.md)）。Offload 时：本地 GPU 先打到一段残尾，外部存储（Mooncake）又发现 **更长** 前缀。整块命中可以干净往外延；残尾会跟远端结果 **重叠**。
+朴素 TEP 每层两次 all-reduce——一次在 attention output projection 后，一次在 MoE 后——每个 rank 都物化整 batch，并对整份冗余施 attention residual。于是做 [sequence parallelism](https://arxiv.org/abs/2205.05198)：`o_proj` 后的 all-reduce 换成 reduce-scatter，每 rank 拥有一 shard tokens；attention residual 按 shard 施；MoE 的 all-to-all 做 dispatch / combine；一次 all-gather 在下一层 QKV 前恢复整 batch。
 
-调度器比两边「真正能复用的 token 数」，取 **更长** 的。远端赢了，就放掉为较短本地残尾预留的块，并把 **所有 cache group** 对齐到新前缀长度。
+两个关键好处：
 
-整套走现成 KV Connector API——`MooncakeStoreConnector`、`SimpleCPUOffloadConnector` 等，不必为模型再开一条路。RFC [issue #45702](https://github.com/vllm-project/vllm/issues/45702)；PR [#45939](https://github.com/vllm-project/vllm/pull/45939)、[#46384](https://github.com/vllm-project/vllm/pull/46384)、[#49502](https://github.com/vllm-project/vllm/pull/49502)。
+- **减通信：** Reduce-scatter + all-to-all dispatch + combine + all-gather，理论上比两次 all-reduce 便宜。实践里 NCCL 的 reduce-scatter / all-gather 没对着 prefill 消息尺寸优化，**没有加速**。于是自己写 custom reduce-scatter / all-gather，比 NCCL 快 **1.7×–4.5×**，小到中等消息尤其明显。
+- **Sharded attention residual：** Residual 整层保持按 rank 切，每 rank 只算、只维护自己那份 tokens。对 K3 尤其要紧：AttnRes 把 residual stream 变成带自己计算和内存脚印的持久跨层状态。
 
-### Agentic serving：更聪明的缓存保留策略
+合适时默认开：TP + MegaMoE，或 TP + DP + EP。**不用额外 flag。**
 
-一层 KDA 状态大约等于几千 token 的 MLA cache——大，但 **不随序列涨**。Agent 跑到几十万到 1M token，这件事才显出来。每个 token 都存一份 KDA，分布式池也会被吃光（一份 checkpoint ≫ 一个 token 的 MLA）。两条政策：
+### Large-scale serving: P/D disaggregation
+
+高吞吐：跨节点 EP / DP，P/D 拆分——prefill-heavy 和 decode-heavy 分 replica，各自按瓶颈 sizing。校验过的拓扑之一：TEP8 prefill → DEP16 decode，NIXL 当 KV transfer。笔记 [mooncake.md](../features/mooncake.md)。
+
+Hybrid 模型上 P/D 不留情：recurrent KDA state、full-attention paged KV、block tables 都要到得正确。NIXL connector 把共享 KV-cache page 看成两份逻辑视图：token-level MLA cache，和 request-level KDA state（含 convolution 和 recurrent）。Handshake 交换 MLA/KDA metadata，再为每次 transfer 建分开的 descriptors。
+
+异构 TP 下，hybrid allocator 给 prefill 和 decode 用不同 block size。NIXL connector 跟踪 logical-to-physical block mapping，把没传过去的尾巴 **清零**，免得上一条请求的陈数据从 padding 或 layout 缝里漏出来。
+
+页上 P/D GIF 未收录。
+
+### Reconciling partial block cache hits and KV cache offloading
+
+Preview 里写过：细粒度 prefix hit 可以停在物理 cache block **里面**。给 KV offload 带来细问题：vLLM 可能先在本地 GPU 打中带 partial tail 的 hit，再在 Mooncake 这类外部 store 发现更长的前缀。Full-block hit 时，远程复用可以干净地接到本地前缀之后。Partial tail 却可能和远程结果 **重叠**。
+
+Scheduler 因此比较两层的 **精确** 可复用 token 长度，选更长的前缀。远程赢了，就释放为更短本地尾巴预留的 block，把所有 cache groups 对齐到新前缀长度。
+
+整套机制完全走现有 KV Connector APIs——语义已经够。`MooncakeStoreConnector`、`SimpleCPUOffloadConnector` 和其他 connectors 都能做多层 partial-prefix reuse，不必模型专用路径。笔记 [kv-offload.md](../features/kv-offload.md)。
+
+设计：[RFC #45702](https://github.com/vllm-project/vllm/issues/45702)；实现 [PR #45939](https://github.com/vllm-project/vllm/pull/45939)、[#46384](https://github.com/vllm-project/vllm/pull/46384)、[#49502](https://github.com/vllm-project/vllm/pull/49502)。
+
+### Agentic serving: 更聪明的 cache retention
+
+K3 的线性注意力层只要常量大小的 KDA state，长上下文省内存。单层 KDA state 大约等于几千 token 的 MLA cache。虽大，却不随序列增长——和常规 KV 不同。Agent 负载跨十几万到一百万 token 时，这个区别变大。
+
+同一设计也把 prefix caching 变复杂。KDA state 在 decode 时原地更新，vLLM 必须在选中的前缀边界 **拷** 一份，下一轮 forward 才会覆写。每个 token 位置都 cache 贵得离谱：一份 KDA checkpoint 比一个 token 的 MLA cache 大得多，分布式 cache pool 也会很快耗尽。
+
+为了提高 cache 空间效率又保住有用前缀，vLLM 支持两套互补 retention。
 
 #### Interval-based retention
 
-把选中的位置当 checkpoint——例如每 **32K** token 一份。**Prompt 边界**更好：下一轮通常回放上一轮 prompt。vLLM 自动留这些。
+每个 KDA state 都 cache 浪费；太稀又逼下一请求重算大段后缀。Interval-based 把选中位置当 checkpoints——例如每 32K tokens 一份。
 
-`VLLM_PREFIX_CACHE_RETENTION_INTERVAL`：`0` 关掉周期性 checkpoint，**只留 prompt 末**（多轮对话）。间隔拉大，用重算换缓存。
+Prompt 边界是更好的 checkpoints。Agent 下一轮通常先回放上一轮 prompt，prompt 末尾的 state 特别容易被复用。vLLM 自动检测并保留这些边界。
 
-DeepSeek V4 和 hybrid SWA 先走 [PR #43447](https://github.com/vllm-project/vllm/pull/43447)；K3 / hybrid 线性 Day-0 是 [PR #45845](https://github.com/vllm-project/vllm/pull/45845)。
+周期 checkpoint：`VLLM_PREFIX_CACHE_RETENTION_INTERVAL`。设 `0` 关掉周期 checkpoint，只留 prompt-end——多轮对话主导的负载合适。更大 interval 用一点重算换更低 cache。
 
-**Figure.** MLA 每块都存 KV；KDA 只在 checkpoint——prompt 末（绿）必留，固定间隔（橙）可配。
+Interval-based 先为 DeepSeek V4 和 hybrid sliding-window 模型进 [PR #43447](https://github.com/vllm-project/vllm/pull/43447)；K3 和 hybrid linear-attention 的 day-0 在 [PR #45845](https://github.com/vllm-project/vllm/pull/45845)。
+
+![interval-based KDA retention](../../../../assets/vllm/blog/serving/kimi-k3/07-interval-cache-retention.png)
+
+_MLA 每块都 cache KV；KDA state 只在 checkpoints 留：prompt ends（绿）总留，固定 interval（橙）可配。_
 
 #### Marconi-style selective retention
 
-系统提示、仓库快照、工具说明书，复用时 **不一定** 落在 prompt 边界。[Marconi-style（MLSys ’25）](https://mlsys.org/virtual/2025/poster/3260)：**第二次命中才缓存**。第一次证明前缀存在，第二次证明它被共享。一次性前缀不占坑。
+Prompt-end 对会话状态好，但有价值的共享前缀可以出现在别处。System prompt、仓库快照、tool spec 可能被许多请求复用，却对不齐 prompt 边界。
 
-[PR #37898](https://github.com/vllm-project/vllm/pull/37898)；K3 Day-0 [PR #47782](https://github.com/vllm-project/vllm/pull/47782)。
+[Marconi-style（MLSys '25）](https://mlsys.org/virtual/2025/poster/3260) 规则简单：**第二次 hit 才 cache。** 第一次证明前缀存在；第二次证明它真被共享。这时 vLLM 才把 cache 容量花在它的 KDA state 上。
 
-**Figure（GIF）。** 请求 1 只在自己的 prompt 末留 KDA（过了共享前缀）→ 请求 2 KV 命中、KDA miss → 第二次目击才在前缀边界存状态 → 请求 3 复用。
+Retention 变成按需决策。一次性前缀不挤 cache；反复出现的自动晋升——用户不必预先猜哪些会热。
 
-合在一起：interval 钉结构边界；Marconi 学哪些别的前缀值得留。
+Selective：[PR #37898](https://github.com/vllm-project/vllm/pull/37898)；K3 day-0 [PR #47782](https://github.com/vllm-project/vllm/pull/47782)。页上 selective GIF 未收录：Request 1 只在自己的 prompt end 留 KDA（过了共享前缀），Request 2 得 KV hit、KDA miss；第二次目击才在前缀边界 cache，Request 3 复用。
 
-## 性能优化
+两套政策合起来覆盖可预期和涌现的复用：interval 钉结构上重要的边界；Marconi 学哪些别的前缀值得留。
 
-整模勉强塞进一张 DGX B300；那一代最少 **16 张 NVIDIA B200/GB200**。TP 对交互好，有效 KV 却小；大规模 EP 又可能把每用户输出速度卡在网上。不少条目 [preview](kimi-k3-preview.md) 已经写过。
+## Performance optimizations
+
+K3 这种体量自带难题。整模型勉强塞进单台 NVIDIA DGX B300；那一代硬件最少要 **16× B200/GB200**。Serving 要在交互性和系统总吞吐之间权衡：TP 对交互性好，但有效 KV 小、总吞吐低；大规模 EP 会因网络带宽卡每用户输出速度。下面这些优化两头都抬，用户按负载选 recipe。许多已在 [preview](https://vllm.ai/blog/2026-07-22-kimi-k3-preview) 写过。
 
 ### Attention Residuals
 
-Block AttnRes 最多看 **八** 份缓存块表示，再加当前块内残差——最多 **九** 个源。像 FlashAttention 的 online-softmax，但轴是 **深度** 不是序列。一次 fused kernel（残差更新进，可选 RMSNorm 出）。通用 Triton；支持的 Blackwell 上有专用 CUDA。
+Block AttnRes 最多 attend **八份** 缓存的 block 表示，外加当前块内 residual。每个 token：从 RMS-normalized sources 算 logits，在这些深度方向候选上 softmax，再聚合表示。实现像 FlashAttention 的 online-softmax，但跨的是 **模型深度** 而不是序列位置，最多九个 sources。一次 fused kernel 做混合，输入侧收 residual update，输出可选 RMSNorm。可移植 Triton 走通用路径；专用 CUDA 加速支持的 Blackwell 配置。
 
-### KDA Decode
+### KDA decode
 
-**Figure.** Fused KDA Decode：因果卷积、recurrent 更新、RMSNorm 一次 launch。
+![fused KDA decode](../../../../assets/vllm/blog/serving/kimi-k3/09-kda-decode.png)
 
-一层 KDA：输入投影、因果 1D conv、QK norm、gate、recurrent、输出 gated RMSNorm。支持的配置里，投影之后的 Decode（conv 到 gated RMSNorm）是 **一个 CUDA kernel**，状态原地更新。否则 Triton。
+_Fused KDA decode 把 causal convolution、recurrent update、RMSNorm 收进一次 launch。_
 
-### KDA Prefill
+一层 KDA 操作很多：input projections、causal 1D convolutions、QK norm、gate、KDA recurrent update、output gated RMSNorm。支持的配置上，vLLM 把 post-projection decode——从 causal convolutions 到 gated RMSNorm——融进一个专用 CUDA kernel。Kernel 原地更新 convolution 和 recurrent states，直接写归一化输出，避开中间张量、反复的 state 流量、以及 K3 许多 KDA 层上的 per-operation launch。不支持的配置走可移植 Triton fallback。
 
-Moonshot 先发 [FlashKDA](https://github.com/MoonshotAI/FlashKDA)（CUTLASS）。vLLM 接进来（覆盖更多 GPU、metadata dtype、布局、vendoring）。[Shikhar Mishra](https://github.com/Itssshikhar) 再为 H100 发 [Flash-Flash-KDA](https://github.com/Itssshikhar/Flash-Flash-KDA)。一天内在 GB300 NVL72 上验过，折进 FlashKDA 集成。开源回路，不是单向交接。
+### KDA prefill
+
+KDA prefill 成了开源开发的爱例。Moonshot 先放 [FlashKDA](https://github.com/MoonshotAI/FlashKDA)，高性能 CUTLASS。很快接到 vLLM，再啃不那么光鲜的生产细节：更宽 GPU 覆盖、metadata dtypes、tensor layouts、可靠 vendoring。[Shikhar Mishra](https://github.com/Itssshikhar) 再为 H100 优化，发 [Flash-Flash-KDA](https://github.com/Itssshikhar/Flash-Flash-KDA)，改善数据搬移、保住数值正确。一天内在 GB300 NVL72 上校验，收紧 recurrence pipeline 和同步，折进 FlashKDA 集成。不是单向交接：开源 kernel 被 serving 社区扩、独立贡献者改进、很快进生产。
 
 ### KDA metadata builder
 
-**Figure.** 优化前后的 Nsight Systems。
+![KDA metadata before/after](../../../../assets/vllm/blog/serving/kimi-k3/10-kda-metadata-builder.png)
 
-DSpark bring-up 时，K3 先复用通用 GDN metadata builder：会准备 K3 不用的 FLA metadata，再用一串小 eager PyTorch op 拼 GPU metadata。专用 builder 剪掉闲路径，把那些序列焊成 Triton。bs=1：准备延迟 **870 µs → 34 µs（96%）**；DSpark 端到端 **−6%**。
+DSpark bring-up 时，KDA metadata 准备成了显著开销。K3 起初复用通用 GDN metadata builder：准备 K3 并不消费的 FLA metadata，再用一串小 eager PyTorch ops 组装、staging GPU metadata。专用 Kimi K3 KDA metadata builder 剪掉不用的路径，把那些序列换成 fused Triton，每段收成一次 launch。Batch size 1：metadata-preparation **96%**，**870 µs → 34 µs**；端到端 DSpark 延迟 **−6%**。
 
-### 低延迟 BF16 GEMM
+### Low-latency BF16 GEMM
 
-小 batch、延迟敏感：若干线性投影不用通用 BF16 GEMM，改 `skinnyGEMM`——跳过 shared memory 中转，激活和权重直接进寄存器，CUDA Core FMA（避开 TMA / Tensor Core 那套吞吐启动）。微基准：kernel **8%–100%**；小 batch 端到端约 **10%**。
+低 batch、延迟敏感时，若干 linear projection 的通用 BF16 GEMM 换成自己的 `skinnyGEMM`。Generic cuBLAS 对着更一般的形状，这里不是最好。Kernel 绕过 shared-memory staging，activations 和 weights 直接进寄存器，用 CUDA Core FMA 做数学。避开为最大吞吐准备的沉重 TMA / Tensor Core setup。Microbenchmarks：kernel 级 **8%–100%**；小 batch 端到端大约 **−10%**。
 
-### 低延迟 MoE tail fusion
+### Low-latency MoE tail fusion
 
-**Figure.** LatentMoE 尾巴：两次 all-reduce + RMSNorm + latent 上投影 + add，换成三个 kernel，通信和计算更好叠。
+![LatentMoE tail fusion](../../../../assets/vllm/blog/serving/kimi-k3/11-latent-moe-tail-fusion.png)
 
-LatentMoE 结束，routed 激活要 RMSNorm 再上投影，才能加到 shared-expert 输出上。普通 TP：两次 all-reduce（或 concat 后一次），上投影还 **复制一份**。
+_LatentMoE tail：两次 all-reduce、RMSNorm、latent up-projection、elementwise add，换成三个 kernels，减计算、更好重叠通信和计算。_
 
-改法：shared expert 走 **reduce-scatter**；routed 走 **all-reduce**（要先归一化）；复制出来的 routed 激活做列并行上投影；加到已经分片的 shared 输出上；broadcast 做 all-gather。这一步大约 **20%**；端到端约 **7%–8%**。
+超低延迟 serving 里，vLLM 用一套新策略压 latent-MoE tail。LatentMoE 末尾，routed experts 收完的 activation 要 RMSNorm、up-project，再加到 shared-expert 输出上。普通 TP：routed 和 shared 两次 all-reduce——或一次 all-reduce + concat——并复制 up-projection。
+
+为避免复制线性投影上的冗余计算：shared experts 走 reduce-scatter；routed experts 仍 all-reduce，因为它们的 activations 要归一化。复制的 routed-expert activation 再按 column-parallel 和 up-projection 做 matmul，elementwise 加到已经 sharded 的 shared-expert 输出上。最后用 broadcast all-gather 到各 rank。这一步大约 **−20%** 延迟；端到端大约 **7%–8%**。
 
 ## Quality and Performance Benchmarks
 
-### 准确率与正确性
+### Accuracy and correctness
 
-走 OpenAI-compatible 端点验，精确配置在菜谱里。最大 reasoning-effort：
+vLLM 把精度和速度同等认真。经 OpenAI 兼容 endpoint 端到端校验 K3，精确配置在 recipes，accuracy 干净通过。最大 reasoning-effort：GSM8K **0.976**，GPQA-Diamond **0.939**，OCRBench **0.889**，MMMU Pro Vision **0.818**。
 
-| Benchmark | Score |
-| --- | ---: |
-| GSM8K | 0.976 |
-| GPQA-Diamond | 0.939 |
-| OCRBench | 0.889 |
-| MMMU Pro Vision | 0.818 |
-
-**Caveat：** K3 想很久。分数低，更常见是答案被 **截断**，不是算错——先加大 reasoning、把 `max_tokens` 给足，再查截断，别先怀疑 kernel。
+评测 caveat：K3 答之前想很多。低分更常是截断，不是答错。先加大 reasoning effort，把 `max_tokens` 留宽，检查 cut-off，再去 debug 别的。
 
 ### Serving performance
 
-**Figure.** GB300 NVL72、bs=1 Decode 吞吐，TP8 与 TP16。
+![single-user decode](../../../../assets/vllm/blog/serving/kimi-k3/12-serving-performance.png)
 
-| Config | tok/s per user (bs=1) |
-| --- | ---: |
-| TP8，无投机 | 111 |
-| TP16，无投机 | 118 |
-| TP8 + DSpark | 331（约 3×） |
-| TP16 + DSpark | 370 |
+_Batch size 1 decode，GB300 NVL72，TP8 / TP16。_
 
-**Figure.** GB300 NVL72 上的初始 Pareto：高吞吐 **2K+ TPGS**，到低延迟 **100+ TPS/user**。
+Launch：无 speculative，TP8 **111** tok/s/user，TP16 **118**。DSpark 大约 **3×** 交互性：TP8 **331**，TP16 **370**。
 
-### 复现基准
+![GB300 NVL72 Pareto](../../../../assets/vllm/blog/serving/kimi-k3/13-pareto-gb300.png)
 
-TP8 + DSpark 的 Decode 吞吐：
+GB300 NVL72 上的初始 Pareto：从高吞吐 2K+ TPGS 到低延迟 100+ TPS/user。
+
+### Reproduce our benchmark
+
+上面 TP8 + DSpark decode 吞吐的完整 recipes：
 
 ```bash
 export NCCL_DMABUF_ENABLE=0
@@ -264,11 +264,8 @@ vllm serve moonshotai/Kimi-K3 \
   --kv-cache-dtype fp8 \
   --attention-config '{"mla_prefill_backend":"FLASHINFER","use_prefill_query_quantization":true}' \
   --speculative-config '{"model":"Inferact/Kimi-K3-DSpark","method":"dspark","num_speculative_tokens":7,"attention_backend":"FLASHINFER_MLA","draft_sample_method":"probabilistic","rejection_sample_method":"block"}'
-```
 
-bs=1，8K/1K random（不开投机）：
-
-```bash
+# Batch size = 1, 8K/1K random (no speculative decoding)
 vllm-bench \
   --backend openai \
   --base-url "http://${HEAD_ADDR}:8000" \
@@ -285,11 +282,8 @@ vllm-bench \
   --percentile-metrics "ttft,tpot,itl,e2el" \
   --metric-percentiles "50,90,99" \
   --save-result
-```
 
-bs=1，SPEED Bench（投机）：
-
-```bash
+# Batch size = 1, SPEED Bench (speculative decoding)
 vllm-bench \
   --backend openai \
   --base-url "http://${HEAD_ADDR}:8000" \
@@ -308,60 +302,66 @@ vllm-bench \
   --save-detailed
 ```
 
-多节点、EP、视觉：[Kimi K3 recipes](https://recipes.vllm.ai/moonshotai/Kimi-K3)。
+完整 recipes（多节点、EP、vision）在 [Kimi K3 recipes](https://recipes.vllm.ai/moonshotai/Kimi-K3)。
 
 ## Important Deployment Tips
 
-1. **Prefix caching：** `--enable-prefix-caching`。vLLM 通常默认开；**K3 现在默认关**，hybrid-cache 还在长。要显式传。
-2. **Tool calling：** 用自己的流量验。K3 偶尔吐出 parser 不认的格式 → `tool_calls` 空，同一套环境干净探针却能解析。跟 prompt 和这次 run 有关。生产 agent：按 schema 校验，空了就重试/回退，考虑 strict / structured tool calling。
-3. **All-to-all：** `--all2all-backend`。NVLink：`flashinfer_nvlink_one_sided`。RDMA：`deepep_v2`。
-4. **MoE backend：** 任何 DEP 用 `deep_gemm_mega_moe`。TP > 1 用 `flashinfer_trtllm`（FAQ）。
-5. **Rust frontend：** `VLLM_USE_RUST_FRONTEND=1`，这个模型全支持。
-6. **ViT 并行：** `--mm-encoder-tp-mode=data` 是 **默认**。视觉编码器 `head_size=12`，TP=8 切不匀。ViT 不到 1B，backbone 约 2T，所以默认 ViT DP，躲开编码器 all-reduce。
+1. **Prefix caching：** `--enable-prefix-caching` 打开。vLLM 通常默认开 prefix caching；**K3 当时默认关**，hybrid-cache 设计还在演化。要显式传 flag。
+2. **Tool calling：** 先在自己的流量上校验再依赖。偶尔见过 K3 吐出自己 parser 不认的 tool-call 格式，`tool_calls` 空；同一套上干净 probe 却解析完美。跟 prompt 和 run 有关，不是一刀切失败。生产 agent 应对着 schema 校验；`tool_calls` 空时重试或 fallback；考虑 strict / structured tool calling，生成时约束 grammar。
+3. **All-to-all：** `--all2all-backend` 管 EP 时 MoE 怎么通信。NVIDIA NVLink 用 `flashinfer_nvlink_one_sided`；RDMA 用 `deepep_v2`。
+4. **MoE backend：** 多套。任何 DEP 环境推荐 `deep_gemm_mega_moe`。
+5. **Rust frontend：** `VLLM_USE_RUST_FRONTEND=1`。完整支持这个模型。
+6. **ViT parallelism：** `--mm-encoder-tp-mode=data` 默认开。K3 vision encoder `head_size=12`，TP=8 切不匀。Vision encoder 不到 1B，backbone 大约 2T，默认开 ViT DP，避开 encoder 的 all-reduce。
 
-## Kimi K3 vLLM FAQ
+## FAQ
 
-### 伺候 Kimi K3 要几张卡？
+### How many GPUs do I need to serve Kimi K3?
 
-至少一台 **8× B300**（或 GB300 NVL72）；**16× B200** 也行。生产多半是多节点 EP + DP，RDMA 或 NVLink。
+至少一台 8× B300（或 GB300 NVL72）；16× B200 也支持。多数生产多节点 EP / DP，RDMA 或 NVLink。
 
-### 怎么开 DSpark？
+### How do I enable DSpark speculative decoding?
 
-上面那段 `--speculative-config` JSON。推理和编码的单流 Decode 大约三倍。
+加：
 
-### MoE 和 all-to-all 用哪个？
+```bash
+--speculative-config '{"model":"Inferact/Kimi-K3-DSpark","method":"dspark","num_speculative_tokens":7,"attention_backend":"FLASHINFER_MLA","draft_sample_method":"probabilistic","rejection_sample_method":"block"}'
+```
 
-DEP 用 `deep_gemm_mega_moe`；TP > 1 用 `flashinfer_trtllm`。互联：NVLink `flashinfer_nvlink_one_sided`，RDMA `deepep_v2`。
+推理和编码负载上，单流 decode 大约三倍。
 
-### 支持前缀缓存吗？默认开吗？
+### Which MoE and all-to-all backend should I use?
 
-满 attention KV 和 recurrent KDA 都支持。**默认不开**，要 `--enable-prefix-caching`。
+拆分或 DEP 用 `deep_gemm_mega_moe`；TP > 1 用 `flashinfer_trtllm`。All-to-all 对齐互联：NVLink `flashinfer_nvlink_one_sided`，RDMA `deepep_v2`。
 
-### AMD 上能跑吗？
+### Does Kimi K3 support prefix caching, and is it on by default?
 
-能。ROCm 随 Day-0 发；更宽的调优在 roadmap。
+支持：full-attention KV **和** recurrent KDA state。**默认关**，要传 `--enable-prefix-caching`。
 
-### 跟 preview 有什么不同？
+### Does vLLM support Kimi K3 on AMD GPUs?
 
-[Preview](kimi-k3-preview.md) 是架构和 kernel 深潜（KDA 前缀缓存、kernel）。这篇是发布指南：菜谱、flag、性能、哪些能进生产。
+支持。Launch 就带 ROCm；更宽调参在 roadmap。
 
-## Roadmap and Future Work
+### How is this different from the Kimi K3 preview post?
 
-- **RL：** rollout 已经接上；下一步跟生态做端到端 RL 训练。
-- Day-0 之后继续挤性能。
-- **Decode Context Parallelism (DCP)：** 原型加速不错；选定负载上比 TP8 **吞吐高 40%**。很快上游。
-- 把 **EPLB** 再做好。
-- 用 DSpark 的 confidence head 做 **confidence-based scheduling**。
-- 更宽的 AMD ROCm 调优。
+[Preview](https://vllm.ai/blog/2026-07-22-kimi-k3-preview) 是架构和 kernel 深潜，含 KDA prefix caching 怎么建。这篇是实用 launch 指南和产物：vLLM 怎么适配、recipes、flags、性能、生产上 K3 准备好了什么。笔记 [kimi-k3-preview.md](kimi-k3-preview.md)。
+
+## Roadmap
+
+- **K3 的 RL：** vLLM rollout 已加。会和 RL 生态项目一起做端到端 RL 训练。
+- **持续性能：** day 0 之后继续抬。
+- **Decode Context Parallelism (DCP)：** prototype 加速不错，很快上游。早期实验：选定负载上比 TP8 高 **40%** 吞吐。笔记 [dcp.md](../features/dcp.md)。
+- **EPLB：** 改善性能。
+- **Confidence-based scheduling：** 用 DSpark 的 confidence head 剪要 verify 的 draft tokens。
+- **更宽 AMD ROCm 调参。**
 
 ## Quick links
 
-- 模型：[moonshotai/Kimi-K3](https://huggingface.co/moonshotai/Kimi-K3)
-- DSpark draft：[Inferact/Kimi-K3-DSpark](https://huggingface.co/Inferact/Kimi-K3-DSpark)
-- 菜谱 / Docker：[recipes.vllm.ai/moonshotai/Kimi-K3](https://recipes.vllm.ai/moonshotai/Kimi-K3)
-- 技术博：[kimi.com/blog/kimi-k3](https://www.kimi.com/blog/kimi-k3)
-- 设计：[preview](kimi-k3-preview.md)
+- **Model：** [moonshotai/Kimi-K3](https://huggingface.co/moonshotai/Kimi-K3)
+- **DSpark draft：** [Inferact/Kimi-K3-DSpark](https://huggingface.co/Inferact/Kimi-K3-DSpark)
+- **Recipes / Docker：** [recipes.vllm.ai/moonshotai/Kimi-K3](https://recipes.vllm.ai/moonshotai/Kimi-K3)
+- **Kimi 技术文：** [kimi.com/blog/kimi-k3](https://www.kimi.com/blog/kimi-k3)
+- **vLLM 设计：** [preview](https://vllm.ai/blog/2026-07-22-kimi-k3-preview)
 
 ## Acknowledgements
 
-Moonshot AI（发布前共享架构、共设计 KDA 感知缓存）。Inferact（端到端集成和部署验证）。NVIDIA（fused KDA Decode、KDA Prefill、AttnRes kernel、MXFP4 MoE）。AMD（ROCm 起盘）。推理伙伴包括 Alibaba Cloud、Baseten、DigitalOcean、Modal。Shikhar（Flash-Flash-KDA）。vLLM 社区。为 K3 长出来的 cache 基础设施，现在属于每一家具有同类架构的 hybrid 模型。
+感谢 Moonshot 做出 K3、发布前共享架构、共设计 KDA-aware caching；Inferact 端到端集成和部署校验；NVIDIA 的 fused KDA decode / prefill、AttnRes kernels、MXFP4 MoE；AMD 的 ROCm bring-up；inference partners：Alibaba Cloud、Baseten、DigitalOcean、Modal；Shikhar 的 Flash-Flash-KDA；vLLM 社区。为 K3 建的 cache 基础设施，现在属于每个类似架构的 hybrid 模型。页上说等不及看你 serve 什么。

@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-08-22-rdt-weight-transfer
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Sharded weight transfer with RDT: Kimi K2 in 7.53s

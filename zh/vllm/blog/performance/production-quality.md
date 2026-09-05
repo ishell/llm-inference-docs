@@ -2,20 +2,22 @@
 source: https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # 怎样把 vLLM 保持在「能上线」的质量
 
 英文对照：[en/vllm/blog/performance/production-quality.md](../../../../en/vllm/blog/performance/production-quality.md)  
 原文：https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality  
-2026-07-16。数字会过时：当时 **86K+** stars、每月 **5.6M** pip、**2.5M** 镜像、**1000+** 模型架构、**600+** 加速器。2026 年 6 月 main 合入 **1,918** 个 commit（日均 64，跟 PyTorch / Kubernetes 一个量级），CI **1,300 万** job-minute，峰值 **1,400** 并发 runner。H100 上干净的改动，可能在 AMD 编不过、在 B200 变慢、在某一个 backend 把输出拧歪一点。让 vLLM 值得用的那块面积，就是每一颗 commit 都要守住的面积。
+2026-07-16。Kevin Luu（Inferact）。学习译文，不是官方译本。数字会过时：当时 **86K+** stars、每月 **5.6M** pip、**2.5M** 镜像、**1000+** 模型架构、**600+** 加速器。2026 年 6 月 main 合入 **1,918** 个 commit（日均 64，跟 PyTorch / Kubernetes 一个量级），CI **1,300 万** job-minute，峰值 **1,400** 并发 runner。
 
-这篇讲流程，不讲 kernel。从 PR 到一个版本，三层门：
+支持这么多模型和加速器，是 vLLM 最大的长处，也是稳定难的原因。H100 上干净的改动，可能在 AMD 编不过、在 B200 变慢、在某一个 backend 把输出拧歪一点。让 vLLM 值得用的那块面积，就是每一颗 commit 都要守住的面积。
+
+这篇讲流程，不讲 kernel：什么行、学到什么、哪里还短。从 PR 到一个版本，三层门：
 
 1. **CI** — 抓住会响的崩，每个 PR。
 2. **夜间性能 / 精度** — 抓住不响的慢和错，CI 负担不起的那些 e2e。
-3. **发布** — 哪一颗 commit 能出门，再编 wheel 和镜像。
+3. **发布** — 看信号、做决定，再编 wheel 和镜像。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -25,7 +27,7 @@ fetched: 2026-09-04
 
 ### 按 diff 动态组测
 
-每个 PR 先过轻量 **GitHub Actions**（lint、format）。committer 点头后，重的单测上 **Buildkite**。
+每个 PR 先过轻量 **GitHub Actions**（lint、format 一类护栏）。committer 点头后，重的单测上 **Buildkite**。
 
 ![01 ci pipeline and selected jobs](../../../../assets/vllm/blog/performance/production-quality/02-01-ci-pipeline-and-selected-jobs.png)
 
@@ -35,7 +37,7 @@ bootstrap 读 job 定义、看 diff，只调度相关组。改文档可能几条
 
 ### 环境必须每次一样
 
-两种漂移：机器环境各玩各的；依赖在你眼皮底下换版本。共享容器管前者，锁死的依赖图管后者。
+一条测试只在每次跑法相同才有意义。两种漂移：机器环境各玩各的；依赖在你眼皮底下换版本。共享容器管前者，锁死的依赖图管后者。
 
 **同一张镜像，每台机器。** 266 个 job 散在几十种机型上，最快把结果变成不可信的办法，就是让每个 job 自己搭一套略不同的环境。多数 job 拉同一张图，一次构建、到处复用。Dockerfile 分阶段：
 
@@ -43,7 +45,7 @@ bootstrap 读 job 定义、看 diff，只调度相关组。改文档可能几条
 - `build` — 在上面编 wheel
 - `runtime` — 装上这些 wheel 和运行时依赖
 
-然后分叉：加 serving 入口 → **发布镜像**；加测试依赖 → CI 拉的 **`test` 镜像**。共同祖先，测的和发出去的才贴得近。B200 上的 kernel 测和 L4 上的 entrypoints 测，看见的是同一串字节。
+然后分叉：加 serving 入口 → **发布镜像**；加测试依赖 → CI 拉的 **`test` 镜像**。共同祖先，测的和发出去的才贴得近。B200 上的 kernel 测和 L4 上的 entrypoints 测，看见的是同一串字节。一次构建，少掉「每个 job 自己搭环境」这种漂移。
 
 ![03 container build stages](../../../../assets/vllm/blog/performance/production-quality/04-03-container-build-stages.png)
 
@@ -98,9 +100,25 @@ agent 跑命令、回流日志、回报退出码。常驻的继续等；一次�
 
 一天几百次运行，每次几百个 job。队列悄悄积到几小时；某条测试二十次里飘一次；某个 job 比上个月慢十分钟。
 
-他们照着 PyTorch 的 [hud.pytorch.org](https://hud.pytorch.org/) 做了 [ci.vllm.ai](https://ci.vllm.ai/)。每 **15 分钟**把 Buildkite 数据灌进 **Databricks** 和 **ClickHouse**。看板上的例子：`main` 现在健康吗？（文中配图：过去三天不健康——而且 job 为什么跑了 10 小时？）
+他们照着 PyTorch 的 [hud.pytorch.org](https://hud.pytorch.org/) 做了 [ci.vllm.ai](https://ci.vllm.ai/)。每 **15 分钟**把 Buildkite 数据灌进 **Databricks** 和 **ClickHouse**。数据在手、看板自己控，常见问题才答得动。原文 dashboard carousel 四问：
+
+**`main` 现在健康吗？** 文中配图：过去三天不健康——而且 job 为什么跑了 10 小时？
 
 ![08 main branch health](../../../../assets/vllm/blog/performance/production-quality/16-08-main-branch-health.png)
+
+**哪条测试坏了或在飘，从何时起？** AMD 硬件那一组从 PR **#47329** 合入后一直挂。Basic correctness 只失败一次，大概是 flaky。
+
+![09 test failure history](../../../../assets/vllm/blog/performance/production-quality/17-09-test-failure-history.png)
+
+**有没有 runner 队列堵着？** `small_cpu_queue_premerge` 看起来很堵。容量大概卡在 **5** 台，该加。
+
+![10 runner queue congestion](../../../../assets/vllm/blog/performance/production-quality/18-10-runner-queue-congestion.png)
+
+**哪个 job 在 CI 里最久？过去两周的时长趋势？**
+
+![11 job duration trend](../../../../assets/vllm/blog/performance/production-quality/19-11-job-duration-trend.png)
+
+这些只是看板能做的几件。文中说：现代 coding agent 让这类工具 unexpectedly 好上手，不必先成为前端专家。
 
 ### 失败检测自动化
 
@@ -121,7 +139,9 @@ agent 跑命令、回流日志、回报退出码。常驻的继续等；一次�
 - `gpt-oss` 在 **Blackwell** 上 **TP > 1** 挂了。
 - `DeepSeek V4` 在 **GB200** 上吞吐塌了。
 
-当时还没有 benchmarking 流水线；没有东西在那种硬件上把这些模型从头跑到尾。性能回退很少会崩——server 起来，请求成功，用户只是每秒少几个 token，或第一个字等得更久。精度回退更安静：返回合法回答，答案是错的。第二层就是那套「本该在 v0.20.0 出门前拦住它」的系统。
+当时还没有 benchmarking 流水线；没有东西在那种硬件上把这些模型从头跑到尾。性能回退很少会崩——server 起来，请求成功，用户只是每秒少几个 token，或第一个字等得更久。精度回退更安静：返回合法回答，答案是错的。
+
+他们后来建的就是那套「本该在 v0.20.0 出门前拦住它」的系统。已经给发布提供大量信号，也抓住过几次大回退。
 
 ### 每夜一张模型 × 加速器矩阵
 
@@ -155,7 +175,7 @@ agent 跑命令、回流日志、回报退出码。常驻的继续等；一次�
 
 ## Layer 3：两周一发
 
-**2025 年 11 月**起两周节奏。他们坚持的理由：
+**2025 年 11 月**起两周节奏。许多同样体量的项目发得慢得多。他们坚持的理由：
 
 - 改动很快到用户手里（发布从不远离 main）。
 - 下游可以按日历计划，不必猜下一班车。
@@ -208,11 +228,25 @@ agent 跑命令、回流日志、回报退出码。常驻的继续等；一次�
 - **更好的告警** — 已有队列拥堵和回退的基本告警；还想要磁盘压力、job 突然失败得*太快*、依赖安装坏掉。
 - **覆盖率报告** — 覆盖面宽，但还不能确定每个角落真被跑到。
 
-Slack `#sig-ci`。全职：当时 Inferact 在招（原文 Ashby 链接）。
+这篇只讲流程；技术细节留给以后。Slack `#sig-ci`。全职：当时 Inferact 在招（[Ashby](https://jobs.ashbyhq.com/Inferact/3dee433c-7121-458c-8408-c193b6326ffb)）。
 
-## 致谢（按原文组织）
+## 致谢（按原文组织，人名按字母）
 
-不是一个人的事。点名的组织（人名在原文按字母排）：Amazon、AMD、Arm、EmbeddedLLM、Google、HuggingFace、Inferact、Intel、Meta、NVIDIA、Red Hat、Reflection AI；独立贡献者 Cyrus Leung (DarkLight1337)、Yuqi Wang (noooop)、haosdent、Mohammad Angkad。
+不是一个人的事。
+
+- **Amazon**：Junpu Fan、Liangfu Chen、Omri Shiv
+- **AMD**：Alexei Ivanov、Andreas Karatzas、Kenny Roche、Micah Williamson
+- **Arm**：Fadi Arafeh、Ioana Ghiban
+- **EmbeddedLLM**：Tun Jian Tan
+- **Google**：Brittany Rockwell、Jincheng Chen、Ming Huang、Qiliang Cui、Yarong Mu、Yiwei Wang
+- **HuggingFace**：Harry Mellor
+- **Inferact**：Harry Chen、Jiangyun Zhu、Kaichao You、Nick Hill、Roger Wang、Simon Mo、Zhewen Li
+- **Intel**：Chendi Xue、Jiang Li、Kunshang Ji、Wenjun Liu
+- **Meta**：Andrey Talman、Charlotte Qi、Eli Uriegas、Huamin Li、Huy Do、Orion Reblitz-Richardson、Reza Barazesh
+- **NVIDIA**：Alec Flowers、Benjamin Chislett、Mathew Wicks、Pen Chung Li、Stefano Castagnetta、Vadim Gimpelson、Xin Li
+- **Red Hat**：Andy Linfoot、Avinash Singh、Doug Smith、Edward Quarm、Flora Feng、Lucas Wilkinson、Luka Govedic、Matt Bonanni、Michael Goin、Nicolo Lucchesi、Robert Shaw、Russell Bryant、Tarun Kumar、Tyler Michael Smith、Wentao Ye
+- **Reflection AI**：Amr Mahdi（贡献在 Meta 期间）
+- **独立贡献者**：Cyrus Leung (DarkLight1337)、Yuqi Wang (noooop)、haosdent、Mohammad Angkad
 
 算力赞助：**AWS、Crusoe、LambdaLabs、Nebius、NVIDIA、Roblox、RunPod**。**Buildkite** 让他们免费用平台跑 CI。Anyscale / Ray 时期的两位老师：Lonnie Liu（后在 OpenAI）、Cuong Nguyen（后在 NVIDIA）。
 

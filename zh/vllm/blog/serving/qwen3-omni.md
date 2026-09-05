@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-07-01-qwen3-omni-optimization
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Qwen3-Omni：Thinker / Talker / Code2Wav 三截
@@ -12,6 +12,15 @@ fetched: 2026-09-04
 2026-07-01。署名 **vLLM-Omni Team and Ant Group SCT Team**。不是一只 Decode 环，是 Thinker → Talker → Code2Wav。TTS 工程细节见 [omni-tts.md](omni-tts.md)。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)。Seed-TTS `en` 扫描和 DFX 数字是他们的合同，不是你的 SLA。音频 **TTFP**（第一包音频）和文本 **TTFT** 不是同一只表。
 
 `--omni` 会解析默认部署档案。`/v1/chat/completions` 出文本和音频；请求体里 `modalities`：`["text"]` 或 `["text", "audio"]`。三阶段各自 batch + CUDA Graph；async chunk / async omni output 避免等整包；Talker / Code2Wav 可 replica；hot-path 再削逐步开销。并发 64 的扫描（`Qwen3-Omni-30B-A3B-Instruct`）：Batch **2.2** req/s、音频 TTFP **5884 ms**、RTF **1.15** → 叠完 **11.7** req/s、**632 ms**、RTF **0.47**。吞吐最大一跳是 CUDA Graph（约 **4×**）；TTFP 砍得最深的是 async chunk（**2790 → 655 ms**）。yaml 的 `platforms:` 自动合并 CUDA / NPU / ROCm / XPU，不必再加旗标。
+
+## TL;DR
+
+vLLM-Omni 的 Qwen3-Omni serving 栈：
+
+- **三截管线：** Thinker 做多模态推理，Talker 吐语音 codec，Code2Wav 还原波形。
+- **OpenAI 兼容 serving：** `/v1/chat/completions` 是文本和音频的主入口。
+- **Batch、CUDA Graph、async chunk、async output、replicas、hot-path：** 阶段级 batch 和每阶段 graph 抬高并发吞吐；async-chunk 交接和 async output 让管线、Decode worker 不必卡在整包屏障和同步拼 payload 上；Talker / Code2Wav replica 只扩语音侧；hot-path 削掉随话语变长的模型内部逐步开销。
+- **验证：** 受控扫描和 DFX perf：音频 TTFP 下来，音频 RTF 下来，吞吐上去——每一层打开都有账。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -112,15 +121,21 @@ Code2Wav  -> codec codes to waveform audio
 
 **Figure 3。** Thinker、Talker 走 vLLM 外层 Decode graph；Talker 内侧 code predictor 用 `torch.compile`（不是第二张 graph）；Code2Wav 用内侧 `CUDAGraphDecoderWrapper`。
 
-**Stage 0 — Thinker（`LLM_AR`）。** `enforce_eager` 为 false 时，Decode 上 vLLM 标准 CUDA Graph，和文本 serving 同一套。
+#### Stage 0 — Thinker: vLLM 外层 Decode graph
 
-**Stage 1 — Talker。** `enforce_eager: false` 时外层 CUDA Graph。每步还跑 **code predictor**（短 re-prefill transformer → RVQ codes）：
+Thinker 是自回归多模态阶段（`LLM_AR`）。`enforce_eager` 为 false 时，Decode 上 vLLM 标准 CUDA Graph，和文本 serving 同一套。长 Thinker 生成时卸掉反复的 CPU kernel dispatch。
+
+#### Stage 1 — Talker: 外层 Decode graph + 编译过的 code predictor
+
+Talker 也在 `enforce_eager: false` 时走 vLLM 外层 CUDA Graph。每步还跑 **code predictor**（短 re-prefill transformer → RVQ codes），内侧路径单独拧：
 
 - `torch.compile` 融合 5 层 predictor（`dynamic=False`，`epilogue_fusion=False`），RMSNorm/RoPE 仍对齐参考路径，kernel 数下来。
 - CUDA 上默认**不开**第二层手工 CUDA Graph（`use_cuda_graphs=False`）——会和 Talker 的 `CUDAGraphWrapper` 打架。外层 graph + 编译后的内侧 forward 是互补：一张抓住 AR 阶段环，另一张融合 codec 预测那截微 forward。
 - 可选 prefix-graph 桶：connector 配置里的 `code_predictor_prefix_graphs`，要显式打开。
 
-**Stage 2 — Code2Wav（`LLM_GENERATION`）。** 内侧 `CUDAGraphDecoderWrapper`，不是 vLLM 外层 wrapper：
+#### Stage 2 — Code2Wav: 内侧 vocoder graph
+
+Code2Wav 是 generation 阶段（`LLM_GENERATION`），不是 AR 环。Graph 路径是内侧 `CUDAGraphDecoderWrapper`，不是 vLLM 外层 wrapper：
 
 ```python
 # Enabled during weight load when stage enforce_eager is false

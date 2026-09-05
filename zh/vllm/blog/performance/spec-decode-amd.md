@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # AMD GPU 上的投机解码：五条草稿路
@@ -19,11 +19,11 @@ fetched: 2026-09-04
 
 ## Introduction
 
-Serving 的底座仍是标准自回归：吐一个 token，接上去，再吐下一个。简单、可靠；输出必须严格从左到右，所以循环一次只提交一个字。
+大模型能撑很多应用；规模化 serving 却要认真拧。底座仍是标准自回归：吐一个 token，接上去，再吐下一个。简单、可靠；输出必须严格从左到右，所以循环一次只提交一个字。
 
 投机解码 [[1]](#ref-1) 保住这份输出行为，把循环拆成 **draft** 和 **verify**。轻量草稿组件先猜未来候选；原模型当 **target**，提交前再核对。几枚草稿活下来，一次 target 验收就能提交多个输出 token。
 
-下文先复习自回归基线和 draft-and-verify，再看五条草稿路——从 target 拿什么、候选是顺序、自回归、并行还是杂交：**Native MTP**、**Gemma 4 MTP**、**EAGLE-3**、**DFlash**、**DSpark**。然后 CLI、现成 draft、MI300X / MI355X 上的测量、拧 `N`、以及一小节训练。
+这篇讲 vLLM 里投机解码怎么走，并记下他们测试环境里的测量。先复习自回归基线和 draft-and-verify，再看五条草稿路——从 target 拿什么、候选是顺序、自回归、并行还是杂交：**Native MTP**、**Gemma 4 MTP**、**EAGLE-3**、**DFlash**、**DSpark**。然后怎么在他们那套环境里打开、Instinct **MI300X / MI355X** 加 ROCm 上的数字，以及拧 `N`、可观测性和一小节训练。
 
 ## 自回归 Decode 基线
 
@@ -206,7 +206,9 @@ Native MTP 不另载一份 draft，还可能和 target 共享 embedding 表或�
 
 ## 现成的预训练草稿在哪
 
-页上点名的 Hugging Face 发布方：
+几家已经在 Hugging Face 上发预训练草稿。Google 给 Gemma 4 配 MTP assistant；Z-Lab 维护一批 DFlash。Red Hat AI 覆盖 EAGLE-3、DFlash、DSpark；DeepSeek 的 DeepSpec 三条方法都有配对 checkpoint。LightSeek 盯 Kimi 的 EAGLE 草稿；Inferact 发 MiniMax 和 Kimi。
+
+页上点名的发布方：
 
 | 发布方 | 方法 | 代表模型和 target |
 | --- | --- | --- |
@@ -221,7 +223,7 @@ Native MTP 不另载一份 draft，还可能和 target 共享 embedding 表或�
 
 打开之后，真正的问题是：多出来的草稿活，端到端 serving 有没有变好。候选不必每位都对；target 提交前会验。性能取决于接受了多少，以及省下的 target Decode 能不能盖过草稿 + 验收的税。
 
-他们用 **任务向** benchmark，不用随机 token 串。接受率跟真实输出的结构和可预测性绑在一起。
+质量和 serving 都用 **任务向** benchmark 来评，不用随机 token 串。接受行为跟真实输出的结构和可预测性绑在一起；任务 prompt 更接近实际表现。
 
 主要指标：
 
@@ -251,7 +253,7 @@ Native MTP 不另载一份 draft，还可能和 target 共享 embedding 表或�
 
 生成 token / 秒，对照标准自回归基线；扫投机长度 `N`，看深度怎么推端到端 serving TPS。
 
-原文 **Figure 4** 是可切换 target 的 Plotly 柱图（悬停看 speedup 和选中的 `N`）。这里不复刻交互件。下面只收正文里写成数字的结论。
+原文 **Figure 4** 是可切换 target 的 Plotly 柱图：按方法和实验画测到的输出吞吐，非投机基线作对照；选择器换 target，悬停看 speedup 和选中的提议长度 `N`。这里不复刻 Plotly / JS。下面只收正文里写成数字的结论。
 
 ### 主要观察
 
@@ -279,7 +281,7 @@ Native MTP 不另载一份 draft，还可能和 target 共享 embedding 表或�
 
 投机解码是运行时优化，不是一个 `N` 通吃。最好的 `num_speculative_tokens` 取决于接受了多少，以及省下的 target Decode 能不能盖过草稿 + 验收。
 
-Model card 上的建议是起点；最终设置要用代表负载和端到端测量来选。有用的信号：吞吐、平均接受长度、总体接受率、**按位置** 接受率。
+所以要能看见。Model card 上的建议是起点；最终设置要用代表负载和端到端测量来选。有用的信号：吞吐、平均接受长度、总体接受率、**按位置** 接受率。
 
 提议窗口更大，一次验收提交多枚的机会更多。后面几位的接受率却常常掉。多出来的候选白付草稿税 → TPS 走平甚至退。
 
@@ -302,14 +304,19 @@ Native MTP：**N=1** 最保守（额外顺序草稿最少）：
 
 Gemma 4 MTP 和 EAGLE-3 的 `N` 变大同样加顺序草稿。就算 checkpoint 给了推荐，短 sweep 仍值得做。这批 Gemma 4 / EAGLE-3 里，测到的 TPS 多半在前几个 `N` 上升，然后平台。
 
-DFlash：从 checkpoint 推荐或支持的提议长度起。许多 DFlash checkpoint 按固定 `block_size` 训。例如：
+DFlash：从 checkpoint 推荐或支持的提议长度起。许多 DFlash checkpoint 按固定 `block_size` 训。例如 `block_size = 16` 时，最大提议长度通常是：
 
 ```text
-block_size = 16
 num_speculative_tokens = 15
 ```
 
-第一位是确认过的 anchor，其余 15 位才是草稿候选。这是 **支持的最大** 提议长度，不一定是最高 TPS。原文建议试更小的：`N = 3, 7, 11, 15`。他们的 DFlash 实验里 **N=7** 经常落在较高吞吐；有的负载最大测到的 TPS 在 **N=11**。
+第一位是确认过的 anchor，其余 15 位才是草稿候选。这是 **支持的最大** 提议长度，不一定是最高 TPS。实践里值得试更小的：
+
+```text
+N = 3, 7, 11, 15
+```
+
+他们的 DFlash 实验里 **N=7** 经常落在较高吞吐；有的负载最大测到的 TPS 在 **N=11**。
 
 DSpark：`num_speculative_tokens` 是每一投机轮生成多少候选。这批 vLLM 实验把 **整段** 配置好的提议都送去验收，所以 N=3 对 N=7（等等）要用端到端 TPS 比。
 
@@ -346,6 +353,8 @@ HumanEval / MBPP：中等 `N` 常常落在较高吞吐。代码有局部结构�
 
 这篇不当训练教程。下面是 vLLM Speculators 和 DeepSpec 的工作流摘要 [[13]](#ref-13) [[14]](#ref-14) [[15]](#ref-15)。经 vLLM 导出 hidden：[extract-hidden-states](../architecture/extract-hidden-states.md)。
 
+典型路径：
+
 1. 准备代表 prompt。
 2. 用 **恰好那只** target 生成回复。
 3. 选 hidden 生成模式。
@@ -353,9 +362,15 @@ HumanEval / MBPP：中等 `N` 常常落在较高吞吐。代码有局部结构�
 5. 训 speculator。
 6. 测接受和 serving 吞吐。
 
-Prompt 应对上预期负载（chat、数学、代码、工具、多语）。留一份评测集。Tokenizer、chat template、thinking mode、生成配置应对上部署。把 target 的 tokenizer / chat template 套到 **已有** 回复上，并不会让数据变成「这只 target 的」；回复本身必须来自 target。
+### 准备代表 prompt
+
+Prompt 应对上预期负载：chat、数学、代码、工具、多语。另留一份评测集。
+
+训练用的回复必须来自 **speculator 将要伺候的那只** target。Tokenizer、chat template、thinking mode、生成配置应对上部署。vLLM 文档强调：把 target 的 tokenizer / chat template 套到 **已有** 回复上，并不会让数据变成「这只 target 的」；回复本身必须来自 target。
 
 ### Hidden 从哪来
+
+训练时 speculator 吃 target 内部 hidden。vLLM Speculators 给三种提供方式：
 
 | 训练模式 | 怎么做 | 主要代价 |
 | --- | --- | --- |
@@ -365,33 +380,46 @@ Prompt 应对上预期负载（chat、数学、代码、工具、多语）。留
 
 模式只改 hidden 从哪来；后面的训练大体一样。
 
+### 收集 target 信息
+
 vLLM 服务可以跑 target，把该方法要的层 hidden 露出来。自定义层选择必须和 speculator 训练配置一致。
+
+收集什么随方法走：
 
 - EAGLE-3：选定层 hidden，自回归草稿 [[4]](#ref-4)。
 - DFlash：用 target 特征训并行块预测 [[16]](#ref-16)。
 - DSpark：在 DFlash 式网上加轻量顺序头和信心头 [[6]](#ref-6)。
 - MTP：微调 target **自己的** MTP 组件——target 必须已经有兼容的 MTP 层 [[13]](#ref-13)。
 
-训完检查 checkpoint，再和 target 一起在 vLLM 里 serve。训练 loss 不够：要看接受长度、接受率、草稿延迟、GPU 显存、端到端 serving TPS。某类负载接受弱 → 改 prompt 配比或训练配置再来。原则：同一只 target、同一种生成模式、同一类代表负载。
+### 训完再测
+
+Speculator 配置要对上 target 的 hidden size、词表、tokenizer、选定层。方法自己的旋钮——草稿网深度、block size、序列长、学习率——也要选。
+
+训完检查 checkpoint，再和 target 一起在 vLLM 里 serve。训练 loss 不够：要看接受长度、接受率、草稿延迟、GPU 显存、端到端 serving TPS。vLLM Speculators 教程把数据准备、hidden 导出、checkpoint 测试、serve 整条路写完了。
+
+某类负载接受弱 → 改 prompt 配比或训练配置再来。原则：同一只 target、同一种生成模式、同一类代表负载。
 
 ## Summary
 
-草稿提议，target 验收；target 没点头就不提交。
+这篇把 vLLM 里的投机解码当成 serving 的 draft-and-verify：草稿先猜未来候选，target 验过才提交。
 
-五条路差在怎么用 target 信息，以及候选是顺序、并行、还是并行再加一层轻量顺序修正。
+五条路——Native MTP、Gemma 4 MTP、EAGLE-3、DFlash、DSpark——差在怎么用 target 信息，以及候选是顺序、并行、还是并行再加一层轻量顺序修正。
 
-实验：Gemma、Qwen、MiniMax、Kimi 里选出的几只，Instinct **MI300X / MI355X**，ROCm。测到的 TPS 随 target、draft checkpoint、负载、`N`、serving 配置走。
+实验：Gemma、Qwen、MiniMax、Kimi 里选出的几只，Instinct **MI300X / MI355X**，ROCm。测到的 TPS 随 target、draft checkpoint、负载、提议长度、serving 配置走。
 
-有的设置变化很小，或 **低于** 非投机基线。若干模型–负载组合 **超过 2×**。页上写的上沿：**2.87×** DFlash on `gemma-4-26B-A4B-it`，**2.83×** Gemma 4 MTP 同一 target，**2.68×** DFlash on Kimi-K2.5。
+有的设置变化很小，或吞吐 **低于** 非投机基线。若干模型–负载组合 **超过 2×**。观察范围的上沿例子：**2.87×** DFlash on `gemma-4-26B-A4B-it`，**2.83×** Gemma 4 MTP 同一 target，**2.68×** DFlash on Kimi-K2.5。
 
-`N` 也是变量。加大 `num_speculative_tokens` 有时在前几档有用，然后平台或回落。Checkpoint 推荐是起点；部署配置要用代表负载的测量和接受指标来选。
+提议长度也是实验变量。加大 `num_speculative_tokens` 有时在前几档抬吞吐，再大可能平台或回落。Checkpoint 推荐是起点；选部署配置要用代表负载的测量和接受指标。
 
 ## Future work
 
-- 非学习方法，例如 n-gram 投机和 suffix decoding，尤其适合重复 token 多的负载（改代码、agent 环）。
-- 更宽的评测：并发、prompt / 输出长度、batch、采样设置。
-- Speculator 训练数据怎么推代码、数学、chat、多语、工具、结构化输出上的接受。
-- 更深地剖草稿生成、target 验收、KV-cache、图执行、调度。
+以后的 benchmark 可以加上非学习方法，例如 n-gram 投机和 suffix decoding，尤其适合重复 token 多的负载（改代码、agent 环）。
+
+评测再宽一点：并发、prompt / 输出长度、batch、采样设置，能看出投机解码在不同 serving 条件下怎么变脸。
+
+另一条有用的方向：speculator 训练数据怎么推代码、数学、chat、多语、工具、结构化输出上的接受。给特定负载选或训草稿时，口径会清楚一点。
+
+最后，更深地剖草稿生成、target 验收、KV-cache、图执行、调度，有助于解释跨 target 和负载看到的那些差。
 
 ## References
 
@@ -412,68 +440,474 @@ vLLM 服务可以跑 target，把该方法要的层 hidden 露出来。自定义
 15. <a id="ref-15"></a> DeepSeek-AI DeepSpec GitHub — https://github.com/deepseek-ai/DeepSpec
 16. <a id="ref-16"></a> DFlash 论文 — https://arxiv.org/pdf/2602.06036
 
-## Appendix：交互热力图（不抄 HTML）
+## Appendix：逐位接受热力图（不抄 HTML）+ 九套 serve 样例
 
-原文附录是 **交互 HTML 热力图**：9 只 target × 方法 × 实验（按提议长度 `N` 的逐位接受率；每一行还有测到的 speedup 和输出 tok/s）。那是页上的 CSS/JS 控件，这里不倒。清洗稿里 **没有** 把逐位接受百分比印成静表——不要编。要悬停看格子，回原网页。
+附录盯的是 **按草稿位置** 的接受。原文是交互 HTML：选 target、方法、实验，看一张更大的逐位接受热力图。行是提议长度 `N`；列是草稿位置；格子越深接受越高。每一行还印测到的 speedup 和输出吞吐，作上下文。**那是页上的 CSS/JS 控件，这里不倒 Plotly / 热力图 HTML，也不把逐位接受百分比编成静表。** 要悬停看格子，回原网页。
 
-九只 target（覆盖表同上）：
+**MAL** 是 mean accepted length（平均每一投机轮提交几枚草稿）。**AR** 是 acceptance rate（提议草稿里接受了多大比例）。热力每一行的小字通常是：`speedup | tok/s`，以及 `MAL … | AR …%`。
 
-1. `google/gemma-4-26B-A4B-it`
-2. `google/gemma-4-31B-it`
-3. `Qwen/Qwen3-8B`
-4. `Qwen/Qwen3.5-27B`
-5. `Qwen/Qwen3.5-122B-A10B`
-6. `Qwen/Qwen3.6-27B`
-7. `Qwen/Qwen3.6-35B-A3B`
-8. `moonshotai/Kimi-K2.5`
-9. `MiniMaxAI/MiniMax-M3-MXFP8`
+### 热力图 caption 里的基线输出 tok/s
 
-页上对每一热力行的描述：按 `N` 的逐位接受，外加该次的 **speedup** 和 **输出 tok/s**。
+下面这些数字印在附录热力图的 dataset caption 上（非投机基线），不是逐位格子。MiniMax-M3-MXFP8 跑在 MI355X；其余在这批实验的 MI300X 配置上。
 
-**清洗稿 caption 里印出的基线 tok/s**（都是 `google/gemma-4-26B-A4B-it`；Gemma 4 MTP / EAGLE-3 / DFlash 的四条 caption 复用同一组基线）：
+| Target | GSM8K | MATH500 | HumanEval | MBPP |
+| --- | ---: | ---: | ---: | ---: |
+| `google/gemma-4-26B-A4B-it` | 2,344 | 2,181 | 1,854 | 2,163 |
+| `google/gemma-4-31B-it` | 1,631 | 1,365 | 1,228 | 1,519 |
+| `Qwen/Qwen3-8B` | 3,698 | 3,530 | 3,226 | 3,268 |
+| `Qwen/Qwen3.5-27B` | 1,555 | 1,500 | 1,256 | 1,418 |
+| `Qwen/Qwen3.5-122B-A10B` | 1,494 | 1,446 | 1,105 | 1,459 |
+| `Qwen/Qwen3.6-27B` | 1,521 | 1,514 | 1,481 | 1,495 |
+| `Qwen/Qwen3.6-35B-A3B` | 2,275 | 2,235 | 2,193 | 2,258 |
+| `moonshotai/Kimi-K2.5` | 324 | 310 | 301 | 311 |
+| `MiniMaxAI/MiniMax-M3-MXFP8` | 2,086 | 2,468 | 2,317 | 2,277 |
 
-| Dataset | Baseline 输出 tok/s |
-| --- | ---: |
-| GSM8K | 2,344 |
-| MATH500 | 2,181 |
-| HumanEval | 1,854 |
-| MBPP | 2,163 |
 
-**正文写成数字的 speedup**（只收已写的；Summary 另点了同一 target 上 Gemma 4 MTP **2.83×** 作为上沿例子，「主要观察」里 GSM8K / MBPP 那对是 2.74× / 2.62×）。
+### 实验里用过的 `vllm serve` 样例
 
-| Target | 方法 | 写成的 speedup | 备注 |
-| --- | --- | --- | --- |
-| gemma-4-26B-A4B-it | Gemma 4 MTP | GSM8K 2.74×，MBPP 2.62×；Summary 2.83× | |
-| gemma-4-26B-A4B-it | DFlash | MATH500 2.87×，HumanEval 2.79× | |
-| gemma-4-26B-A4B-it | EAGLE-3 | 四个数据集 2.11×–2.27× | |
-| gemma-4-31B-it | Gemma 4 MTP | GSM8K 2.00×，MBPP 1.99× | |
-| gemma-4-31B-it | DFlash | MATH500 2.34×，HumanEval 2.05× | |
-| gemma-4-31B-it | EAGLE-3、DSpark | 四个数据集高于基线 | 精确 × 未写 |
-| Qwen3-8B | DSpark | MATH500 1.15× … GSM8K 1.63× | |
-| Qwen3-8B | DFlash | 1.08×–1.27× | |
-| Qwen3-8B | EAGLE-3 | GSM8K / HumanEval / MBPP 高于基线；MATH500 **低于** 基线 | 精确 × 未写 |
-| Qwen3.5-27B / 122B-A10B / Qwen3.6-27B | Native MTP vs DFlash | native MTP 最大 > DFlash 最大；Qwen3.5-122B-A10B MATH500 **2.20×** | native MTP N=4–7 |
-| Qwen3.6-35B-A3B | DFlash | 1.77×–2.06× at N=7 | |
-| Qwen3.6-35B-A3B | Native MTP | 1.28×–1.49× at N=6 | |
-| MiniMax-M3-MXFP8 | EAGLE-3 | HumanEval 2.09× at N=4 | MI355X |
-| Kimi-K2.5 | EAGLE-3 | 最高 2.33×，多半 N=4 | |
-| Kimi-K2.5 | DFlash | 最高 2.68×，N=7 | |
+原文用 `<details>` 收了九只 target 的命令：每只先 baseline，再写他们实际跑过的方法。CLI 原样留下。注意 Gemma 4 MTP 的 assistant 即使从 `model` 进来，走的仍是 MTP 路，常常不另写 `"method"`。`num_speculative_tokens` 是菜谱里的示例值，不一定是吞吐 sweep 的赢家。
+
+### `google/gemma-4-26B-A4B-it`
+
+Baseline:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768
+```
+
+Gemma 4 MTP:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --speculative-config '{"model":"google/gemma-4-26B-A4B-it-assistant","num_speculative_tokens":4}'
+```
+
+EAGLE-3:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.8 \
+  --speculative-config '{"model":"RedHatAI/gemma-4-26B-A4B-it-speculator.eagle3","num_speculative_tokens":1,"method":"eagle3"}'
+```
+
+DFlash:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve google/gemma-4-26B-A4B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --attention-backend triton_attn \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.8 \
+  --speculative-config '{"method":"dflash","model":"z-lab/gemma-4-26B-A4B-it-DFlash","num_speculative_tokens":15,"attention_backend":"triton_attn"}'
+```
+
+### `google/gemma-4-31B-it`
+
+Baseline:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768
+```
+
+Gemma 4 MTP:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --chat-template /app/vllm/examples/tool_chat_template_gemma4.jinja \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --speculative-config '{"model":"google/gemma-4-31B-it-assistant","num_speculative_tokens":1}'
+```
+
+EAGLE-3:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --speculative-config '{"model":"RedHatAI/gemma-4-31B-it-speculator.eagle3","num_speculative_tokens":3,"method":"eagle3"}'
+```
+
+DFlash:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --attention-backend triton_attn \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"method":"dflash","model":"z-lab/gemma-4-31B-it-DFlash","num_speculative_tokens":15,"attention_backend":"triton_attn"}'
+```
+
+DSpark:
+
+```bash
+vllm serve google/gemma-4-31B-it \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --attention-backend triton_attn \
+  --language-model-only \
+  --reasoning-parser gemma4 \
+  --enable-auto-tool-choice \
+  --tool-call-parser gemma4 \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 32768 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"RedHatAI/gemma-4-31B-it-speculator.dspark","num_speculative_tokens":7,"method":"dspark","attention_backend":"triton_attn"}'
+```
+
+### `Qwen/Qwen3-8B`
+
+Baseline:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85
+```
+
+EAGLE-3:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"RedHatAI/Qwen3-8B-Thinking-speculator.eagle3","num_speculative_tokens":5,"method":"eagle3"}'
+```
+
+DFlash:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"z-lab/Qwen3-8B-DFlash-b16","method":"dflash","num_speculative_tokens":7}'
+```
+
+DSpark:
+
+```bash
+vllm serve Qwen/Qwen3-8B \
+  --trust-remote-code \
+  --max-num-batched-tokens 16384 \
+  --max-model-len 4096 \
+  --gpu-memory-utilization 0.85 \
+  --speculative-config '{"model":"deepseek-ai/dspark_qwen3_8b_block7","method":"dspark","num_speculative_tokens":11}'
+```
+
+### `Qwen/Qwen3.5-27B`
+
+Baseline:
+
+```bash
+vllm serve Qwen/Qwen3.5-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768
+```
+
+Native MTP:
+
+```bash
+vllm serve Qwen/Qwen3.5-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":1}'
+```
+
+DFlash:
+
+```bash
+vllm serve Qwen/Qwen3.5-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.5-27B-DFlash","num_speculative_tokens":15}'
+```
+
+### `Qwen/Qwen3.5-122B-A10B`
+
+Baseline:
+
+```bash
+vllm serve Qwen/Qwen3.5-122B-A10B \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --max-num-batched-tokens 32768
+```
+
+Native MTP:
+
+```bash
+vllm serve Qwen/Qwen3.5-122B-A10B \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":7}'
+```
+
+DFlash:
+
+```bash
+vllm serve Qwen/Qwen3.5-122B-A10B \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.5-122B-A10B-DFlash","num_speculative_tokens":15}'
+```
+
+### `Qwen/Qwen3.6-27B`
+
+Baseline:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve Qwen/Qwen3.6-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768
+```
+
+Native MTP:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve Qwen/Qwen3.6-27B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":3}'
+```
+
+DFlash:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 \
+vllm serve Qwen/Qwen3.6-27B \
+  --tensor-parallel-size 2 \
+  --max-num-batched-tokens 32768 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.6-27B-DFlash","num_speculative_tokens":15}'
+```
+
+### `Qwen/Qwen3.6-35B-A3B`
+
+Baseline:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+vllm serve Qwen/Qwen3.6-35B-A3B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_xml \
+  --mm-encoder-tp-mode data \
+  --max-num-batched-tokens 16384
+```
+
+Native MTP:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+vllm serve Qwen/Qwen3.6-35B-A3B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_xml \
+  --mm-encoder-tp-mode data \
+  --max-num-batched-tokens 16384 \
+  --speculative-config '{"method":"mtp","num_speculative_tokens":3,"moe_backend":"triton"}'
+```
+
+DFlash:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+vllm serve Qwen/Qwen3.6-35B-A3B \
+  --trust-remote-code \
+  --tensor-parallel-size 2 \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_xml \
+  --mm-encoder-tp-mode data \
+  --max-num-batched-tokens 16384 \
+  --speculative-config '{"method":"dflash","model":"z-lab/Qwen3.6-35B-A3B-DFlash","num_speculative_tokens":15}'
+```
+
+### `moonshotai/Kimi-K2.5`
+
+Baseline:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+vllm serve moonshotai/Kimi-K2.5 \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --language-model-only \
+  --reasoning-parser kimi_k2 \
+  --enable-auto-tool-choice \
+  --tool-call-parser kimi_k2
+```
+
+EAGLE-3:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+vllm serve moonshotai/Kimi-K2.5 \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --language-model-only \
+  --reasoning-parser kimi_k2 \
+  --enable-auto-tool-choice \
+  --tool-call-parser kimi_k2 \
+  --speculative-config '{"model":"lightseekorg/kimi-k2.5-eagle3-mla","method":"eagle3","num_speculative_tokens":3}'
+```
+
+DFlash:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+vllm serve moonshotai/Kimi-K2.5 \
+  --trust-remote-code \
+  --tensor-parallel-size 4 \
+  --language-model-only \
+  --reasoning-parser kimi_k2 \
+  --enable-auto-tool-choice \
+  --tool-call-parser kimi_k2 \
+  --speculative-config '{"model":"z-lab/Kimi-K2.5-DFlash","method":"dflash","num_speculative_tokens":7}'
+```
+
+### `MiniMaxAI/MiniMax-M3-MXFP8`
+
+Baseline:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_USE_AITER_FUSION_SHARED_EXPERTS=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+VLLM_USE_BREAKABLE_CUDAGRAPH=0 \
+VLLM_ROCM_USE_AITER_MOE=1 \
+vllm serve MiniMaxAI/MiniMax-M3-MXFP8 \
+  --tensor-parallel-size 8 \
+  --block-size 128 \
+  --attention_config.indexer_kv_dtype fp8 \
+  --linear-backend emulation \
+  --attention-backend TRITON_ATTN \
+  --language-model-only \
+  --reasoning-parser minimax_m3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser minimax_m3
+```
+
+EAGLE-3:
+
+```bash
+VLLM_ROCM_USE_AITER=1 \
+VLLM_ROCM_USE_AITER_FUSION_SHARED_EXPERTS=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+VLLM_USE_BREAKABLE_CUDAGRAPH=0 \
+VLLM_ROCM_USE_AITER_MOE=1 \
+vllm serve MiniMaxAI/MiniMax-M3-MXFP8 \
+  --tensor-parallel-size 8 \
+  --block-size 128 \
+  --attention_config.indexer_kv_dtype fp8 \
+  --linear-backend emulation \
+  --attention-backend TRITON_ATTN \
+  --language-model-only \
+  --reasoning-parser minimax_m3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser minimax_m3 \
+  --speculative-config '{"method":"eagle3","model":"Inferact/MiniMax-M3-EAGLE3","num_speculative_tokens":3,"attention_backend":"TRITON_ATTN"}'
+```
 
 ## Acknowledgements
 
-Hongxia Yang、Peng Sun（AMD）；Pin Siang Tan、Jun Kang Chow、Ye Hur Cheong（Embedded LLM）。
+致谢这次合作里出力的人，包括 AMD 的 Hongxia Yang、Peng Sun，以及 Embedded LLM 的 Pin Siang Tan、Jun Kang Chow、Ye Hur Cheong。
 
 ## Disclaimer
 
-测量在 AMD Instinct™ MI300X 和 MI355X 上，配置如下。
+测量跑在 AMD Instinct™ MI300X 和 MI355X 上，配置如下。
 
-**Hardware**
+**Hardware Configuration**
 
-- Hardware 1：**8×** AMD Instinct™ **MI300X**（gfx942），**2×** AMD EPYC™ **9654** 96-Core。
-- Hardware 2：**8×** AMD Instinct™ **MI355X**（gfx950），**2×** AMD EPYC™ **9575F** 64-Core。用于 **MiniMax-M3-MXFP8** 实验。
+- Hardware 1：**8×** AMD Instinct™ **MI300X** GPU（gfx942），**2×** AMD EPYC™ **9654** 96-Core Processor。
+- Hardware 2：**8×** AMD Instinct™ **MI355X** GPU（gfx950），**2×** AMD EPYC™ **9575F** 64-Core。用于 **MiniMax-M3-MXFP8** 实验。
 
-**Software**
+**Software Configuration**
 
 Ubuntu **22.04.5** LTS，ROCm/HIP runtime **7.2.53211**，vLLM **0.23.1rc1.dev1120+g0f0f28b53**，PyTorch **2.11.0+gitd0c8b1f**，Transformers **5.13.1**，Python **3.12.13**。
 
-服务器厂商配置可能不同。性能随配置、软件、vLLM 版本、驱动和优化变化。
+服务器厂商配置可能不同，结果也会不同。性能随配置、软件、vLLM 版本、以及是否用上最新驱动和优化而变。

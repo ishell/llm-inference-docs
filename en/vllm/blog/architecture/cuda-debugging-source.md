@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2025-12-03-improved-cuda-debugging
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Tracing Hanging and Complicated GPU Kernels Down To The Source Code
@@ -188,7 +188,13 @@ Opening GPU coredump: /tmp/cuda_coredump_flow-matic.3756036.1764250282
 
 CUDA Exception: Warp Illegal Address
 The exception was triggered at PC 0x7ff533bb91d0  ...
-#0  void at::native::index_elementwise_kernel<128, 4, ...>(...)<<<(1,1,1),(128,1,1)>>> ()
+#0  void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<at::native::OpaqueType<1> >(at
+::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::TensorIteratorBase&, c10::ArrayRef<
+long>, c10::ArrayRef<long>, at::native::index_kernel_impl<at::native::OpaqueType<1> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayR
+ef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1}>(long, at::native::gpu_index_kernel<at::native::index_kernel_imp
+l<at::native::OpaqueType<1> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::Ten
+sorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>, at::native::index_kernel_impl<at::native::OpaqueType<1> >(at::TensorIteratorBase&,
+c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1})<<<(1,1,1),(128,1,1)>>> ()
     at /data/youkaichao/pytorch/aten/src/ATen/native/cuda/IndexKernel.cu:203 in _ZZN2at6native17index_kernel_implINS0_10OpaqueTypeILi1EEEEEvRNS
 _18TensorIteratorBaseEN3c108ArrayRefIlEES8_ENKUlPcPKclE_clES9_SB_l inlined from IndexKernel.cu:118
 203         *reinterpret_cast<scalar_t*>(out_data) = *reinterpret_cast<const scalar_t*>(in_data + offset);
@@ -198,7 +204,7 @@ Then `info symbol $errorpc` inside `cuda-gdb`:
 
 ```text
 (cuda-gdb) info symbol $errorpc
-void at::native::index_elementwise_kernel<128, 4, ...> + 11472 in section .text._ZN2at6native24index_elementwise_kernelILi128ELi4EZNS0_16gpu_index_kernelIZNS0_17index_kernel_implINS0_10OpaqueTypeILi1EEEEEvRNS_18TensorIteratorBaseEN3c108ArrayRefIlEESA_EUlPcPKclE_EEvS7_SA_SA_RKT_bEUliE_EEvlT1_ of /tmp/cuda-dbg/2123124/session1/elf.21407f80.24fe2940.o.4gyLzn
+void at::native::index_elementwise_kernel<128, 4, at::native::gpu_index_kernel<at::native::index_kernel_impl<at::native::OpaqueType<1> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>, at::native::index_kernel_impl<at::native::OpaqueType<1> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1}>(long, at::native::gpu_index_kernel<at::native::index_kernel_impl<at::native::OpaqueType<1> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1}>(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>, at::native::index_kernel_impl<at::native::OpaqueType<1> >(at::TensorIteratorBase&, c10::ArrayRef<long>, c10::ArrayRef<long>)::{lambda(char*, char const*, long)#1} const&, bool)::{lambda(int)#1}) + 11472 in section .text._ZN2at6native24index_elementwise_kernelILi128ELi4EZNS0_16gpu_index_kernelIZNS0_17index_kernel_implINS0_10OpaqueTypeILi1EEEEEvRNS_18TensorIteratorBaseEN3c108ArrayRefIlEESA_EUlPcPKclE_EEvS7_SA_SA_RKT_bEUliE_EEvlT1_ of /tmp/cuda-dbg/2123124/session1/elf.21407f80.24fe2940.o.4gyLzn
 ```
 
 `cuda-gdb` unpacks the binary; `/tmp/cuda-dbg/.../elf....o.4gyLzn` is a cubin containing `index_elementwise_kernel`. The error is at `0x7ff533bb91d0`. Disassemble with `nvdisasm`:
@@ -213,9 +219,9 @@ That shows the full inline stack. Default `cuda-gdb` shows only the last inline.
 ```text
         /*7ff533bb9190*/                   IMAD.IADD R19, R23, 0x1, R3 ;
 .L_x_27840:
-	//## File "/data/youkaichao/pytorch/aten/src/ATen/native/cuda/IndexKernel.cu", line 203 inlined at ".../IndexKernel.cu", line 118
-	//## File ".../IndexKernel.cu", line 118 inlined at ".../IndexKernel.cu", line 37
-	//## File ".../IndexKernel.cu", line 37
+	//## File "/data/youkaichao/pytorch/aten/src/ATen/native/cuda/IndexKernel.cu", line 203 inlined at "/data/youkaichao/pytorch/aten/src/ATen/native/cuda/IndexKernel.cu", line 118
+	//## File "/data/youkaichao/pytorch/aten/src/ATen/native/cuda/IndexKernel.cu", line 118 inlined at "/data/youkaichao/pytorch/aten/src/ATen/native/cuda/IndexKernel.cu", line 37
+	//## File "/data/youkaichao/pytorch/aten/src/ATen/native/cuda/IndexKernel.cu", line 37
         /*7ff533bb91a0*/                   ULDC.64 UR4, c[0x0][0x480] ;
         /*7ff533bb91b0*/                   IADD3 R2, P0, P1, R22, UR4, R2 ;
         /*7ff533bb91c0*/                   IADD3.X R3, R19, UR5, RZ, P0, P1 ;
@@ -234,6 +240,8 @@ If the cubin has several kernels sharing that PC (`grep` hits more than once), f
 ```bash
 $ cuobjdump -elf /tmp/cuda-dbg/2123124/session1/elf.21407f80.24fe2940.o.4gyLzn > elf.txt
 $ cat elf.txt | grep ".text._ZN2at6native24index_elementwise_kernelILi128ELi4EZNS0_16gpu_index_kernelIZNS0_17index_kernel_implINS0_10OpaqueTypeILi1EEEEEvRNS_18TensorIteratorBaseEN3c108ArrayRefIlEESA_EUlPcPKclE_EEvS7_SA_SA_RKT_bEUliE_EEvlT1_" | grep PROGBITS
+
+  1ac 1b83f80   b200  0 80                     PROGBITS        6    3      26a .text._ZN2at6native24index_elementwise_kernelILi128ELi4EZNS0_16gpu_index_kernelIZNS0_17index_kernel_implINS0_10OpaqueTypeILi1EEEEEvRNS_18TensorIteratorBaseEN3c108ArrayRefIlEESA_EUlPcPKclE_EEvS7_SA_SA_RKT_bEUliE_EEvlT1_
 ```
 
 The page’s CUDA function index (`-fun`) is `26a`:
@@ -248,23 +256,23 @@ Difference: look up the function index from the ELF section via `cuobjdump`, the
 This is a simplified example. Real kernels inline much deeper. A CUTLASS / FlashAttention chain from the post:
 
 ```text
-	//## File ".../cute/arch/copy_sm90.hpp", line 93 inlined at ".../cute/arch/util.hpp", line 158
-	//## File ".../cute/arch/util.hpp", line 158 inlined at ".../cute/arch/util.hpp", line 185
-	//## File ".../cute/arch/util.hpp", line 185 inlined at ".../cute/atom/copy_traits.hpp", line 133
-	//## File ".../cute/atom/copy_traits.hpp", line 133 inlined at ".../cute/atom/copy_atom.hpp", line 103
-	//## File ".../cute/atom/copy_atom.hpp", line 103 inlined at ".../cute/atom/copy_atom.hpp", line 124
-	//## File ".../cute/atom/copy_atom.hpp", line 124 inlined at ".../cute/algorithm/copy.hpp", line 211
-	//## File ".../cute/algorithm/copy.hpp", line 211 inlined at ".../cute/algorithm/copy.hpp", line 412
-	//## File ".../cute/algorithm/copy.hpp", line 412 inlined at ".../hopper/epilogue_fwd.hpp", line 265
-	//## File ".../hopper/epilogue_fwd.hpp", line 265 inlined at ".../hopper/flash_fwd_kernel_sm90.h", line 454
-	//## File ".../hopper/flash_fwd_kernel_sm90.h", line 454 inlined at ".../hopper/utils.h", line 41
-	//## File ".../hopper/utils.h", line 41 inlined at ".../cutlass/device_kernel.h", line 122
-	//## File ".../cutlass/device_kernel.h", line 122
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/arch/copy_sm90.hpp", line 93 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/arch/util.hpp", line 158
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/arch/util.hpp", line 158 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/arch/util.hpp", line 185
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/arch/util.hpp", line 185 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/atom/copy_traits.hpp", line 133
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/atom/copy_traits.hpp", line 133 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/atom/copy_atom.hpp", line 103
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/atom/copy_atom.hpp", line 103 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/atom/copy_atom.hpp", line 124
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/atom/copy_atom.hpp", line 124 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/algorithm/copy.hpp", line 211
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/algorithm/copy.hpp", line 211 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/algorithm/copy.hpp", line 412
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/algorithm/copy.hpp", line 412 inlined at "/data/youkaichao/data/vllm_flash_attn/hopper/epilogue_fwd.hpp", line 265
+	//## File "/data/youkaichao/data/vllm_flash_attn/hopper/epilogue_fwd.hpp", line 265 inlined at "/data/youkaichao/data/vllm_flash_attn/hopper/flash_fwd_kernel_sm90.h", line 454
+	//## File "/data/youkaichao/data/vllm_flash_attn/hopper/flash_fwd_kernel_sm90.h", line 454 inlined at "/data/youkaichao/data/vllm_flash_attn/hopper/utils.h", line 41
+	//## File "/data/youkaichao/data/vllm_flash_attn/hopper/utils.h", line 41 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cutlass/device_kernel.h", line 122
+	//## File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cutlass/device_kernel.h", line 122
         /*7eebf5e9eb80*/                   STSM.16.M88.4 [R13], R4 ;
         /*7eebf5e9eb90*/                   MOV R34, R26 ;
 ```
 
-(Full paths on the page are under `/data/youkaichao/data/vllm_flash_attn/...`.) The faulty source calls CUTLASS helpers; its containing function is inlined from above. Here `cuda-gdb` cannot associate a line — often **no** line info near the error PC. Even when it shows a line, it is only the last frame: `copy_sm90.hpp:93 inlined at util.hpp:158` — an internal CUTLASS expansion, still unhelpful.
+The faulty source calls CUTLASS helpers; its containing function is inlined from above. Here `cuda-gdb` cannot associate a line — often **no** line info near the error PC. Even when it shows a line, it is only the last frame: `File "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/arch/copy_sm90.hpp", line 93 inlined at "/data/youkaichao/data/vllm_flash_attn/csrc/cutlass/include/cute/arch/util.hpp", line 158` — an internal CUTLASS expansion, still unhelpful.
 
 The disassembly path above uncovers the full inline chain so each frame can be inspected.
 

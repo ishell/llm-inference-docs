@@ -2,171 +2,163 @@
 source: https://vllm.ai/blog/2026-07-22-kimi-k3-preview
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
-# Kimi K3 preview：权重还没到，cache 先改了
+# Kimi K3 开源日前的 preview：KDA prefix cache 才是硬骨头
 
 英文对照：[en/vllm/blog/serving/kimi-k3-preview.md](../../../../en/vllm/blog/serving/kimi-k3-preview.md)  
 原文：https://vllm.ai/blog/2026-07-22-kimi-k3-preview  
-2026-07-22。署名 **vLLM Team**。权重计划 **2026-07-27**。落地数字见 [kimi-k3.md](kimi-k3.md)。tool-calling 握手：[kimi-k2-accuracy.md](kimi-k2-accuracy.md)。合作名单里点名的 CUDA 调试：[cuda-debugging-source.md](../architecture/cuda-debugging-source.md)。DCP：[dcp.md](../performance/dcp.md)。缓存 / P/D：[mooncake.md](mooncake.md)。优化还在飞。**引擎骨架没换**。**不是发布指南**——那篇是 [kimi-k3.md](kimi-k3.md)。
+2026-07-22。vLLM Team。权重按当时计划 **2026-07-27** 放；落地见 [kimi-k3.md](kimi-k3.md)。公告 [Moonshot](https://www.kimi.com/blog/kimi-k3)；[推文](https://x.com/Kimi_Moonshot/status/2077830229968683203)。选中的 trusted partners，要 Moonshot **和** vLLM/Inferact **双方批准**，用的是准备开源的同一份代码。KDA prefix cache：Moonshot 贡献实现，随权重一起放；设计另文。页上原话：**vLLM is proud to be a long-term partner of Moonshot AI and a popular inference engine for Kimi-series models.** 跳过社交预览图。本地图版权仍归原站。
 
-上周 Moonshot AI [介绍 Kimi K3](https://www.kimi.com/blog/kimi-k3)：2.8T、原生视觉、1M 上下文、Kimi Delta Attention（KDA）、Attention Residuals（AttnRes）、极稀疏 MoE。开源权重计划 2026-07-27。vLLM、Moonshot、NVIDIA、AMD 和社区在收尾，好让开源社区 Day-0 就能伺候。
+上周 Moonshot 推出 Kimi K3：2.8T、原生视觉、1M 上下文、Kimi Delta Attention (KDA)、Attention Residuals (AttnRes)、高度稀疏 MoE。开源社区兴奋的是开权重在追专有模型。权重当时定在 2026-07-27 放。这期间 vLLM、Moonshot、NVIDIA、AMD 和更宽的社区在收最后的集成和校验，好让社区 **day 0** 就能 serve。
 
-这篇是 **预告**。核心模型路径、KDA 感知的前缀缓存、多模态、tool-calling parser、硬件专用活，已经成形。获双方批准的合作伙伴（Moonshot + vLLM/Inferact）已经用准备开源的同一份代码做部署验证。
-
-宣布博说过：KDA 给常规前缀缓存出了新题。Moonshot 把对应实现贡献进 vLLM，跟权重一起发。设计细写后来成了 [kimi-k3.md](kimi-k3.md) 加这篇 preview。
-
-**Figure（social preview，未收录）：** 原文 `/assets/figures/2026-07-22-kimi-k3-preview/social-preview.png`。
-
-本地图（原文版权仍归原站；学习对照用）：
-
-![kda prefix state](../../../../assets/vllm/blog/serving/kimi-k3-preview/01-kda-prefix-state.png)
-
-![fine grained prefix cache](../../../../assets/vllm/blog/serving/kimi-k3-preview/02-fine-grained-prefix-cache.png)
+这篇是 preview，性能优化还在走。核心模型路径、KDA-aware prefix caching、多模态集成、tool-calling parsers、硬件专项优化，已经成形。
 
 ## TL;DR
 
-- **Day-0 开源 serving：** 模型实现、Docker、部署配方、生产验证，等权重。
-- **新 hybrid 架构：** KDA 为主的线性 attention 夹周期性满 attention，沿深度的 AttnRes，Stable LatentMoE，原生视觉。
-- **前缀缓存要动 core：** 物理 KDA state 块大小和前缀匹配粒度拆开——不必在每个小 attention 块上都存一份 recurrent，也能吃到有用的部分前缀命中。
-- **Kernel：** FlashKDA、fused KDA Decode、fused KDA 投影和卷积、fused AttnRes、重写的 MLA、接通 SiTU 的 MXFP4 MoE、优化过的专家路由。
-- **NVIDIA 和 AMD：** NVIDIA kernel 在做最后调优；AMD 初版 FlyDSL MoE 已经在，更宽的验证还在走。
+- **Day-0 开源 serving：** 模型实现、Docker、deployment recipes、production validation，对着权重发布日准备。
+- **新的 hybrid 架构：** KDA 主导的线性注意力 + 周期性 full-attention、跨深度 AttnRes、Stable LatentMoE、原生视觉。
+- **Prefix caching 要改核心：** 物理 KDA state-block size 和 prefix-match 粒度拆开，才能在不大块存 recurrent state 的前提下拿到有用的 partial prefix-cache hit。
+- **整栈 kernel：** FlashKDA、fused KDA decode、fused KDA projections 和 convolution、fused AttnRes、重写 MLA、SiTU 的 MXFP4 MoE、优化过的 expert routing。
+- **NVIDIA 和 AMD：** NVIDIA kernel 最后调参；AMD 已有 FlyDSL MoE，更宽的校验还在走。
 
-## Kimi K3 一眼
+## Kimi K3 at a Glance
 
-这不是更大的 Kimi K2。Serving 问题一次变了好几维。
+K3 不是更大的 K2。serving 问题同时在几维上变了。
 
-| 属性 | Kimi K3 配置 | Serving 含义 |
+| 属性 | Kimi K3 | serving 含义 |
 | --- | --- | --- |
-| **规模** | **2.8T** | 大规模 expert parallelism，高带宽加速域 |
-| **上下文** | **1M tokens** | cache 容量、前缀复用、chunked Prefill、Prefill/Decode 分离变成一等事 |
-| **Attention** | **Hybrid KDA + 满 attention** | Recurrent 状态 cache 和 paged KV 必须在 **同一** 逻辑前缀上往前走 |
-| **深度** | **Attention Residual** | 跨层读写要专用 kernel |
-| **MoE** | **896 routed，每 token 激活 16，外加 shared** | 路由、dispatch、均衡、MoE kernel 坐在端到端上 |
-| **量化** | **发布配置里的 MXFP4 权重** | 高效 FP4 MoE，还要接 Kimi K3 的 **SiTU** |
-| **多模态** | **原生视觉 + vision tower** | 多模态预处理（当时图）和靠谱的视觉并行策略 |
+| **Model scale** | **2.8T** | 大规模 expert parallelism，高带宽加速器域 |
+| **Context** | **1M tokens** | cache 容量、prefix reuse、chunked prefill、P/D 拆分都是一等公民 |
+| **Attention** | **Hybrid KDA + full attention** | recurrent state cache 和 paged KV 必须停在同一逻辑前缀 |
+| **Depth** | **AttnRes** | 跨层读写，要专门 kernel |
+| **MoE** | **896 routed，每 token 16 active，加 shared** | routing、dispatch、load balance、MoE kernel 决定端到端 |
+| **Quant** | 发布配置 **MXFP4** | 高效 FP4 MoE，还要吃 K3 的 **SiTU** |
+| **Multimodality** | 原生视觉 + vision tower | 多模态预处理（当时 image-only）和稳的 vision parallelism |
 
-每一项都把代价挪到新地方。KDA 不必给每个过去 token 留一对常规 KV，却引进很大一块 recurrent。AttnRes 松开单一残差流，却多了跨层内存交通。极稀疏 MoE 不必每 token 激活全部 2.8T，路由和通信的赌注却变大。vLLM 的活，是让这些在一张熟的 serving API 后面一起转。
+对推理系统，每一项都把成本挪到新地方。KDA 不必为每个过去 token 留常规 KV，但引入大块 recurrent state。AttnRes 不再只靠一条均匀累加的 residual stream，却多了跨层内存流量。极端稀疏避免每 token 激活全部 2.8T，却把 routing 和通信的赌注抬高。vLLM 的活是让这些在同一套熟悉的 serving API 后面一起转。
 
-## 几代 Kimi 攒下来的合作
+## 跨几代 Kimi 的合作
 
-- [GOSIM 2024](https://china2024.gosim.org/schedules/vllm-in-moonshot.html)：Moonshot 工程师讲内部大规模用 vLLM，以及 vLLM + Mooncake 的 Prefill/Decode 分离。
-- 后来在 [vLLM Beijing Meetup](https://pytorch.org/blog/vllm-beijing-meetup-advancing-large-scale-llm-deployment/) 讲 Kimi K2 训练和推理——在线流量的严格 SLO，还有 RL。
-- Kimi K2、Kimi K2-Thinking、Kimi K2.5、Kimi Linear 等的 Day-0 伙伴。
-- 深的技术合作：[Kimi K2 tool-calling](kimi-k2-accuracy.md)、[CUDA 调试](../architecture/cuda-debugging-source.md)、[decode context parallelism](https://github.com/vllm-project/vllm/pull/23734)（[dcp.md](../performance/dcp.md)）、Mooncake 的 P/D、大规模性能验证。Kimi K2.5 也出现在公开 [InferenceX](https://inferencex.semianalysis.com/inference?g_rundate=2026-04-07&g_model=Kimi-K2.5&g_runid=24100518225&i_gpus=gb200_dynamo-vllm&i_dstart=2026-04-07&i_dend=2026-04-07)。
+K3 接着 Moonshot 和 vLLM 社区的长合作。
 
-Day-0 很少是宣布之后写一个 PR。架构细节要早给，真实 checkpoint 要在真实并行下测，引擎缺口要找出来，上游改进要在这一发之后还值钱。
+- [GOSIM 2024](https://china2024.gosim.org/schedules/vllm-in-moonshot.html)：Moonshot 讲内部大规模用 vLLM，以及 vLLM + Mooncake 的 P/D 拆分。
+- [vLLM Beijing Meetup](https://pytorch.org/blog/vllm-beijing-meetup-advancing-large-scale-llm-deployment/)：K2 训练和推理，严 SLO 下的在线流量和 RL 负载。
+- vLLM 做过 K2、K2-Thinking、K2.5、Kimi Linear 等的 day-0。
+- 深合作：[Kimi K2 tool-calling](https://vllm.ai/blog/Kimi-K2-Accuracy)（正确性）、[CUDA debugging](https://vllm.ai/blog/improved-cuda-debugging)、[decode context parallelism](https://github.com/vllm-project/vllm/pull/23734)、Mooncake P/D、大规模性能校验。K2.5 也进过公开 [InferenceX](https://inferencex.semianalysis.com/inference?g_rundate=2026-04-07&g_model=Kimi-K2.5&g_runid=24100518225&i_gpus=gb200_dynamo-vllm&i_dstart=2026-04-07&i_dend=2026-04-07)。学习笔记：[kimi-k2-accuracy.md](kimi-k2-accuracy.md)、[cuda-debugging-source.md](../dev/cuda-debugging-source.md)、[dcp.md](../features/dcp.md)、[mooncake.md](../features/mooncake.md)。
 
-## 最难的一块：KDA 的前缀缓存
+这段历史要紧。Day-0 很少是公告之后写一个 PR。模型组和推理组早早共享架构、在真实 checkpoint 和现实并行下测、找出 serving 引擎的缺口、把 launch 之后仍有用的改进上游。页上原话：**vLLM is proud to be a long-term partner of Moonshot AI and a popular inference engine for Kimi-series models.**
 
-满 attention 和 KDA 记住前缀的方式完全不同。
+下面钻进当时最有意思的技术硬骨头。
 
-满 attention：前缀是逐 token 的 key / value。vLLM 把它们放进 paged 块，给完整 token 块做哈希，匹配上的块序列可以复用。
+## 最难的一块：KDA 的 Prefix Caching
 
-KDA 是 recurrent。不是每个 token 一对常规 KV，每一层 KDA 推进一块矩阵式 recurrent，外加短卷积状态。要从缓存前缀接着走，引擎需要 **恰好落在前缀边界** 的 KDA 状态。把更早的状态重放到那个边界，前缀缓存的好处就没了。
+常规 full attention 和 KDA，记前缀的方式完全不同。
 
-**Figure。** 常规 attention 和 KDA 各自怎么表示缓存前缀。
+Full attention：前缀是 per-token K/V。vLLM 把它们放进 paged blocks，对完整 token block 做 hash，另一条请求可以复用匹配的 block 序列。
 
-直白解法——在每个小 attention-cache 边界都存一份 KDA 状态——太贵。一份 KDA 状态比一个普通 token 的 KV 大得多，实现上用相对大的物理 state 块来摊存储。在这次工作之前，物理块大小也卡住了前缀命中能落在哪。几千 token 一块时，两份请求几乎共用整段 prompt，仍可能 miss——共同边界没填满同一块物理块。
+KDA 是 recurrent。每层推进一个矩阵状 recurrent state，外加短 convolution state。要从缓存前缀恢复，引擎需要 **恰好在前缀边界** 的 KDA state。从更早的 state replay 到边界，会把 prefix caching 的好处抹掉大半。
 
-新设计把三件曾经绑在一起的事拆开：
+![conventional attention vs KDA cached prefixes](../../../../assets/vllm/blog/serving/kimi-k3-preview/01-kda-prefix-state.png)
 
-- **物理块大小：** GPU 上 KDA 状态和满 attention KV 怎么分配。
-- **调度对齐：** 执行必须停在哪，好让所有 cache group 一致。
-- **前缀匹配单位：** 共享前缀被哈希、可能命中的更细 token 间隔。
+直白做法——在每个小 attention-cache 边界都存一份 KDA state——太贵。一份 KDA state 比一个普通 token 的 KV 大得多，所以实现用较大的物理 state block 摊成本。在这次改动之前，物理 block size 也约束 prefix-cache hit 能落在哪。几千 token 一块时，两条请求几乎共享整段 prompt，仍可能 miss：共同边界没填满同一物理块。
 
-**Figure。** 大物理 KDA state 块里的细粒度前缀匹配。
+新设计把原先绑在一起走的三件事拆开：
 
-vLLM 可以在大物理块 **内部** 的细粒度边界登记一份有效的 KDA 状态。后来的请求命中这块残尾：先拷到私有目的地，再往前延伸。Copy-on-write 保住共享前缀；新请求可以安全接着生成。
+- **Physical block size：** GPU 上怎么分配 KDA state 和 full-attention KV。
+- **Scheduler alignment：** 执行必须停在哪，好让所有 cache group 一致。
+- **Prefix-match unit：** 共享前缀被 hash、被匹配的更细 token 间隔。
 
-容易漏的细节：
+![fine-grained prefix matching inside a larger physical KDA state block](../../../../assets/vllm/blog/serving/kimi-k3-preview/02-fine-grained-prefix-cache.png)
 
-- 调度停在对的块和哈希边界，登记的 recurrent 才真对应宣称的 token 前缀。
-- 满 attention 和 KDA 的 cache group 同意同一个 `num_computed_tokens`，哪怕物理块大小不同。
-- 部分 cache 条目用链式细粒度哈希，边界标识的是 **整段** 前缀，不只是尾巴。
-- 同一步的复用等到状态拷贝安全才发生——登记和延伸之间不抢。
-- Cache 搬运和分离 Prefill/Decode 可以把同一逻辑前缀带到别的 worker。
+这样可以在较大的物理 state block **里面** 的细粒度边界登记一份有效 KDA state。后来的请求打中这块 partial block，先把缓存 state **拷** 到私有目的地，再往前走。Copy-on-write 保住共享前缀，新请求也能安全续生成。
 
-动机来自 Kimi K3 和其他 hybrid attention 模型，但这是 **core 基础设施**，不是模型私房。设计、不变量、基准的细写，现在在 [kimi-k3.md](kimi-k3.md)。
+实现还处理了容易漏的细节：
 
-## 性能工作：把新瓶颈拆掉
+- Scheduler 停在对的 block 和 hash 边界，登记的 recurrent state 真对应宣称的 token 前缀。
+- Full-attention 和 KDA cache group 对同一份 `num_computed_tokens` 达成一致，尽管物理 block size 不同。
+- Partial cache 用链式细粒度 hash，边界标识 **整段** 前缀，不只是尾巴。
+- 同一步 reuse 推迟到 state copy 安全，避免登记和扩展之间的 race。
+- Cache transfer 和拆分的 P/D 路径，能把同一逻辑前缀带过 worker。
 
-| 区域 | 当时进度 |
+工作由 K3 和许多 hybrid attention 模型推动，但是 **vLLM 核心基础设施**，不是模型专用捷径。vLLM 和 Moonshot 在设计上合作很深。两队另发文讲设计、不变量、benchmark。落地见 [kimi-k3.md](kimi-k3.md)。
+
+## 性能工作：拆掉新瓶颈
+
+当时进度可以收成这张表：
+
+| 区域 | 当时状态 |
 | --- | --- |
-| **模型和配置** | 语言和视觉定义已接上；硬件路径不同处，**NVIDIA** / **AMD** 分开实现 |
-| **给原生 P/D 优化的 MLA** | 手写融合，Prefill/Decode 分路径。Gate 投影和 attention 并行；Decode 可多流；Prefill fused epilogue |
-| **Serving 语义** | Chat 渲染、tokenizer、流式解析、tool call、reasoning、structured-output——**最后一轮端到端验证** |
-| **KDA Prefill** | FlashKDA 和 Triton 已接；最终 backend 选择和数值验证 **进行中** |
-| **KDA Decode** | Fused **NVIDIA** Decode：卷积、recurrent KDA 更新、gate、归一化；可移植回退还在 |
-| **前缀缓存** | Hybrid 满 attention + recurrent 的细粒度部分命中已接；分离和 offload **在验** |
-| **Attention Residuals** | Triton 和 **NVIDIA** kernel；支持的形状上融合残差加和输出 RMSNorm |
-| **MoE** | **SiTU** 接到 **MXFP4 TRTLLM-Gen** 和 **DeepGEMM**；优化过的 grouped top-k。**AMD** FlyDSL **MLIR**：硬件调过的 **A16W4/A8W4** fused op + **SiTU** |
-| **生产栈** | 非分离 serving 能跑；Dynamo + vLLM + Mooncake 分离、expert parallelism、厂商验证在 **最后验证环** |
+| **Model and configuration** | 语言和视觉定义已接入；硬件路径不同处 **NVIDIA / AMD 分开实现** |
+| **Optimized MLA for native PD** | 手工 kernel fusion，prefill/decode 分路径。Gate projection 和 attention 并行；decode 多流，prefill fused epilogue——对着 PD 拆分优化 |
+| **Serving semantics** | chat 渲染、tokenizer、streaming parse、tool calls、reasoning、structured-output 已实现，**最终端到端校验中** |
+| **KDA prefill** | FlashKDA 和 Triton 已接入；最终后端选择和数值校验 **进行中** |
+| **KDA decode** | 覆盖 convolution、recurrent 更新、gating、normalization 的 fused **NVIDIA** decode kernel 已接入，保留可移植 fallback |
+| **Prefix caching** | hybrid full-attention + recurrent-state 的细粒度 partial hit 已接入；拆分和 offload **校验中** |
+| **AttnRes** | Triton 和 **NVIDIA** kernel 已接入，支持形状上融合 residual add 和 output RMSNorm |
+| **MoE** | **SiTU** 接到 **MXFP4 TRTLLM-Gen** 和 **DeepGEMM**；优化过的 grouped top-k routing。**AMD** 用 FlyDSL **MLIR**，硬件调过的 **A16W4/A8W4** fused op 和 **SiTU** |
+| **Production stack** | 非拆分 serving 能跑；Dynamo + vLLM + Mooncake 拆分、EP、vendor verification 在 **最终校验环** |
 
-Kimi K3 改了热路径，所以优化不只是 attention kernel。
+K3 改了热路径，优化不只 attention kernel。
 
-### KDA Prefill 和 Decode
+### KDA prefill and decode
 
-Prefill 接 FlashKDA 和 Flash Linear Attention（FLA）。核心 recurrence 周围：输入投影和因果卷积融合；一次操作收集初始 recurrent。
+Prefill 接入 FlashKDA 和 Flash Linear Attention (FLA)。核心 recurrence 周围，vLLM 融合 input projections 和 causal convolution，一次 gather 初始 recurrent states。
 
-Decode：支持的架构和形状上走 fused NVIDIA kernel。卷积、KDA 状态更新、输出 gate、归一化一次做完，而不是每个生成 token 拆成好几次 launch。Kimi K3 的 KDA 层很多；每层一点点 launch 或内存惩罚，会变成很大的 **TPOT** 惩罚。
+Decode 在支持的架构和形状上走 fused NVIDIA kernel。短 convolution、KDA state 更新、output gate、normalization 不再每 token 各 launch 一次。K3 有很多 KDA 层；每层一点 launch 或内存惩罚，很快变成大的 TPOT 惩罚。
 
 ### Attention Residuals
 
-AttnRes 从更早层块写下的表示里取，不只依赖一条均匀累加的残差流。朴素实现：整张 **93 层** 网上多出读写、归约、归一化 launch。
+AttnRes 从更早 layer block 写下的表示里取，不只靠一条均匀累加的 residual stream。朴素实现会在 **93 层** 网络里到处多读写、reduction、normalization launch。
 
-发布分支：Triton，加上在支持形状上融合残差更新、AttnRes 混合、输出 RMSNorm 的 NVIDIA kernel。Sequence-parallel 把 attention-residual 交通按 rank 切开。Kernel 级早期结果看好；端到端还在不同 Prefill 长度和并行配置上量。
+Release branch 有 Triton 和 NVIDIA kernel：支持的情况下融合 residual update、AttnRes mixing、output RMSNorm。Sequence-parallel 也把 attention-residual 流量按 rank 切。早期 kernel 结果令人鼓舞；端到端收益还在按 prefill 长度和并行配置量。
 
-### 给原生 P/D 优化的 MLA
+### Optimized MLA module for native PD disaggregation
 
-Kimi K3 每四层仍用 MLA。以前 vLLM 很依赖 `torch.compile` 的自定义融合：启动慢，许多 kernel 仍没焊上。这发：新 MLA 模块，**手写** 融合。Prefill 和 Decode 的 kernel launch 顺序不同，于是两条代码、两套融合，专门对着 P/D。Kimi K3 还加了可以和主 attention 并行的 gate 投影：Decode 可选多流；Prefill 上多流重叠不划算，就把逐元素乘和 sigmoid 焊进 gate 投影的 epilogue。
+K3 每四层仍用 MLA。上一模型大量靠 `torch.compile` 自定义融合把小 kernel 合成 fused kernel，启动慢，仍有许多没融上。这次新 MLA 模块手工融合。Prefill 和 decode 的 launch 顺序不同，所以两条路径、不同融合图案，专门对着 PD 拆分。K3 还引入可与主 attention 并行的 gate projection。Decode 可选多流；prefill 里多流 overlap 不优，就把 elementwise multiply 和 sigmoid 融进 gate-projection epilogue。
 
 ### MXFP4 MoE
 
-发布配置：MXFP4 权重 + SiTU 激活。此前 MXFP4 TRTLLM-Gen 路径不认 SiTU，会掉到更慢的实现。现在把 Kimi K3 的 SiTU 参数映进优化过的 FP4 expert 路径，大 token-by-top-k launch grid 也安全切开。
+发布配置：MXFP4 权重 + SiTU。此前 MXFP4 TRTLLM-Gen 不支持 SiTU，会落到更慢的实现。现在把 K3 的 SiTU 参数映射进优化过的 FP4 expert 路径；大 token-by-top-k launch grid 安全 chunk。
 
-在 **16 GPU DP16+EP16** 上验过：所有 rank 都选了优化过的 MXFP4 backend，正确性过。
+已在 **16-GPU DP16+EP16** 上校验：所有 rank 选中优化 MXFP4 backend，过正确性检查。
 
-AMD：Kimi K3 MoE 走 FlyDSL 的 MLIR Python kernel 栈——硬件调过的 A16W4/A8W4 量化 fused op 和 SiTU，建在 FlyDSL 的模块抽象上。
+AMD：K3 MoE 走 FlyDSL 的 MLIR Python kernel stack，含硬件调过的 A16W4/A8W4 quantized fused operators 和 SiTU，建在 FlyDSL 模块化抽象上。
 
-## 开源当天可以预期什么
+## 开源日能期待什么
 
-计划中的 Day-0 包裹：
+计划中的 day-0 包：
 
-- vLLM 模型、parser、cache、kernel 集成
-- 初版开源 Docker
-- 验过的 NVIDIA 启动配方
-- 初版 AMD 路径（FlyDSL MoE）；更多 ROCm 调优随后
-- 多模态、工具、reasoning、structured-output 例子
-- 初版性能数字
+- vLLM 模型、parser、cache、kernel 集成；
+- 初始开源 Docker；
+- 校验过的 NVIDIA launch recipes；
+- 初始 AMD 路径（FlyDSL MoE），更多 ROCm 调参随后；
+- 多模态、tool-use、reasoning、structured-output 例子；
+- 初始性能数字。
 
-受信任的部署伙伴已经在 Moonshot 和 vLLM/Inferact 双重批准下跑发布候选。不必把预发布权重铺得很开，也能拿到生产反馈。测的是整套 serving——前端语义、batch、cache 搬运、expert parallelism、可观测、故障处理——不只是孤立 kernel。
+Trusted deployment partners 已在 Moonshot 和 vLLM/Inferact 的双重批准下跑 release candidate。真实生产反馈，又不把预发布权重广散。也给完整 serving 系统——前端语义、batching、cache transfer、EP、可观测、失败处理——而不只是孤立 kernel，一次试跑的机会。落地数字见 [kimi-k3.md](kimi-k3.md)。
 
 ## 致谢
 
-模型方、推理引擎、硬件社区一起。
+K3 day-0 是模型厂商、推理引擎、硬件社区的合力。
 
-**Moonshot AI** — Kimi K3，权重前分享架构，初版模型集成和 KDA 前缀缓存，正确性和生产验证。
+- **Moonshot：** 做出 K3；权重前共享架构；初始模型集成和 KDA prefix-caching；正确性和生产校验上密切合作。
+- **Inferact：** 接到 vLLM；扩展核心 cache manager 做 partial hybrid prefix hit；serving 语义和多模态；deployment recipes；端到端性能。
+- **NVIDIA：** KDA decode 和 AttnRes kernel、MXFP4 MoE、整盘性能。
+- **AMD：** 初始 day-0 ROCm，并继续把 K3 铺到更多 AMD GPU。
+- 更宽的开源社区：期待、测试、反馈。页上说期待把权重和推理引擎支持交到手里。
 
-**Inferact** — 接到 vLLM，扩展 core cache manager 做 hybrid 部分前缀命中，serving 语义和多模态，部署配方，端到端性能。
+## 还有一件事：为什么公告和开源要拆开
 
-**NVIDIA** — KDA Decode 和 Attention Residual kernel，MXFP4 MoE，整条性能。
+K3 还有一套发布流程，页上希望更多模型厂商考虑：**先公告模型，再放权重和推理引擎支持。**
 
-**AMD** — 初版 Day-0 ROCm；继续把 Kimi K3 铺到更多 AMD GPU。
+vLLM 提出拆开，Moonshot 同意并执行。理由实际。前沿模型公告有躲不开的 last-mile 不确定性。模型组同时在稳自己的产品、API、评测、安全、文档、商业发布。如果开源权重和开源支持必须落在 **同一时刻**，像 vLLM 这样的社区项目会被移动的 deadline 拖垮。
 
-更广的开源社区：期待、测试、反馈。
+拆开时间线，两边合同更好：
 
-## 还有一件事：为什么宣布和开源拆开
+1. 模型厂商可以专心产品发布，冻结最终 checkpoint、配置、tokenizer、serving 语义。
+2. 开源推理引擎组拿到稳定的集成窗口：正确性测试、性能调参、Docker、recipe 校验。
+3. 社区拿到公开、有界的预期，而不是含糊的 “coming soon”。
 
-先宣布模型，再发权重和推理引擎支持。
-
-vLLM 提的拆法，Moonshot 同意。实际：前沿模型宣布总有最后一公里的不确定。模型团队同时在稳产品、API、评测、安全、文档、商业发布。如果开源权重和开源支持必须落在 **同一时刻**，像 vLLM 这样的社区项目会被那根移动的 deadline 拖着走。
-
-拆开时间线：
-
-1. 厂商可以冻住最终 checkpoint、配置、tokenizer、serving 语义。
-2. 开源推理团队拿到稳定窗口：正确性、性能、Docker、配方。
-3. 社区拿到公开、有界的预期，而不是含糊的「即将到来」。
-
-不是从 Day-0 后退。是用用户真正会下载的那份产物，更可持续地把 Day-0 做完。
+拆开不是从 day-0 撤退。它是对着用户真正会下载的那份产物，更可持续地交付 day-0。页上鼓励更多模型厂商跟。

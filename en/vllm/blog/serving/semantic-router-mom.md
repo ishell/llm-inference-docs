@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-07-21-vllm-sr-new-chapter-mom
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Beyond a Single Model: Mixture-of-Models with vLLM Semantic Router
@@ -67,6 +67,8 @@ They cannot be optimized independently. Safety and privacy cut across all three;
 
 **Figure 3.** White paper: programmable routing engine. Vision paper: workload and physical pool.
 
+Together the papers make routing programmable and tie it to workload and hardware — the two foundations MoM brings under one model contract.
+
 Meanwhile the runtime already left single-model selection: [Fusion](semantic-router-fusion.md), ReMoM, Confidence, Ratings, bounded Workflows ([micro-agent](semantic-router-micro-agent.md)). One model name; serving selects a recipe, fans out, verifies or synthesizes, returns one ordinary response.
 
 | First chapter | New chapter |
@@ -109,6 +111,8 @@ The application selects one versioned identity and receives one attributable res
 A **Mixture-of-Models** is a versioned composite whose engine realizes each request through a preference-conditioned, resource-bounded path across independent models and operators. One model interface; one attributable result.
 
 A multi-upstream gateway can forward traffic without owning system quality. An MoM owns an objective, an evaluation contract, a reproducible composition, and the runtime that executes it.
+
+MoM also differs from Mixture-of-Experts. MoE routes tokens among internal experts during one forward pass; MoM coordinates independent models that may differ in architecture, owner, license, modality, protocol, context window, and hardware. An MoE checkpoint can itself be one MoM component.
 
 | | Conventional model | Mixture-of-Models |
 | --- | --- | --- |
@@ -231,13 +235,21 @@ If the application must know which provider owns every submodel, which device ru
 
 Mission on the page: *Advancing the science of intelligence across models, devices, and environments.*
 
-## Build it with them
+## Build it with us
 
-Iris / Athena / Themis improved because contributors brought real workloads. MoM needs learned allocation, preference optimization, model cooperation, energy-aware inference, portable artifacts, open evaluation, heterogeneous runtimes. They want cases where composition **fails**, not only where it wins.
+Building Mixture-of-Models requires more than routing. The work spans model training, evaluation, serving systems, hardware, and production operations.
+
+Iris, Athena, and Themis improved because contributors brought real workloads, added backends, trained models, published benchmarks, found failure cases, and argued for better interfaces. MoM needs the same range: learned allocation, preference optimization, model cooperation, energy-aware inference, portable artifacts, open evaluation, heterogeneous runtimes.
+
+If you work on these problems: build an operating point, add a runtime, test a collaboration recipe, or publish a case where composition fails. MoM is stronger if its assumptions are tested in the open.
 
 ### Acknowledgments
 
-Named for technical / research direction: Xunzhuo Liu, Huamin Chen, Bowei He, Yankai Chen, Fuyuan Lyu, Steve Liu. ROCm / router-model training / open MoM: Andy Luo, Haichen Zhang. A long contributor list follows on the original page (FAUST, David Shrader, Yang Wu, and many others). Milestone: **1,734 commits**, **150+ contributors**. Research collaborators: MBZUAI, McGill, Mila, Rice. Broader: vLLM, AMD, Intel, Meta, Red Hat, Microsoft, Google, IBM, NVIDIA, Hugging Face, NASA, Nutanix, DaoCloud.
+Thanks to [Xunzhuo Liu](https://www.linkedin.com/in/bitliu), [Huamin Chen](https://www.linkedin.com/in/huaminchen), [Bowei He](https://www.linkedin.com/in/bowei-he-8a9450199/), [Yankai Chen](https://www.linkedin.com/in/yankai-chen-923001154/), [Fuyuan Lyu](https://www.linkedin.com/in/fuyuan-lyu-560756167/), and [Steve Liu](https://ca.linkedin.com/in/xueliu) for technical and research direction; [Andy Luo](https://www.linkedin.com/in/andyluo77/) and [Haichen Zhang](https://www.linkedin.com/in/haichen-zhang-9010b6382/) for ROCm enablement, router-model training, and open MoM experimentation.
+
+Also named: [FAUST](https://github.com/FAUST-BENCHOU), [David Shrader](https://www.linkedin.com/in/shraderdm/), [Yang Wu](https://github.com/drivebyer), [Ramakrishnan Sathyavageeswaran](https://github.com/ramkrishs), [Kuntai Wu](https://github.com/WUKUNTAI-0211), [Aayush Saini](https://github.com/AayushSaini101), [siloteemu](https://github.com/siloteemu), [Chen Wang](https://www.linkedin.com/in/chenw615/), [Yue Zhu](https://www.linkedin.com/in/yue-zhu-b26526a3/), [Senan Zedan](https://www.linkedin.com/in/senan-zedan-2041855b/), [Yossi Ovadia](https://www.linkedin.com/in/yossi-ovadia-336b314/), [Samzong Lu](https://www.linkedin.com/in/samzong), [Liav Weiss](https://www.linkedin.com/in/liav-weiss-2a0428208), [Asaad Balum](https://www.linkedin.com/in/asaad-balum-0928771a9/), [Yehudit](https://www.linkedin.com/in/yehuditkerido/), [Noa Limoy](https://www.linkedin.com/in/noalimoy/), [Marina Koushnir](https://github.com/mkoushni), [Jared Wen](https://github.com/JaredforReal), [Abdallah Samara](https://www.linkedin.com/in/abdallah-samara), [Hen Schwartz](https://www.linkedin.com/in/henschwartz), [Srinivas A](https://www.linkedin.com/in/sriniabhiram), [Yang Zhu](https://github.com/carlory), [Jintao Zhang](https://www.linkedin.com/in/jintao-zhang-402645193/), [yuluo-yx](https://github.com/yuluo-yx), [cryo](https://github.com/cryo-zd), [Bishen Yu](https://github.com/OneZero-Y), [Zhijie Wang](https://github.com/aeft), [Hao Wu](https://github.com/haowu1234), [Qiping Pan](https://www.linkedin.com/in/qiping-pan-8662ab215/).
+
+Milestone: **1,734 commits**, **150+ contributors**. Research collaborators: MBZUAI, McGill, Mila, Rice. Broader: vLLM, AMD, Intel, Meta, Red Hat, Microsoft, Google, IBM, NVIDIA, Hugging Face, NASA, Nutanix, DaoCloud, and open-source communities.
 
 ![community](../../../../assets/vllm/blog/serving/semantic-router-mom/14-community.png)
 
@@ -247,3 +259,5 @@ Named for technical / research direction: Xunzhuo Liu, Huamin Chen, Bowei He, Ya
 - Docs: [vllm-sr.ai](https://vllm-sr.ai)
 - Models: [Hugging Face](https://huggingface.co/LLM-Semantic-Router)
 - Slack: `#semantic-router` on [vLLM Slack](https://vllm-dev.slack.com/archives/C09CTGF8KCN)
+
+Closing: Semantic Router began by helping infrastructure choose the right model for each request. Now the foundation extends beyond a single model — toward systems that can coordinate, evaluate, and operate multiple models across devices and environments. They invite the community to build and test that approach in the open.

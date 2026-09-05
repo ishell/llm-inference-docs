@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-07-01-qwen3-omni-optimization
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Experience and Lessons Learned from Serving Multi-Stage Qwen3-Omni in vLLM-Omni
@@ -16,6 +16,15 @@ Chinese: [zh/vllm/blog/serving/qwen3-omni.md](../../../../zh/vllm/blog/serving/q
 - Primary endpoint: `/v1/chat/completions`. `modalities` in the body: `["text"]` or `["text", "audio"]`.
 - Stage batching + per-stage CUDA Graphs; async chunk / async omni output; Talker/Code2Wav replicas; hot-path cleanup.
 - Sweep at concurrency 64 (Seed-TTS `en`, `Qwen3-Omni-30B-A3B-Instruct`): Batch **2.2** req/s, audio TTFP **5884 ms**, RTF **1.15** → stacked **11.7** req/s, **632 ms**, RTF **0.47**. CUDA Graph is the ~**4×** throughput jump; async chunk is the largest TTFP cut (**2790 → 655 ms**).
+
+## TL;DR
+
+vLLM-Omni's Qwen3-Omni serving stack:
+
+- **A three-stage pipeline:** Thinker for multimodal reasoning, Talker for speech codec generation, Code2Wav for waveform reconstruction.
+- **OpenAI-compatible serving:** `/v1/chat/completions` is the primary endpoint for Qwen3-Omni text and audio generation.
+- **Batching, CUDA Graphs, async chunk, async output, replicas, and hot-path cleanup:** stage-level batching and per-stage graph capture on Thinker, Talker, and Code2Wav improve high-concurrency throughput; async-chunk handoffs and async output keep the pipeline and Decode workers from stalling on full-payload barriers and synchronous payload construction; Talker/Code2Wav replicas scale the speech-generation stages; hot-path cleanup trims the per-step model-internal overhead that scales with utterance length.
+- **Performance validation:** controlled benchmark sweeps and DFX perf runs show lower audio TTFP (time to first audio packet), lower audio RTF (real-time factor), and higher throughput as each optimization layer is enabled.
 
 Local figures (copyright remains with the original site; study copies):
 
@@ -120,15 +129,21 @@ Each step’s numbers assume every layer above is already on.
 
 **Figure 3.** Thinker and Talker under vLLM’s outer Decode graph; Talker’s inner code predictor is `torch.compile`d (not a second graph); Code2Wav uses an inner `CUDAGraphDecoderWrapper`.
 
-**Stage 0 — Thinker (`LLM_AR`).** `enforce_eager` false → vLLM’s standard CUDA Graph on Decode, same mechanism as text-only serving.
+#### Stage 0 — Thinker: vLLM outer decode graph
 
-**Stage 1 — Talker.** Outer CUDA Graph when `enforce_eager: false`. Each step also runs the **code predictor** (short re-prefill transformer → RVQ codes):
+The Thinker is an autoregressive multimodal stage (`LLM_AR`). When `enforce_eager` is false, it uses vLLM's standard CUDA Graph capture on the Decode path — the same mechanism as text-only serving. That removes repeated CPU-side kernel dispatch during long Thinker generations.
+
+#### Stage 1 — Talker: outer decode graph + compiled code predictor
+
+The Talker also runs through vLLM's outer CUDA Graph path when `enforce_eager: false`. Each Talker Decode step additionally invokes the **code predictor** — a short re-prefill transformer that emits RVQ codec codes. That inner path is optimized separately:
 
 - `torch.compile` fuses the 5-layer predictor (`dynamic=False`, `epilogue_fusion=False`) so RMSNorm/RoPE stay aligned with the reference while cutting kernel count.
 - On CUDA the predictor does **not** enable a second manual CUDA Graph by default (`use_cuda_graphs=False`) — it would conflict with Talker’s `CUDAGraphWrapper`. Outer graph + compiled inner forward are complementary: one captures the AR stage loop, the other fuses the codec-prediction micro-forward.
 - Optional prefix-graph buckets: `code_predictor_prefix_graphs` in connector config, when explicitly enabled.
 
-**Stage 2 — Code2Wav (`LLM_GENERATION`).** Inner `CUDAGraphDecoderWrapper`, not vLLM’s outer wrapper:
+#### Stage 2 — Code2Wav: inner vocoder graph
+
+Code2Wav is a generation stage (`LLM_GENERATION`), not an AR loop. Its graph path is an **inner** `CUDAGraphDecoderWrapper` rather than vLLM's outer wrapper:
 
 ```python
 # Enabled during weight load when stage enforce_eager is false

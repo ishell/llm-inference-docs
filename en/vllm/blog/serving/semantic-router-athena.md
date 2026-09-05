@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-03-10-v0.2-vllm-sr-athena-release
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # vLLM Semantic Router v0.2 Athena: ClawOS, Model Refresh, and the System Brain
@@ -123,7 +123,13 @@ Operational layer: setup wizard for ML training and config generation, CLI and r
 
 **OpenClaw** = underlying agent platform. **ClawOS** = orchestration and operating experience Athena builds on top, inside Semantic Router. Experimental, already tangible: MCP tools and room-style chat to spin up OpenClaw teams and workers, coordinate in shared rooms, observe runtime state.
 
-Dashboard capabilities they want in that setup: intelligent routing, safety guardrails (jailbreak, PII, hallucination), hierarchical memory, knowledge sharing, isolation and team management.
+Dashboard capabilities they want in that setup:
+
+- **Intelligent Routing** for cost-quality model selection
+- **Safety Guardrails** against jailbreaks, PII leakage, and hallucination risk
+- **Hierarchical Memory Storage** for long-horizon, multi-step execution
+- **Knowledge Sharing** across agents
+- **Isolation & Team Management** for multi-agent operations in one orchestration layer
 
 ![athena 7](../../../../assets/vllm/blog/serving/semantic-router-athena/06-athena-7.png)
 
@@ -212,7 +218,13 @@ curl -fsSL https://vllm-semantic-router.com/install.sh | bash
 
 Installer: detect Python, install `vllm-sr` into an isolated local env, write a launcher to `~/.local/bin/vllm-sr`, prepare Docker or Podman unless opted out, run the first `vllm-sr serve`, open the dashboard when possible; remote machines get access / SSH tunnel hints instead of failing silently.
 
-From an empty directory, `vllm-sr serve` can: bootstrap a minimal workspace; create `.vllm-sr/router-defaults.yaml` behind the scenes; launch the dashboard in setup mode; guide first model + routing starter; write `config.yaml` only after activation.
+Later, or any time from an empty directory:
+
+```bash
+vllm-sr serve
+```
+
+it can: bootstrap a minimal workspace; create `.vllm-sr/router-defaults.yaml` behind the scenes; launch the dashboard in setup mode; guide first model + routing starter; write `config.yaml` only after activation.
 
 ![athena 8](../../../../assets/vllm/blog/serving/semantic-router-athena/11-athena-8.png)
 
@@ -255,7 +267,7 @@ ROCm image builds the ONNX-backed router, installs ROCm ONNX Runtime, can load t
 
 **Figure 14.** Research, training, and production moving together.
 
-## Looking ahead
+## Looking ahead: Beyond Athena
 
 Athena operationalizes strategic routing. Next they list: a training coding agent that writes / revises the DSL from NL; a self-learning loop from reverse signals and routing outcomes; deeper multi-turn memory and agentic tools; more operator automation; broader multimodal and tool-aware safety; continued research-to-runtime convergence. The next numbered release is [Themis](semantic-router-themis.md).
 
@@ -270,6 +282,8 @@ Hosted: [play.vllm-semantic-router.com](http://play.vllm-semantic-router.com).
 ```bash
 curl -fsSL https://vllm-semantic-router.com/install.sh | bash
 ```
+
+Installs the CLI, prepares local Docker or Podman for `vllm-sr serve`, runs the first launch, opens the dashboard when possible.
 
 Manual / Windows:
 

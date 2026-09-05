@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Distributed Layerwise Offload: Scaling Toward 200B+ DiT Models Efficiently in vLLM-Omni
@@ -10,7 +10,7 @@ Chinese: [zh/vllm/blog/serving/omni-layerwise-offload.md](../../../../zh/vllm/bl
 
 2026-08-17. **vLLM-Omni Diffusion Team**. DLO shards and streams DiT weights so a measured **124 GB** Cosmos3-Super can run on **64 GB** HBM, with a host-capacity *estimate* toward 200B+. Same Omni line: [vllm-omni.md](vllm-omni.md), [minimax-h3.md](minimax-h3.md), [omni-diffusion-cache.md](omni-diffusion-cache.md). Study note; production-oriented measurements on the page, not your SLA.
 
-**TL;DR from the page:**
+## TL;DR
 
 - Out-of-the-box DLO + AllGather quickstart: vLLM `0.27.0` with vLLM-Omni `v0.27.0rc1`.
 - Meta-device init + mmap: Cosmos3-Nano DP4 cold-start cgroup-visible peak **178 GB → 47 GB** (−73%).

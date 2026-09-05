@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-06-05-v0.3-vllm-sr-themis-release
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Semantic Router v0.3 Themis：从信号到可运营的有状态路由
@@ -492,7 +492,7 @@ helm install semantic-router oci://ghcr.io/vllm-project/charts/semantic-router
 
 ## 往前看：v0.4 Hermes
 
-下一版代号 **Hermes**。核心目标：**会自己变好的 router**。回路：GPU 规模上自动研究 router 性能，用 router 评测拧 DSL recipe，把验证过的证据喂回代码库和 encoder 微调。原文点名的高价值工作：
+下一版代号 **Hermes**。Themis 让合同稳到能运营。Hermes 该让 router 更快变好、更好评、在真实负载下更安全地适应。核心目标：**会自己变好的 router**。回路：GPU 规模上自动研究 router 性能，用 router 评测拧 DSL recipe，把验证过的证据喂回代码库和 encoder 微调。原文点名的高价值工作：
 
 - **Self-improving router：** GPU 规模性能研究、DSL recipe 调、代码库加 encoder 微调。生成出来的改动仍要可审、可 replay、有版本、能回滚。
 - **SAAR 当 agentic 路由层：** 切换经济学、工具环连续、provider 状态可移植、replay 诊断、router 记忆。

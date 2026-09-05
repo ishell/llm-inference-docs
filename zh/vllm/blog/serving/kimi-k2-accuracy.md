@@ -2,16 +2,16 @@
 source: https://vllm.ai/blog/2025-10-28-kimi-k2-accuracy
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Kimi K2 tool-calling：坏的是 chat template 握手，不是 MoE kernel
 
 英文对照：[en/vllm/blog/serving/kimi-k2-accuracy.md](../../../../en/vllm/blog/serving/kimi-k2-accuracy.md)  
 原文：https://vllm.ai/blog/2025-10-28-kimi-k2-accuracy  
-2025-10-28。署名 **Linian Wang (Peking University)**。vLLM **v0.11.0**。基准：[MoonshotAI/K2-Vendor-Verifier](https://github.com/MoonshotAI/K2-Vendor-Verifier)。Hub 模板需晚于 [Kimi-K2-0905](https://huggingface.co/moonshotai/Kimi-K2-Instruct-0905) commit `94a4053eb8863059dd8afc00937f054e1365abbd`，或 [Kimi-K2](https://huggingface.co/moonshotai/Kimi-K2-Instruct) commit `0102674b179db4ca5a28cd9a4fb446f87f0c1454`。后来 K3 的 chat template 是 Python 渲染器，不是 Jinja：[kimi-k3.md](kimi-k3.md)。Token ID 调试亲戚：[agent-lightning.md](agent-lightning.md)。握手坏在 **chat template**，不在 MoE kernel。
+2025-10-28。署名 **Linian Wang (Peking University)**。vLLM **v0.11.0**。基准：[MoonshotAI/K2-Vendor-Verifier](https://github.com/MoonshotAI/K2-Vendor-Verifier)。Hub 模板需晚于 [Kimi-K2-0905](https://huggingface.co/moonshotai/Kimi-K2-Instruct-0905) commit `94a4053eb8863059dd8afc00937f054e1365abbd`，或 [Kimi-K2](https://huggingface.co/moonshotai/Kimi-K2-Instruct) commit `0102674b179db4ca5a28cd9a4fb446f87f0c1454`。更新按模型分别提交。后来 K3 的 chat template 是 Python 渲染器，不是 Jinja：[kimi-k3.md](kimi-k3.md)。Token ID 调试亲戚：[agent-lightning.md](agent-lightning.md)。握手坏在 **chat template**，不在 MoE kernel。
 
-**原文 TL;DR：** 要和 vLLM 处得好，用上述 commit 之后更新过 chat template 的 Kimi K2。更新按模型分别提交。
+**原文 TL;DR：** 要和 vLLM 处得好，用上述 commit 之后更新过 chat template 的 Kimi K2。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -19,7 +19,7 @@ fetched: 2026-09-04
 
 ## 引言
 
-Agent 工作流要靠得住的 tool-calling。Moonshot 的 Kimi K2 以此出名。作者拿官方 K2-Vendor-Verifier 打 vLLM，想对齐 Moonshot 原生 API：几千次 tool call，schema 校验错误 **0**。
+Agent 工作流靠得住的 tool-calling 当引擎。Moonshot 的 Kimi K2 以此出名。作者拿官方 K2-Vendor-Verifier 打 vLLM，想对齐 Moonshot 原生 API：几千次 tool call，schema 校验错误 **0**——可靠的金标准。
 
 **K2-Vendor-Verifier，Moonshot AI 官方 API**
 
@@ -28,7 +28,7 @@ Agent 工作流要靠得住的 tool-calling。Moonshot 的 Kimi K2 以此出名�
 | Moonshot AI | MoonshotAI | 2679 | 1286 | 35 | **0** | **1286** |
 | Moonshot AI Turbo | MoonshotAI | 2659 | 1301 | 40 | **0** | **1301** |
 
-同一套 bench，vLLM 开箱却是坏的。
+同一套 bench，vLLM 开箱却是坏的。不是差一点，是断了。
 
 **vLLM 上的初测**
 
@@ -39,7 +39,7 @@ Agent 工作流要靠得住的 tool-calling。Moonshot 的 Kimi K2 以此出名�
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Kimi-K2-Instruct-0905（当时 Hub） | 3705 | 248 | 44 | 30 | **218** |
 
-一千多次潜在 tool call，只解析出 **218**——不到 **20%**。不是小 bug：模型和 serving 引擎之间的通信断了。Kimi K2 的 `chat_template` 和 vLLM 之间，三处兼容问题。
+一千多次潜在 tool call，只解析出 **218**——不到 **20%**。不是小 bug：模型和 serving 引擎之间的通信断了。Kimi K2 的 `chat_template` 和 vLLM 之间，三处兼容问题。修好之后成功率抬了四倍以上；对别的复杂模型和 serving 框架的握手，也留了路。
 
 ## 调试：三处核心问题
 
@@ -49,15 +49,15 @@ Agent 工作流要靠得住的 tool-calling。Moonshot 的 Kimi K2 以此出名�
 
 **排查。** 绕开 vLLM 高层的 `/v1/chat/completions`：在外面调 tokenizer 的 `apply_chat_template`，再把字符串送给 `/v1/completions`。这跳过了 vLLM 内部套模板，多数失败消失。bug 在 vLLM **怎么用** 这份 chat template。
 
-**根因。** Kimi 的 `apply_chat_template` 用 `**kwargs` 接模型专用参数。其中 `add_generation_prompt=True` 用来标记 assistant 回合开始。
+**根因。** Kimi 的 `apply_chat_template` 用 `**kwargs` 接模型专用参数。其中 `add_generation_prompt=True` 用来标记 assistant 回合开始，把模型往 tool call 上引。
 
 正确后缀：`...<|im_assistant|>assistant<|im_middle|>`
 
-不传 `add_generation_prompt=True`，prompt 在用户消息后就被截断。模型没有「开始你的回合」的指令。
+不传 `add_generation_prompt=True`，prompt 在用户消息后就被截断。模型没有「开始你的回合」的指令：不知道该吐 tool call、文本，还是任何结构化回复。
 
 vLLM 出于安全（[PR #25794](https://github.com/vllm-project/vllm/pull/25794)）检查函数签名，只传 **显式声明** 的参数。`add_generation_prompt` 藏在 `**kwargs` 里，被丢掉。格式化 **静默** 失败。
 
-**修复。** Kimi 在 Hub 上更新 `tokenizer_config.json`：把 `add_generation_prompt` 声明成 chat template 支持的参数，vLLM 才能传进去。作者另提 [PR #27622](https://github.com/vllm-project/vllm/pull/27622)：tokenizer 经 `**kwargs` 接标准 chat-template 参数时，把它们加入白名单。
+**修复。** Kimi 在 Hub 上更新 `tokenizer_config.json`：把 `add_generation_prompt` 声明成 chat template 支持的参数，vLLM 才能传进去。作者另提 [PR #27622](https://github.com/vllm-project/vllm/pull/27622)：tokenizer 经 `**kwargs` 接标准 chat-template 参数时，把它们加入白名单，免得 tool-call 再静默失败。
 
 ### 问题 2：空的 `content` 把 prompt 带歪
 
@@ -78,6 +78,8 @@ vLLM 出于安全（[PR #25794](https://github.com/vllm-project/vllm/pull/25794)
 ```
 ...<|im_end|><|im_assistant|>assistant<|im_middle|><|tool_calls_section_begin|>...
 ```
+
+这份畸形 prompt 足够把生成逻辑带偏。
 
 **修复。** 模板先看 `content` 的类型：字符串直接渲；可迭代（list）按列表处理，不再把字面量倒进去。Kimi 发了 Hub 更新。
 
@@ -116,11 +118,11 @@ Hub 模板更新后再跑 K2-Vendor-Verifier：
 
 ## 要点和做法
 
-- **魔鬼在 chat template。** 它是模型和 serving 框架之间的握手。模板逻辑的每一块，都要拿框架的假设对一遍。
-- **把抽象揭开。** `/chat/completions` 方便，也会把根因藏住。落到 `/completions`。手工拼输入，才能把问题隔离。
-- **Token ID 才是最终真相。** 最细的问题，要看真正送给模型的那串 token ID。能返回 token ID 的 OpenAI 兼容 API 有用——和 [agent-lightning.md](agent-lightning.md) 同一扇门。
-- **先懂框架的设计哲学。** vLLM 对 `**kwargs` 的严格处理是 **安全选择**，不是 bug（[PR #25794](https://github.com/vllm-project/vllm/pull/25794)）。
-- **开源生态的挑战。** Enforcer 是打磨过的专有 API 的标志。在 vLLM 里把它做稳、做干净，是社区的活。
+1. **魔鬼在 chat template。** 它是模型和 serving 框架之间的握手。模板逻辑的每一块，都要拿框架的假设对一遍。
+2. **把抽象揭开。** `/chat/completions` 方便，也会把根因藏住。落到 `/completions`。手工拼输入，才能把问题隔离。
+3. **Token ID 才是最终真相。** 最细的问题，要看真正送给模型的那串 token ID。能返回 token ID 的 OpenAI 兼容 API 有用——和 [agent-lightning.md](agent-lightning.md) 同一扇门。上面几处没走到这一层，但工具箱里要有。
+4. **先懂框架的设计哲学。** vLLM 对 `**kwargs` 的严格处理是 **安全选择**，不是 bug（[PR #25794](https://github.com/vllm-project/vllm/pull/25794)）。
+5. **开源生态的挑战。** Enforcer 是打磨过的专有 API 的标志。在 vLLM 里把它做稳、做干净，是社区的活。
 
 ## 结语
 
@@ -128,4 +130,4 @@ Hub 模板更新后再跑 K2-Vendor-Verifier：
 
 ## 致谢
 
-Kimi 工程师：根因判断，Hub 上改得快。vLLM 的 Kaichao You、Chauncey Jiang：带进项目，把 tool-call 路径讲清楚。
+Kimi 工程师：根因判断，Hub 上改得快。vLLM 的 Kaichao You、Chauncey Jiang：带进项目，把 tool-call 路径讲清楚。vLLM 在 serving 里的位置，要靠把螺丝拧开才看得见。

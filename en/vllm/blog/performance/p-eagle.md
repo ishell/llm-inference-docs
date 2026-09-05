@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-03-13-p-eagle
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # P-EAGLE: Faster LLM inference with Parallel Speculative Decoding in vLLM
@@ -25,7 +25,7 @@ Artifacts named on the page:
 
 **Figure 1.** P-EAGLE vs other methods on SPEED-BENCH, concurrency **1**, one B200.
 
-## Quick start
+## Quick start P-EAGLE
 
 One field on `SpeculativeConfig` (this is a code comment in the original, not a heading):
 

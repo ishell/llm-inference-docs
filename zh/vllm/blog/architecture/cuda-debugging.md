@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2025-08-11-cuda-debugging
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # CUDA core dump：illegal memory access 落到哪只 kernel

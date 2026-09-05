@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2025-08-11-cuda-debugging
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # CUDA Core Dump: An Effective Tool to Debug Memory Access Issues and Beyond

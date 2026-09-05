@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-07-13-eagle-3-amd-instinct
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # EAGLE3 on Instinct：Quark MXFP4，先量 served acceptance length
@@ -59,7 +59,7 @@ MXFP4 = OCP Microscaling 4-bit 浮点：小块共用 scale。内存接近 INT4�
 
 5. **导出。** Hugging Face 格式，vLLM 能吃的 draft 目录，ROCm EAGLE 投机解码。
 
-### SPEED-Bench：MiniMax-M3 draft
+### SPEED-Bench：11 个域和长上下文
 
 Acceptance length（AL）= 每次 target 验收平均吐出的 token。AL = 1 是一次 verify 吐一个，还没算 drafting 税。
 
@@ -99,8 +99,6 @@ vllm serve amd/MiniMax-M3-MXFP4 --trust-remote-code --tensor-parallel-size 8 \
 - **Draft：** EAGLE3 训练（这篇的 M3）、Quark 的 FP8/MXFP4、ROCm/vLLM。
 - **胶水：** on-policy 数据、hidden 抽取、serve-eval、导出、投机 serve——都走 vLLM。
 
-Instinct 上的 EAGLE3 训练支持写在 **下一版 AMD Quark**；量化工作流已在现成 toolkit 里。
-
 ## 加速数字
 
 这一节只有 **1K/1K**（ISL=1024，OSL=1024）。加速比 = EAGLE3 TPS / **同一** vLLM 构建和 MML 的 no-spec TPS。MML = `--max-model-len`（prompt + 生成）。随机 prompt 吞吐微基准，不是应用级负载。
@@ -130,11 +128,19 @@ Target：[amd/Kimi-K2.5-MXFP4](https://huggingface.co/amd/Kimi-K2.5-MXFP4)。BF1
 
 Sweep 小结：Kimi-K2.5 **1.69–2.00×**，MiniMax-M2.5 **1.38–1.79×**。
 
-## 致谢 / 资源（页上点名）
+## Summary
 
-AMD Quark、ROCm 与 vLLM 贡献者、InferenceX、EAGLE3 研究社区。特别感谢：Chang Liu、Xinjun Niu、Wei Luo、Lin Zhao。
+Instinct 上的 EAGLE3 投机解码，在保住 target 输出语义的前提下把吞吐抬上去：这篇 1K/1K sweep 里 Kimi-K2.5 **1.69×–2.00×**，MiniMax-M2.5 最高 **1.79×**。能端到端落地，靠三件事叠在一起：（1）Quark 给 target 和部分 draft 的 MXFP4/FP8；（2）以 vLLM 为中心的训练环——on-policy 数据、hidden 抽取、按 served acceptance 选盘；（3）ROCm/vLLM 投机 serving。量化工作流已经在放出的 AMD Quark toolkit 里；Instinct 上的 EAGLE3 draft 训练支持写在 **下一版 AMD Quark**。
 
-- [EAGLE3 项目](https://github.com/SafeAILab/EAGLE) / [论文](https://arxiv.org/abs/2503.01840)
+## Acknowledgements
+
+感谢 AMD Quark 团队、AMD ROCm 与 vLLM 贡献者、InferenceX 维护者和评审、EAGLE3 研究社区。特别感谢：Chang Liu、Xinjun Niu、Wei Luo、Lin Zhao。
+
+## Additional Resources
+
+- [EAGLE3 项目](https://github.com/SafeAILab/EAGLE)
+- [EAGLE3 论文](https://arxiv.org/abs/2503.01840)
 - [SPEED-Bench](https://arxiv.org/abs/2604.09557)
 - [InferenceX](https://github.com/SemiAnalysisAI/InferenceX)
-- [AMD Quark](https://github.com/amd/Quark) / [vLLM](https://github.com/vllm-project/vllm)
+- [AMD Quark](https://github.com/amd/Quark)
+- [vLLM](https://github.com/vllm-project/vllm)

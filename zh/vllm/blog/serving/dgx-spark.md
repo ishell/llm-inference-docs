@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-06-01-vllm-dgx-spark
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # DGX Spark：128GB 统一内存上的小并发 NVFP4，不是机房卡
@@ -19,7 +19,9 @@ fetched: 2026-09-04
 - 官方镜像 `vllm/vllm-openai:cu130-nightly` 是**轨道**不是 pin。部署要钉 digest。
 - 五场景、warmup 后中位：Decode **22.7–23.7 tok/s**。Prefill 从 **140** 到长 prompt **约 1,900 tok/s**。首请求 Inductor/FlashInfer JIT 约 **25 s**。safetensor 加载 **10–15 分钟**。
 
-原文封面照片（未收录）：*vLLM running Nemotron-3-Super on the DGX Spark for a demo at the Inferact office.*
+![office dgx spark](../../../../assets/vllm/blog/serving/dgx-spark/01-office-dgx-spark.jpg)
+
+*vLLM running Nemotron-3-Super on the DGX Spark for a demo at the Inferact office.*
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -145,7 +147,9 @@ Spark 上最大的杠杆，**先于**拧 flag。**Figure 3**（本地 `04-…svg
 
 [vllm-spark-game](https://github.com/zlxi02/vllm-spark-game)：对着本地 endpoint 玩现场 20 Questions；旁边的 stats 视图在同一台 Spark 上轮询 vLLM 和 GPU。把 OpenAI 兼容聊天、流式、Prefill、Decode、KV、活指标从头走到尾。命令在 [项目 README](https://github.com/zlxi02/vllm-spark-game/blob/master/README.md)。
 
-展位照片（未收录）：*vllm-spark-game demo at the Inferact booth during MLSys, May 2026.*
+![spark demo crowd](../../../../assets/vllm/blog/serving/dgx-spark/06-spark-demo-crowd.jpg)
+
+*vllm-spark-game demo at the Inferact booth during MLSys, May 2026.*
 
 ### Docker 启动
 

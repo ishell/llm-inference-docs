@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-03-13-p-eagle
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # P-EAGLE：一次前向猜 K 个字
@@ -26,7 +26,7 @@ fetched: 2026-09-04
 
 **Figure 1。** SPEED-BENCH 上 P-EAGLE 对照其他方法，并发 **1**，一块 B200。
 
-## Quick start
+## Quick start P-EAGLE
 
 `SpeculativeConfig` 上一个字段（原文里的 `# vllm/config/speculative.py` 是代码注释，不是小节标题）：
 

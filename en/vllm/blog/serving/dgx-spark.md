@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-06-01-vllm-dgx-spark
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # vLLM on DGX Spark: Architecture, Configuration, and Local Evaluation
@@ -18,7 +18,9 @@ Chinese: [zh/vllm/blog/serving/dgx-spark.md](../../../../zh/vllm/blog/serving/dg
 - Official image `vllm/vllm-openai:cu130-nightly` is a **compatibility track**, not a pin. Validate a digest.
 - Five-scenario median after warmup: Decode **22.7–23.7 tok/s**. Prefill **140 → ~1,900 tok/s** as prompts grow. First-request Inductor/FlashInfer JIT ~**25 s**. Safetensor load **10–15 min**.
 
-Hero photo on the page (not copied here): *vLLM running Nemotron-3-Super on the DGX Spark for a demo at the Inferact office.*
+![office dgx spark](../../../../assets/vllm/blog/serving/dgx-spark/01-office-dgx-spark.jpg)
+
+*vLLM running Nemotron-3-Super on the DGX Spark for a demo at the Inferact office.*
 
 Local figures (copyright remains with the original site; study copies):
 
@@ -144,7 +146,9 @@ They optimize here for a public demo: predictable local serving, clear telemetry
 
 [vllm-spark-game](https://github.com/zlxi02/vllm-spark-game): live 20-Questions against the local endpoint; a companion stats view polls vLLM and GPU telemetry on the same Spark. Exercises OpenAI-compatible chat, streaming, Prefill, Decode, KV, live metrics. Commands in the [project README](https://github.com/zlxi02/vllm-spark-game/blob/master/README.md).
 
-Booth photo on the page (not copied here): *vllm-spark-game demo at the Inferact booth during MLSys, May 2026.*
+![spark demo crowd](../../../../assets/vllm/blog/serving/dgx-spark/06-spark-demo-crowd.jpg)
+
+*vllm-spark-game demo at the Inferact booth during MLSys, May 2026.*
 
 ### The Docker invocation
 

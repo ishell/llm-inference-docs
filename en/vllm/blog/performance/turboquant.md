@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-05-11-turboquant
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # A First Comprehensive Study of TurboQuant: Accuracy and Performance
@@ -9,6 +9,8 @@ fetched: 2026-09-04
 Chinese: [zh/vllm/blog/performance/turboquant.md](../../../../zh/vllm/blog/performance/turboquant.md)
 
 2026-05-11. Eldar Kurtić, Michael Goin, Alexandre Marques (Red Hat AI). Benchmarks on **vLLM 0.20.2** (commit `6ec9bbec3`). Read after [fp8-kvcache.md](fp8-kvcache.md). Paper: [TurboQuant](https://arxiv.org/pdf/2504.19874). Then-current TurboQuant docs: [quantization/turboquant](https://docs.vllm.ai/en/latest/api/vllm/model_executor/layers/quantization/turboquant/). Study note.
+
+## Introduction
 
 [TurboQuant](https://arxiv.org/pdf/2504.19874) advertised large GPU-memory savings from 3–4 bit KV-cache. Unlike [FP8 KV-cache](https://vllm.ai/blog/fp8-kvcache) (`--kv-cache-dtype fp8`), which quantizes **storage and attention compute** with hardware-native FP8 Tensor Cores, TurboQuant compresses **storage only** to 3–4 bits and dequantizes back to BF16 for attention. That split drives both accuracy and speed.
 

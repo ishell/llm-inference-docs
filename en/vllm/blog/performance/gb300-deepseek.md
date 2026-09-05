@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-02-13-gb300-deepseek
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # DeepSeek-V3.2 on GB300: deployment validation, not a peak hunt
@@ -50,14 +50,22 @@ Figures use `vllm bench serve` metrics: Prefill throughput = total token through
 
 Blackwell’s fifth-generation Tensor Core has native NVFP4.
 
-1. Weights from Hugging Face: [DeepSeek-V3.2-NVFP4](https://huggingface.co/nvidia/DeepSeek-V3.2-NVFP4), [DeepSeek-R1-0528-NVFP4](https://huggingface.co/nvidia/DeepSeek-R1-0528-NVFP4).
-2. FP4 MoE on Blackwell needs FlashInfer explicitly:
+### 1. Download NVFP4 model weights from Hugging Face
+
+- [DeepSeek-V3.2-NVFP4](https://huggingface.co/nvidia/DeepSeek-V3.2-NVFP4)
+- [DeepSeek-R1-0528-NVFP4](https://huggingface.co/nvidia/DeepSeek-R1-0528-NVFP4)
+
+### 2. Use FP4 MoE kernel provided by FlashInfer
+
+FP4 MoE on Blackwell needs FlashInfer explicitly:
 
 ```bash
 export VLLM_USE_FLASHINFER_MOE_FP4=1
 ```
 
-3. Two GPUs hold DeepSeek-series NVFP4 weights (288 GB each):
+### 3. Serve the model
+
+Two GPUs hold DeepSeek-series NVFP4 weights (288 GB each):
 
 ```bash
 vllm serve nvidia/DeepSeek-V3.2-NVFP4    -tp 2
@@ -65,7 +73,17 @@ vllm serve nvidia/DeepSeek-V3.2-NVFP4    -tp 2
 vllm serve nvidia/DeepSeek-R1-0528-NVFP4 -tp 2
 ```
 
-4. Prefill-throughput boundary batch via `--max-num-batched-tokens`: R1 **32768**; V3.2 **20480**.
+### 4. Optimized configurations
+
+Prefill-throughput boundary batch via `--max-num-batched-tokens`: R1 **32768**; V3.2 **20480**.
+
+```bash
+# DeepSeek-R1-0528-NVFP4
+--max-num-batched-tokens 32768
+
+# DeepSeek-V3.2-NVFP4
+--max-num-batched-tokens 20480
+```
 
 ## Performance boost by Blackwell
 
@@ -120,7 +138,7 @@ R1 weights fit two B300 HBMs. Question: scale DP on TP2 or on EP2? EP2 CLI: `-dp
 
 **Figure 5–7.** Mixed P+D throughput / TTFT / TPOT for EP2 vs TP2.
 
-**Conclusions on the page:**
+### Conclusions
 
 - Disaggregated Prefill for R1 on GB300: EP is the better prefiller (then raise DP to scale). Prefill ceiling ~**10–15%** above TP2; TTFT grows more slowly — better for queueing and tail latency.
 - Colocated P+D: if ISL is large and OSL small, Prefill dominates → **TP2**, so attention latency does not crowd Decode GPU time. Output-heavy: EP2’s TPOT win dominates.
@@ -182,7 +200,10 @@ vllm serve nvidia/DeepSeek-V3.2-NVFP4 -tp 2 --max-num-batched-tokens 20480 \
   '{"kv_connector":"NixlConnector","kv_role":"kv_both","kv_load_failure_policy":"fail","kv_buffer_device":"cuda"}' \
   --port 8000
 
-# Decode Node: same env and CLI except VLLM_NIXL_SIDE_CHANNEL_HOST=${DECODE_NODE_IP}
+# Decode Node
+export VLLM_NIXL_SIDE_CHANNEL_HOST=${DECODE_NODE_IP}
+...
+# Exactly the same environment variables and vLLM CLI as Prefill Node, except `VLLM_NIXL_SIDE_CHANNEL_HOST`
 
 # Proxy
 python tests/v1/kv_connector/nixl_integration/toy_proxy_server.py \

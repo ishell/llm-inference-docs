@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-06-02-session-aware-agentic-routing
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # SAAR：长程 agent 问的是「现在能不能换模」
@@ -27,7 +27,7 @@ fetched: 2026-09-04
 
 ## 从 prompt 路由到 session 路由
 
-Semantic Router 起手：不是每条请求都该走同一条路。Iris 让信号可组合。Athena 更战略——选模、记忆、replay、长上下文信号、多模态原语、AMD ROCm。
+Semantic Router 起手：不是每条请求都该走同一条路。短事实问、安全敏感 prompt、多模态请求、难推理、领域查询，可能都该不同待遇。第一代是 prompt 路由：从当前请求抽信号、匹配决策、选路。Iris 让信号可组合。Athena 更战略——选模、记忆、replay、长上下文信号、多模态原语、AMD ROCm。
 
 Agent 又把路由单位换了。coding / 研究 agent 是一次 **session**：计划、调工具、收工具结果、改文件、跑测试、从错里爬、暂停、再开，然后短跟句 "continue" / "fix it" / "run that again"。这些 turn 只因为前面的轨迹才有意义。
 
@@ -119,7 +119,7 @@ Agent **该**换模：任务变难就从便宜走到强，碰到安全边界再�
 
 SAAR 给 **cached-input checkout 差价**：当前考虑的物理模型，普通 prompt 输入价和 cached-input 价之间的缝。越长越贵的 session，越舍不得丢掉 prefix locality。
 
-用户调 `auto`，逻辑名后面的物理模型可以随时间换。一台 backend 报的 cache hit 是 **那一台的物理证据**，不能自动转给另一台。SAAR 把 backend 报的 cached tokens 和 router 估的复用分开，**不改写**上游 usage 字段。
+用户调 `auto`，逻辑名后面的物理模型可以随时间换。一台 backend 报的 cache hit 是 **那一台的物理证据**，不能自动转给另一台。SAAR 把 backend 报的 cached tokens 和 router 估的复用分开，**不改写**上游 usage 字段。运营仍能看物理 cache 行为；router 用自己的记忆决定值不值得付 checkout。
 
 ## 一条请求怎么走
 
@@ -210,6 +210,8 @@ balanced / 工具重 / 前沿重 / idle 重 / provider-state 重 / 漂移重。�
 
 ## 结果 3：不是换了名字的粘会话
 
+最显眼的基线是粘路由：session 第一次选中的模型一直握着。好讲、也能靠「干脆不切」消掉许多不安全切换。对 agent 这简单会变成产品问题。长 session 会漂。用户会换任务。便宜的初选可能不再合适。强模型也可能不再必要。
+
 ![ablation effect](../../../../assets/vllm/blog/serving/semantic-router-session/08-ablation-effect.png)
 
 **Figure 8.** 连续，但仍能动；不是纯粘。
@@ -273,7 +275,15 @@ Router 不成 agent。它只认得伺候 agent 所需的最少 session 事实。
 
 ## 一起做
 
-他们列的开口：真实 agent 流量上的 session 政策；多轮 / 工具环评测；AMD ROCm serving 验证；可观测 / replay / 生产调试；把政策从 endpoint LB 里分开的 Envoy / Kubernetes / gateway 集成。
+**Looking for collaborations.** SAAR 是长程 agent 的下一步，开口还很多。他们找：
+
+- 真实 agent 流量上的 session 政策
+- 多轮 / 工具环评测套件
+- AMD ROCm serving 验证和性能实验
+- 可观测 / replay / 生产调试
+- 把政策从 endpoint LB 里分开的 Envoy / Kubernetes / gateway 集成
+
+如果你在造 agent 系统、在 AMD GPU 上跑模型篮子、或研究连续性感知的选模，他们想合作。
 
 - GitHub：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)
 - 文档：[vllm-semantic-router.com](https://vllm-semantic-router.com)

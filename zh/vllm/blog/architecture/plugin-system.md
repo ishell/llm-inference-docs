@@ -2,14 +2,14 @@
 source: https://vllm.ai/blog/2025-11-20-vllm-plugin-system
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # 插件系统：改 vLLM 不必养一座 fork
 
 英文对照：[en/vllm/blog/architecture/plugin-system.md](../../../../en/vllm/blog/architecture/plugin-system.md)  
 原文：https://vllm.ai/blog/2025-11-20-vllm-plugin-system  
-2025-11-20。署名 **Dhruvil Bhatt (AWS SageMaker)**。先发在 [Medium](https://medium.com/@dhruvilbhattlm10/building-clean-maintainable-vllm-modifications-using-the-plugin-system-e80df0f62861)。架构图来源页上写的是 [vllm-ascend](https://github.com/vllm-project/vllm-ascend)。硬件那扇专门的门：[hardware-plugin](hardware-plugin.md)。后来走 `vllm.general_plugins` 的亲戚：[AFD](../serving/afd.md)。同样是「留门、别 fork」：[sleep-mode](sleep-mode.md)、[KV offload](../serving/kv-offload.md) / [Mooncake](../serving/mooncake.md)（`KVConnector`）、[RDT](../serving/rdt-weight-transfer.md) / [native-rl](../serving/native-rl.md)（`WeightTransferEngine`）。
+2025-11-20。署名 **Dhruvil Bhatt (AWS SageMaker)**。先发在 [Medium](https://medium.com/@dhruvilbhattlm10/building-clean-maintainable-vllm-modifications-using-the-plugin-system-e80df0f62861)。页上那句副题：*Avoiding forks, avoiding monkey patches, and keeping sanity intact*。架构图来源页上写的是 [vllm-ascend](https://github.com/vllm-project/vllm-ascend)。硬件那扇专门的门：[hardware-plugin](hardware-plugin.md)。后来走 `vllm.general_plugins` 的亲戚：[AFD](../serving/afd.md)。同样是「留门、别 fork」：[sleep-mode](sleep-mode.md)、[KV offload](../serving/kv-offload.md) / [Mooncake](../serving/mooncake.md)（`KVConnector`）、[RDT](../serving/rdt-weight-transfer.md) / [native-rl](../serving/native-rl.md)（`WeightTransferEngine`）。
 
 适用：自定义调度、KV 行为、硬件、执行路径上的补丁。不适合：改引擎心脏、又想跟主线每一周对齐——那种还是该上游，或接受 fork 的税。
 
@@ -23,7 +23,9 @@ vLLM 已经是高吞吐、低延迟的 serving 引擎：continuous batching、�
 
 ## 问题：「我要改 vLLM……然后呢？」
 
-改动简单、又对社区有用，答案仍是 **选项 A：上游**。补丁活在开源里，接受评审，跟着 vLLM 一起长。
+### 选项 A：上游
+
+改动简单、又对社区有用，答案仍是这条。补丁活在开源里，接受评审，跟着 vLLM 一起长。
 
 现实常常是：**专有**、**领域特定**、**太实验**、**不够通用** 过不了上游，或 **内部时间表** 跟开源评审对不齐。那就得另找路。
 
@@ -94,69 +96,112 @@ vllm_custom_patches/
 
 ```python
 # vllm_custom_patches/core.py
+import logging
 from types import MethodType, ModuleType
 from typing import Type, Union
 from packaging import version
 import vllm
 
+logger = logging.getLogger(__name__)
+
 PatchTarget = Union[Type, ModuleType]
 
 class VLLMPatch:
+    """
+    Base class for creating clean, surgical patches to vLLM classes.
+
+    Usage:
+        class MyPatch(VLLMPatch[TargetClass]):
+            def new_method(self):
+                return "patched behavior"
+
+        MyPatch.apply()
+    """
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, '_patch_target'):
-            raise TypeError(f"{cls.__name__} must be defined as VLLMPatch[Target]")
+            raise TypeError(
+                f"{cls.__name__} must be defined as VLLMPatch[Target]"
+            )
 
     @classmethod
     def __class_getitem__(cls, target: PatchTarget) -> Type:
         if not isinstance(target, (type, ModuleType)):
             raise TypeError(f"Can only patch classes or modules, not {type(target)}")
-        return type(f"{cls.__name__}[{target.__name__}]", (cls,), {'_patch_target': target})
+
+        return type(
+            f"{cls.__name__}[{target.__name__}]",
+            (cls,),
+            {'_patch_target': target}
+        )
 
     @classmethod
     def apply(cls):
+        """Apply this patch to the target class/module."""
         if cls is VLLMPatch:
             raise TypeError("Cannot apply base VLLMPatch class directly")
+
         target = cls._patch_target
+
+        # Track which patches have been applied
         if not hasattr(target, '_applied_patches'):
             target._applied_patches = {}
+
         for name, attr in cls.__dict__.items():
             if name.startswith('_') or name in ('apply',):
                 continue
+
             if name in target._applied_patches:
+                existing = target._applied_patches[name]
                 raise ValueError(
-                    f"{target.__name__}.{name} already patched by {target._applied_patches[name]}"
+                    f"{target.__name__}.{name} already patched by {existing}"
                 )
+
             target._applied_patches[name] = cls.__name__
+
+            # Handle classmethods
             if isinstance(attr, MethodType):
                 attr = MethodType(attr.__func__, target)
+
             setattr(target, name, attr)
-```
+            action = "replaced" if hasattr(target, name) else "added"
+            logger.info(f"✓ {cls.__name__} {action} {target.__name__}.{name}")
 
-版本闸：装上的 vLLM 太旧就 **警告并跳过**，不把进程打崩：
-
-```python
 def min_vllm_version(version_str: str):
+    """
+    Decorator to specify minimum vLLM version required for a patch.
+
+    Usage:
+        @min_vllm_version("0.9.1")
+        class MyPatch(VLLMPatch[SomeClass]):
+            pass
+    """
     def decorator(cls):
         original_apply = cls.apply
+
         @classmethod
         def checked_apply(cls):
             current = version.parse(vllm.__version__)
             minimum = version.parse(version_str)
+
             if current < minimum:
                 logger.warning(
                     f"Skipping {cls.__name__}: requires vLLM >= {version_str}, "
                     f"but found {vllm.__version__}"
                 )
                 return
+
             original_apply()
+
         cls.apply = checked_apply
         cls._min_version = version_str
         return cls
+
     return decorator
 ```
 
-文中的例子：`@min_vllm_version("0.9.1")`。
+文中的例子：`@min_vllm_version("0.9.1")`。装上的 vLLM 太旧就 **警告并跳过**，不把进程打崩。
 
 ### 例子：按优先级调度
 
@@ -164,18 +209,45 @@ def min_vllm_version(version_str: str):
 
 ```python
 # vllm_custom_patches/patches/priority_scheduler.py
+import logging
 from vllm.core.scheduler import Scheduler
 from vllm_custom_patches.core import VLLMPatch, min_vllm_version
 
+logger = logging.getLogger(__name__)
+
 @min_vllm_version("0.9.1")
 class PrioritySchedulerPatch(VLLMPatch[Scheduler]):
+    """
+    Adds priority-based scheduling to vLLM's scheduler.
+
+    Requests can include a 'priority' field in their metadata.
+    Higher priority requests are scheduled first.
+
+    Compatible with vLLM 0.9.1+
+    """
+
     def schedule_with_priority(self):
+        """
+        Enhanced scheduling that respects request priority.
+
+        This method can be called instead of the standard schedule()
+        to enable priority-aware scheduling.
+        """
+        # Get the standard scheduler output
         output = self._schedule()
+
+        # Sort by priority if metadata contains priority field
         if hasattr(output, 'scheduled_seq_groups'):
             output.scheduled_seq_groups.sort(
                 key=lambda seq: getattr(seq, 'priority', 0),
-                reverse=True,
+                reverse=True
             )
+
+            logger.debug(
+                f"Scheduled {len(output.scheduled_seq_groups)} sequences "
+                f"with priority ordering"
+            )
+
         return output
 ```
 
@@ -187,12 +259,79 @@ vLLM 调用的是 `register_patches()`。`PatchManager` 管 `available_patches` 
 
 ```python
 # vllm_custom_patches/__init__.py
+import os
+import logging
+from typing import Dict, List
+
+logger = logging.getLogger(__name__)
+
+class PatchManager:
+    """Manages registration and application of vLLM patches."""
+
+    def __init__(self):
+        self.available_patches: Dict[str, type] = {}
+        self.applied_patches: List[str] = []
+
+    def register(self, name: str, patch_class: type):
+        """Register a patch for later application."""
+        self.available_patches[name] = patch_class
+        logger.info(f"Registered patch: {name}")
+
+    def apply_patch(self, name: str) -> bool:
+        """Apply a single patch by name."""
+        if name not in self.available_patches:
+            logger.error(f"Unknown patch: {name}")
+            return False
+
+        try:
+            self.available_patches[name].apply()
+            self.applied_patches.append(name)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to apply {name}: {e}")
+            return False
+
+    def apply_from_env(self):
+        """
+        Apply patches specified in VLLM_CUSTOM_PATCHES environment variable.
+
+        Format: VLLM_CUSTOM_PATCHES="PatchOne,PatchTwo"
+        """
+        env_patches = os.environ.get('VLLM_CUSTOM_PATCHES', '').strip()
+
+        if not env_patches:
+            logger.info("No custom patches specified (VLLM_CUSTOM_PATCHES not set)")
+            return
+
+        patch_names = [p.strip() for p in env_patches.split(',') if p.strip()]
+        logger.info(f"Applying patches: {patch_names}")
+
+        for name in patch_names:
+            self.apply_patch(name)
+
+        logger.info(f"Successfully applied: {self.applied_patches}")
+
+# Global manager instance
 manager = PatchManager()
 
 def register_patches():
+    """
+    Main entry point called by vLLM's plugin system.
+    This function is invoked automatically when vLLM starts.
+    """
+    logger.info("=" * 60)
+    logger.info("Initializing vLLM Custom Patches Plugin")
+    logger.info("=" * 60)
+
+    # Import and register all available patches
     from vllm_custom_patches.patches.priority_scheduler import PrioritySchedulerPatch
+
     manager.register('PriorityScheduler', PrioritySchedulerPatch)
+
+    # Apply patches based on environment configuration
     manager.apply_from_env()
+
+    logger.info("=" * 60)
 ```
 
 `apply_patch(name)` 查出类、调用 `.apply()`、记入 `applied_patches`；失败打日志，不把进程掀翻。
@@ -200,11 +339,19 @@ def register_patches():
 ### `setup.py`
 
 ```python
+# setup.py
+from setuptools import setup, find_packages
+
 setup(
     name='vllm-custom-patches',
     version='0.1.0',
+    description='Clean vLLM modifications via the plugin system',
     packages=find_packages(),
-    install_requires=['vllm>=0.9.1', 'packaging>=20.0'],
+    install_requires=[
+        'vllm>=0.9.1',
+        'packaging>=20.0',
+    ],
+    # Register with vLLM's plugin system
     entry_points={
         'vllm.general_plugins': [
             'custom_patches = vllm_custom_patches:register_patches'
@@ -221,6 +368,7 @@ setup(
 ### 安装
 
 ```bash
+# Install the plugin package
 pip install -e .
 ```
 
@@ -242,21 +390,32 @@ VLLM_CUSTOM_PATCHES="PriorityScheduler" python -m vllm.entrypoints.openai.api_se
 
 ### Docker
 
-底：`vllm/vllm-openai:latest`。拷进包、`pip install -e`，默认 `ENV VLLM_CUSTOM_PATCHES=""`。CMD：
+```dockerfile
+# Dockerfile
+FROM vllm/vllm-openai:latest
 
-```
-python -m vllm.entrypoints.openai.api_server --model ${MODEL_NAME} --host 0.0.0.0 --port 8000
+COPY . /workspace/vllm-custom-patches/
+RUN pip install -e /workspace/vllm-custom-patches/
+
+ENV VLLM_CUSTOM_PATCHES=""
+
+CMD python -m vllm.entrypoints.openai.api_server \
+    --model ${MODEL_NAME} \
+    --host 0.0.0.0 \
+    --port 8000
 ```
 
 同一镜像、两套配置：
 
 ```bash
+# Run with patches
 docker run \
     -e MODEL_NAME=meta-llama/Meta-Llama-3-70B-Instruct \
     -e VLLM_CUSTOM_PATCHES="PriorityScheduler" \
     -p 8000:8000 \
     vllm-with-patches
 
+# Run vanilla vLLM
 docker run \
     -e MODEL_NAME=mistralai/Mistral-7B-Instruct-v0.2 \
     -e VLLM_CUSTOM_PATCHES="" \
@@ -268,33 +427,60 @@ docker run \
 
 ## 它怎么生效：插件生命周期
 
+### vLLM 自动加载
+
 **原文的关键洞察：** vLLM 是多进程（tensor / pipeline / 其他并行）。它在 **创建的每一个进程** 里调用 `load_general_plugins()`，而且是在 **那个进程开始任何正经工作之前**。
 
-于是补丁会进： **主进程**；**所有 worker**；**GPU worker、CPU worker、以及任何辅助进程**。加载发生在 **模型初始化之前**、**scheduler 创建之前**、**推理之前**。
+于是补丁会进：**主进程**；**所有 worker**；**GPU worker、CPU worker、以及任何辅助进程**。加载发生在 **模型初始化之前**、**scheduler 创建之前**、**推理之前**。
 
-每个进程的启动顺序，原文列了十条：
+### 每个进程的启动顺序
 
-1. 创建进程（main、worker、…）
-2. 插件系统启动：先于其他 vLLM 工作调用 `load_general_plugins()`
-3. 用 entry point 发现所有已注册的 `vllm.general_plugins`
-4. 跑插件函数（`register_patches()`）
-5. 向 manager 注册补丁
-6. 读环境变量（`VLLM_CUSTOM_PATCHES`）
-7. 按名单 `VLLMPatch.apply()`
-8. 版本校验（`@min_vllm_version`）
-9. 在目标类上外科手术式地加 / 换方法
-10. 这才轮到加载模型、初始化 scheduler、serving
+原文列了十条：
+
+1. **Process Creation：** 创建进程（main、worker、…）
+2. **Plugin System Activation：** 先于其他 vLLM 工作调用 `load_general_plugins()`
+3. **Entry Point Discovery：** 用 entry point 发现所有已注册的 `vllm.general_plugins`
+4. **Plugin Function Execution：** 跑插件函数（`register_patches()`）
+5. **Patch Registration：** 向 manager 注册补丁
+6. **Environment Check：** 读环境变量（`VLLM_CUSTOM_PATCHES`）
+7. **Selective Application：** 按名单 `VLLMPatch.apply()`
+8. **Version Validation：** 版本校验（`@min_vllm_version`）
+9. **Surgical Modification：** 在目标类上外科手术式地加 / 换方法
+10. **Normal vLLM Startup：** 这才轮到加载模型、初始化 scheduler、serving
 
 宣称的保证：补丁在 **vLLM 做任何事之前** 已经活着，跨进程行为一致，也躲掉 monkey patch 撞上的 `EngineCore` 旧类问题。
 
 ## 原文列的好处
 
-1. **补丁极小、够外科。** 不必复印整文件。`VLLMPatch` 可以只加一个方法，不必抄整类。
-2. **同一份 vLLM 构建伺候多个模型。** 不同进程 / 镜像用不同的 `VLLM_CUSTOM_PATCHES`。
-3. **带版本闸。** `@min_vllm_version("0.9.1")` 升级时选择跳过，而不是给你一个惊喜。
-4. **不必再 fork、同步、rebase。** 升级就是 `pip install --upgrade vllm`，再测自己的补丁。
-5. **甩掉 monkey patch 的复杂度。** 改动可追踪，没有整文件默默碎掉。
-6. **官方支持的挂钩。** 走的是 `general_plugins` entry point。
+### 1. 补丁极小、够外科
+
+不必复印整文件。`VLLMPatch` 可以只加一个方法，不必抄整类。
+
+### 2. 同一份 vLLM 构建伺候多个模型
+
+不同进程 / 镜像用不同的 `VLLM_CUSTOM_PATCHES`。
+
+### 3. 带版本闸
+
+```python
+@min_vllm_version("0.9.1")
+class MyPatch(VLLMPatch[TargetClass]):
+    pass
+```
+
+升级时选择跳过，而不是给你一个惊喜。
+
+### 4. 不必再 fork、同步、rebase
+
+升级就是 `pip install --upgrade vllm`，再测自己的补丁。
+
+### 5. 甩掉 monkey patch 的复杂度
+
+改动可追踪，没有整文件默默碎掉。
+
+### 6. 官方支持的挂钩
+
+走的是 `general_plugins` entry point。
 
 ## 为什么这个模式要紧
 
@@ -306,7 +492,7 @@ docker run \
 
 - 用 `VLLMPatch[TargetClass]` 做类级、外科手术式改动
 - 在 `setup.py` 里注册 `vllm.general_plugins`
-- 用环境变量（例如 `VLLM_CUSTOM_PATCHES`，只是例子名）控制开哪些补丁
+- 用环境变量（例如 `VLLM_CUSTOM_PATCHES`，只是例子名，**不是** 官方变量）控制开哪些补丁
 - 用 `@min_vllm_version` 做版本闸
 - 一份 Docker 镜像，多套配置
 

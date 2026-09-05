@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-01-31-streaming-realtime
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Streaming Requests & Realtime API in vLLM
@@ -102,7 +102,7 @@ vLLM can serve any model. **True** streaming needs architecturally causal models
 
 Serving must also accept incremental input. A streaming-capable model behind a “complete prompt first” server loses the latency win. That is why vLLM now streams **input** as well as output.
 
-Further reading named on the page:
+### Further reading on streaming architecture
 
 - [Transformer Transducer](https://arxiv.org/abs/2002.02562) — streamable speech recognition.
 - [Streaming Sequence-to-Sequence Learning with Delayed Streams Modeling](https://arxiv.org/abs/2509.08753) (Kyutai) — the architecture sketched above.
@@ -176,39 +176,80 @@ Implementation is a **sticky session**. The first chunk creates an **anchor requ
 ### The Anchor Request pattern
 
 ```
-User AsyncGenerator                         Scheduler
-===================                         =========
-
-Chunk 1 [A, B, C]  ──►  Add ANCHOR REQUEST
-                        Request (id="session_1")
-                          resumable: true
-                          max_tokens: 2
-                          streaming_queue: deque()
-                          status: RUNNING
-                          prompt_token_ids: [A, B, C]
-                                │
-                                ▼
-Chunk 2 [D, E] ─┐          ENGINE processing  ──► Output: [X, Y]
-Chunk 3 [F, G] ─┴──►  Anchor busy? queue it
-                      streaming_queue: [D, E] → [F, G] → …
-
-WHEN ANCHOR FINISHES CURRENT CHUNK
-  Engine: chunk complete (stopped = True)
-  _handle_stopped_request() pops first queue item
-  streaming_queue: [[D,E], [F,G]]  ──pop──►  [[F,G]]
-  _update_request_as_session(anchor, update=[D, E])
-
-  BEFORE                         AFTER
-  prompt_token_ids: [A, B, C]    prompt_token_ids: [A, B, C, X, D, E]
-  _output_token_ids: [X, Y]      _output_token_ids: []
-  _all_token_ids: [A,B,C,X,Y]    _all_token_ids: [A, B, C, X, D, E]
-  num_computed_tokens: 4         num_computed_tokens: 4
-  status: RUNNING                status: WAITING
-
-  Y is DISCARDED (last sampled token, not yet computed).
-  Only X is kept (num_computed_tokens = 4 ⇒ [A,B,C,X]).
-
-Anchor returns to the waiting queue → scheduled again → ENGINE
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           STREAMING SESSION                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   User's AsyncGenerator              Scheduler                              │
+│   ═══════════════════               ═════════                               │
+│                                                                             │
+│   ┌──────────────┐                                                          │
+│   │   Chunk 1    │ ──────────────►  Add ANCHOR REQUEST                      │
+│   │   [A, B, C]  │                  ┌────────────────────────────────┐      │
+│   └──────────────┘                  │  Request (id="session_1")      │      │
+│                                     │  ├── resumable: true           │      │
+│                                     │  ├── max_tokens: 2             │      │
+│                                     │  ├── streaming_queue: deque()  │      │
+│                                     │  ├── status: RUNNING           │      │
+│                                     │  └── prompt_token_ids: [A,B,C] │      │
+│                                     └────────────────────────────────┘      │
+│                                              │                              │
+│                                              ▼                              │
+│   ┌──────────────┐                  ┌────────────────┐                      │
+│   │   Chunk 2    │                  │    ENGINE      │  Generating...       │
+│   │   [D, E]     │ ─────┐           │  Processing    │  ──► Output: [X, Y]  │
+│   └──────────────┘      │           └────────────────┘                      │
+│                         │                                                   │
+│                         ▼           Anchor busy? Queue it!                  │
+│   ┌──────────────┐      │           ┌────────────────────────────────┐      │
+│   │   Chunk 3    │      └────────►  │  streaming_queue:              │      │
+│   │   [F, G]     │ ─────────────►   │  ┌───────┐ ┌───────┐           │      │
+│   └──────────────┘                  │  │[D, E] │→│[F, G] │→ ...      │      │
+│                                     │  └───────┘ └───────┘           │      │
+│                                     └────────────────────────────────┘      │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                     WHEN ANCHOR FINISHES CURRENT CHUNK                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Engine signals: chunk complete (stopped = True)                           │
+│          │                                                                  │
+│          ▼                                                                  │
+│   ┌────────────────────────────────────────────────────────────────┐        │
+│   │  _handle_stopped_request() pops first item from queue          │        │
+│   │                                                                │        │
+│   │  streaming_queue: [[D,E], [F,G]]  ──►  [[F,G]]                 │        │
+│   │                      ▲                                         │        │
+│   │                      │                                         │        │
+│   │                    pop!                                        │        │
+│   └──────────────────────┬─────────────────────────────────────────┘        │
+│                          │                                                  │
+│                          ▼                                                  │
+│   ┌────────────────────────────────────────────────────────────────┐        │
+│   │  _update_request_as_session(anchor, update=[D, E])             │        │
+│   │                                                                │        │
+│   │  BEFORE:                       AFTER:                          │        │
+│   │  ┌───────────────────────┐     ┌───────────────────────────┐   │        │
+│   │  │ prompt_token_ids:     │     │ prompt_token_ids:         │   │        │
+│   │  │   [A, B, C]           │     │   [A, B, C, X, D, E]      │   │        │
+│   │  │ _output_token_ids:    │ ──► │ _output_token_ids:        │   │        │
+│   │  │   [X, Y]              │     │   []                      │   │        │
+│   │  │ _all_token_ids:       │     │ _all_token_ids:           │   │        │
+│   │  │   [A, B, C, X, Y]     │     │   [A, B, C, X, D, E]      │   │        │
+│   │  │ num_computed_tokens: 4│     │ num_computed_tokens: 4    │   │        │
+│   │  │ status: RUNNING       │     │ status: WAITING           │   │        │
+│   │  └───────────────────────┘     └───────────────────────────┘   │        │
+│   │                                                                │        │
+│   │  Note: Y is DISCARDED (last sampled token, not yet computed)   │        │
+│   │        Only X is kept (num_computed_tokens = 4, so [A,B,C,X])  │        │
+│   └────────────────────────────────────────────────────────────────┘        │
+│                          │                                                  │
+│                          ▼                                                  │
+│   ┌────────────────────────────────────────────────────────────────┐        │
+│   │  Anchor returns to waiting queue → scheduled again → ENGINE    │        │
+│   └────────────────────────────────────────────────────────────────┘        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Why discard the last token (Y) on the next `prompt_token_ids`?**

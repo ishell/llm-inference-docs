@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-08-22-rdt-weight-transfer
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # RDT 分片权重搬运：Kimi K2 7.53 秒

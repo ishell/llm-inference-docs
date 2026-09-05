@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-03-10-v0.2-vllm-sr-athena-release
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Semantic Router v0.2 Athena：换底座，当系统脑
@@ -124,7 +124,13 @@ FA 怎么接：`onnx-binding/ort-ck-flash-attn` 下一只独立的 **ONNX Runtim
 
 **OpenClaw** 是底下的 agent 平台。**ClawOS** 是 Athena 在 Semantic Router 里叠上去的编排和操作体验。实验，但已经摸得着：MCP 工具和房间式聊天，拉起 OpenClaw 团队和 worker，在共享房间里协调，看整机运行时。
 
-他们想塞进这套的：智能路由、安全护栏（jailbreak、PII、幻觉）、分层记忆、跨 agent 知识、隔离和团队管理。
+Dashboard 想塞进这套的：
+
+- **Intelligent Routing：** 成本–质量选模
+- **Safety Guardrails：** jailbreak、PII、幻觉
+- **Hierarchical Memory Storage：** 长程、多步执行
+- **Knowledge Sharing：** 跨 agent
+- **Isolation & Team Management：** 多 agent 操作收在一块编排面
 
 ![athena 7](../../../../assets/vllm/blog/serving/semantic-router-athena/06-athena-7.png)
 
@@ -213,7 +219,13 @@ curl -fsSL https://vllm-semantic-router.com/install.sh | bash
 
 安装器：侦测 Python，把 `vllm-sr` 装进隔离本地环境，启动器写到 `~/.local/bin/vllm-sr`，除非退出否则准备 Docker 或 Podman，自动跑第一次 `vllm-sr serve`，能开 dashboard 就开；远端机器给访问 / SSH 隧道提示，不默默失败。
 
-空目录里 `vllm-sr serve` 可以：自动 bootstrap 最小工作区；背后写 `.vllm-sr/router-defaults.yaml`；dashboard 开在 setup 模式；带第一只模型和路由起步；**激活之后**才写 `config.yaml`。
+之后，或任何时候从空目录再跑：
+
+```bash
+vllm-sr serve
+```
+
+可以：自动 bootstrap 最小工作区；背后写 `.vllm-sr/router-defaults.yaml`；dashboard 开在 setup 模式；带第一只模型和路由起步；**激活之后**才写 `config.yaml`。
 
 ![athena 8](../../../../assets/vllm/blog/serving/semantic-router-athena/11-athena-8.png)
 
@@ -256,7 +268,7 @@ ROCm 镜像编 ONNX 后端的 router，装 ROCm ONNX Runtime，能加载 CK Flas
 
 **Figure 14.** 研究、训练、生产一起动。
 
-## 往前看
+## 往前看：Athena 之后
 
 Athena 把战略路由做成能运营的。下一步他们列：能从自然语言写 / 改 DSL 的训练 coding agent；用反向信号和路由结果迭代规则的自学习环；更深的多轮记忆和 agent 工具；更多运营自动化；更宽的多模态和工具安全；研究原型继续收进可部署 runtime。下一号发版是 [Themis](semantic-router-themis.md)。
 
@@ -271,6 +283,8 @@ Athena 把战略路由做成能运营的。下一步他们列：能从自然语�
 ```bash
 curl -fsSL https://vllm-semantic-router.com/install.sh | bash
 ```
+
+装 CLI，给 `vllm-sr serve` 准备本地 Docker / Podman，自动第一次启动，能开 dashboard 就开。
 
 手工 / Windows：
 

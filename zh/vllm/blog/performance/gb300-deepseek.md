@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-02-13-gb300-deepseek
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # DeepSeek-V3.2 on GB300：验证部署，不是刷峰值
@@ -48,14 +48,22 @@ vllm bench serve --model nvidia/DeepSeek-R1-0528-NVFP4 \
 
 Blackwell 第五代 Tensor Core 原生 NVFP4。
 
-1. Hugging Face 权重：[DeepSeek-V3.2-NVFP4](https://huggingface.co/nvidia/DeepSeek-V3.2-NVFP4)、[DeepSeek-R1-0528-NVFP4](https://huggingface.co/nvidia/DeepSeek-R1-0528-NVFP4)。
-2. Blackwell 上 FP4 MoE 要显式开 FlashInfer：
+### 1. 从 Hugging Face 下载 NVFP4 权重
+
+- [DeepSeek-V3.2-NVFP4](https://huggingface.co/nvidia/DeepSeek-V3.2-NVFP4)
+- [DeepSeek-R1-0528-NVFP4](https://huggingface.co/nvidia/DeepSeek-R1-0528-NVFP4)
+
+### 2. 打开 FlashInfer 的 FP4 MoE kernel
+
+Blackwell 上 FP4 MoE 要显式开 FlashInfer：
 
 ```bash
 export VLLM_USE_FLASHINFER_MOE_FP4=1
 ```
 
-3. 单卡 288 GB，两卡装得下 DeepSeek 系列 NVFP4：
+### 3. Serve the model
+
+单卡 288 GB，两卡装得下 DeepSeek 系列 NVFP4：
 
 ```bash
 vllm serve nvidia/DeepSeek-V3.2-NVFP4    -tp 2
@@ -63,7 +71,17 @@ vllm serve nvidia/DeepSeek-V3.2-NVFP4    -tp 2
 vllm serve nvidia/DeepSeek-R1-0528-NVFP4 -tp 2
 ```
 
-4. Prefill 边界 batch：`--max-num-batched-tokens`，R1 **32768**，V3.2 **20480**。
+### 4. Optimized configurations
+
+Prefill 边界 batch：`--max-num-batched-tokens`，R1 **32768**，V3.2 **20480**。
+
+```bash
+# DeepSeek-R1-0528-NVFP4
+--max-num-batched-tokens 32768
+
+# DeepSeek-V3.2-NVFP4
+--max-num-batched-tokens 20480
+```
 
 ## Blackwell 把哪一头抬起来
 
@@ -118,7 +136,7 @@ R1 权重两张 B300 的 HBM 就装得下。往上扩：DP 叠在 TP2 上，还�
 
 **Figure 5–7。** 一体机混跑的吞吐 / TTFT / TPOT。
 
-**原文结论：**
+### Conclusions
 
 - 拆开 Prefill 的 R1 on GB300：EP 更适合作 prefiller（再加 DP 扩）。Prefill 天花板比 TP2 大约 **10–15%**；TTFT 随并发涨得更慢——排队和尾延迟更好控。
 - P+D 一体：ISL 大、OSL 小时 Prefill 是瓶颈 → **TP2**，免得 attention 把 Decode 的 GPU 时间挤掉。输出重：EP2 的 TPOT 优势占上风。
@@ -180,7 +198,10 @@ vllm serve nvidia/DeepSeek-V3.2-NVFP4 -tp 2 --max-num-batched-tokens 20480 \
   '{"kv_connector":"NixlConnector","kv_role":"kv_both","kv_load_failure_policy":"fail","kv_buffer_device":"cuda"}' \
   --port 8000
 
-# Decode Node：环境和 CLI 一样，只换 VLLM_NIXL_SIDE_CHANNEL_HOST=${DECODE_NODE_IP}
+# Decode Node
+export VLLM_NIXL_SIDE_CHANNEL_HOST=${DECODE_NODE_IP}
+...
+# Exactly the same environment variables and vLLM CLI as Prefill Node, except `VLLM_NIXL_SIDE_CHANNEL_HOST`
 
 # Proxy
 python tests/v1/kv_connector/nixl_integration/toy_proxy_server.py \

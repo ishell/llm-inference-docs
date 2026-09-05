@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-06-23-vllm-omni-tts
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # TTS：Talker 要 TTFP，Code2Wav 要吞吐

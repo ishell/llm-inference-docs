@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-06-02-session-aware-agentic-routing
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # SAAR: Session-Aware Agentic Routing
@@ -26,7 +26,7 @@ Local figures (copyright remains with the original site; study copies):
 
 ## From prompt routing to session routing
 
-Semantic Router started from: not every request should take the same path. Iris made signals composable. Athena made the router more strategic — model selection, memory, replay, long-context signals, multimodal primitives, AMD ROCm.
+Semantic Router started from: not every request should take the same path. A short factual question, a security-sensitive prompt, a multimodal request, a hard reasoning task, and a domain-specific query may all deserve different treatment. First generation was prompt routing: extract signals from the current request, match a decision, pick a path. Iris made those signals composable. Athena made the router more strategic — model selection, memory, replay, long-context signals, multimodal primitives, AMD ROCm.
 
 Agents change the unit of routing again. A coding or research agent is a **session**: plan, tool call, tool output, edit, test, recover, pause, resume, then short follow-ups like "continue" / "fix it" / "run that again". Those turns only mean something because of the trajectory.
 
@@ -118,7 +118,7 @@ A short retry on a cheap model and a 40-turn warm frontier session are not the s
 
 SAAR prices a **cached-input checkout delta**: gap between normal prompt input price and cached-input price for the physical model under consideration. Longer / more expensive sessions get stricter about discarding prefix locality.
 
-If the user calls `auto`, the router may map that logical name to different physical models over time. A cache hit reported by one backend is **physical evidence for that backend**, not automatically transferable. SAAR keeps backend-reported cached tokens separate from router-estimated reuse and does **not** rewrite upstream usage fields.
+If the user calls `auto`, the router may map that logical name to different physical models over time. A cache hit reported by one backend is **physical evidence for that backend**, not automatically transferable. SAAR keeps backend-reported cached tokens separate from router-estimated reuse and does **not** rewrite upstream usage fields. Operators can still inspect physical cache behavior; the router uses its own memory to decide whether switching is worth the checkout.
 
 ## How a request moves through SAAR
 
@@ -209,6 +209,8 @@ Tool-loop switch violations: **3,404 → 0**. Provider-state switch violations: 
 
 ## Result 3: not sticky sessions with a new name
 
+The obvious baseline is sticky routing: pick the first model for a session and hold it. Easy to reason about, and it solves many unsafe-switch cases by avoiding switching entirely. For agents that simplicity becomes a product problem. Long sessions drift. Users change tasks. A cheap initial model may no longer be appropriate. A strong model may no longer be necessary.
+
 ![ablation effect](../../../../assets/vllm/blog/serving/semantic-router-session/08-ablation-effect.png)
 
 **Figure 8.** Continuity with movement; not just sticky.
@@ -270,9 +272,17 @@ Iris made decisions composable. Athena moved toward a strategic system brain. [V
 
 The router does not become an agent. It becomes aware of the minimum session facts required to serve agents well. A router behind `auto` should know when a switch is allowed, when it is forbidden, and what the switch costs for a warm long-running session.
 
-## Join them
+## Join us
 
-Open work they list: session-aware policies on real agent traffic; multi-turn / tool-loop eval suites; AMD ROCm serving validation; observability / replay / production debugging; Envoy / Kubernetes / gateway integrations that keep policy separate from endpoint LB.
+**Looking for collaborations.** SAAR is the next step for long-horizon agents, and there is open work ahead:
+
+- session-aware routing policies for real agent traffic
+- multi-turn and tool-loop evaluation suites
+- AMD ROCm serving validation and performance experiments
+- router observability, replay traces, and production debugging
+- Envoy, Kubernetes, and gateway integrations that keep routing policy separate from endpoint load balancing
+
+If you are building agent systems, running model portfolios on AMD GPUs, or researching continuity-aware model selection, they want to collaborate.
 
 - GitHub: [vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)
 - Docs: [vllm-semantic-router.com](https://vllm-semantic-router.com)

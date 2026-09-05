@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-05-11-turboquant
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # TurboQuant：KV 再压到 3–4 bit 之前，先读完这篇对照
@@ -10,6 +10,8 @@ fetched: 2026-09-04
 英文对照：[en/vllm/blog/performance/turboquant.md](../../../../en/vllm/blog/performance/turboquant.md)  
 原文：https://vllm.ai/blog/2026-05-11-turboquant  
 2026-05-11。Eldar Kurtić、Michael Goin、Alexandre Marques（Red Hat AI）。数字来自 **vLLM 0.20.2**（commit `6ec9bbec3`）。接在 [FP8 KV](fp8-kvcache.md) 后面读。论文：[TurboQuant](https://arxiv.org/pdf/2504.19874)。当时文档：[quantization/turboquant](https://docs.vllm.ai/en/latest/api/vllm/model_executor/layers/quantization/turboquant/)。
+
+## Introduction
 
 [TurboQuant](https://arxiv.org/pdf/2504.19874) 把 KV 压到 3–4 bit，广告上是一大截 GPU 显存。和 [FP8 KV](https://vllm.ai/blog/fp8-kvcache)（`--kv-cache-dtype fp8`）不一样：FP8 连 **存储和 attention 计算** 都走硬件 FP8 Tensor Core；TurboQuant 只压缩**存储**，算的时候再反量化回 BF16。省的是房间，付的是反量化。精度和速度都从这条裂缝里长出来。
 

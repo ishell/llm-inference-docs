@@ -1,24 +1,31 @@
 ---
 source: https://vllm.ai/blog/2026-07-29-optimizing-vllm-on-arm-cpus
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Optimizing vLLM on Arm CPUs
 
-Chinese: [zh/vllm/blog/architecture/arm-cpus.md](../../../../zh/vllm/blog/architecture/arm-cpus.md)
+Chinese: [zh/vllm/blog/architecture/arm-cpus.md](../../../../zh/vllm/blog/architecture/arm-cpus.md)  
+Source: https://vllm.ai/blog/2026-07-29-optimizing-vllm-on-arm-cpus
 
-2026-07-29. **Arm Team**. Study note; benches vs an October 2025 BF16 baseline on Neoverse, not your SLA. Hardware-out-of-core: [hardware-plugin.md](hardware-plugin.md). PagedAttention itself: [paged-attention.md](paged-attention.md). INT8 / W4A16 cousins: [autoround-llmc.md](autoround-llmc.md). CPU vs Arc XPU: [intel-arc.md](intel-arc.md).
+2026-07-29. **Arm Team**. Study extract, not an official reprint. Benches vs an October 2025 BF16 baseline on Neoverse, not your SLA. Hardware-out-of-core: [hardware-plugin.md](hardware-plugin.md). PagedAttention itself: [paged-attention.md](paged-attention.md). INT8 / W4A16 cousins: [autoround-llmc.md](autoround-llmc.md). CPU vs Arc XPU: [intel-arc.md](intel-arc.md).
 
 Fits: Arm Neoverse servers that want wheels, chunked prefill / prefix cache, and INT8 W8A8 / W4A8 on vLLM. Does not fit: treating the page’s **2.7–6.2×** as a promise — allocator gains are **excluded** from the heatmaps.
 
-## Overview
+## Introduction
 
-CPU serving is cheaper infrastructure, broadly available. As Neoverse servers spread, open-source serving on Arm has to be usable, feature-complete, and fast. Months of upstream work with vLLM, PyTorch, oneDNN, and KleidiAI. This post: enablement first, then the performance stack.
+LLM serving on CPUs is a real deployment path: lower cost, simpler infrastructure, broad availability in cloud and enterprise data centers. As Arm® Neoverse™-based servers spread, open-source serving such as vLLM on Arm CPUs has to be usable, feature-complete, and fast.
 
-Dense GEMMs were already near hardware efficiency (~**80%** of runtime). The rest was allocator, OpenMP, layout, attention, quantization.
+Months of upstream work with the vLLM, PyTorch, oneDNN, and KleidiAI communities. Result: better usability, broader model and feature support, and performance gains that any Neoverse server running vLLM can take.
+
+This post: enablement and coverage first, then the main optimizations and end-to-end serving numbers.
 
 ## Enablement
+
+Alongside performance, they improved usability and feature completeness of vLLM on Arm® CPUs so deployment on Arm® servers is easier.
+
+Key enablement:
 
 - Pre-built [wheels](https://docs.vllm.ai/en/latest/getting_started/installation/cpu/#arm-aarch64_2:~:text=venv/bin/activate-,Pre%2Dbuilt%20wheels,%C2%B6,-When%20specifying%20the) and [Docker images](https://docs.vllm.ai/en/latest/getting_started/installation/cpu/#arm-aarch64_4:~:text=%C2%B6-,Pre%2Dbuilt%20images,%C2%B6,-Intel/AMD%20x86)
 - Fixes for crashes, accuracy, threading, CPU utilization
@@ -27,23 +34,31 @@ Dense GEMMs were already near hardware efficiency (~**80%** of runtime). The res
 - GPT-OSS, Whisper, Qwen 3.5 / 3.6
 - Tighter [PyTorch](https://github.com/pytorch/pytorch) and [UXL](https://github.com/uxlfoundation) integration
 
-## Performance
+With enablement in place, they turned to finding and removing performance bottlenecks.
 
-October 2025 first benches were far below what the GEMM kernels suggested. Standalone BF16 GEMMs were already close to expected efficiency, so kernel-only work would not move the needle. Profiles pointed at allocator behavior, runtime sync, framework overhead, attention, quantized execution.
+## Performance Improvements
 
-### Memory allocation
+First benches on Arm CPUs in October 2025 were much lower than expected, even though roughly **80%** of model runtime was in dense layers dispatched to highly optimized BF16 GEMMs. Standalone GEMM kernels behind those layers were already close to expected hardware efficiency, so the biggest gains were unlikely to come from GEMM kernels alone.
 
-Prefill and Decode repeatedly allocate/free tensors for scheduling, KV, intermediates. Poor reuse of large allocations → page faults. Root cause: PyTorch’s glibc `malloc`. Large blocks were not reused; alloc/free contended as thread counts rose. Early workaround: preload a caching allocator — extra setup, performance tied to runtime config.
+Profiles pointed at a broader problem: allocator behavior, runtime synchronization, framework overheads, attention kernels, quantized execution.
 
-Fix: [mimalloc](https://github.com/microsoft/mimalloc) as PyTorch’s **default** allocator on Arm. Caching allocator, scales under multi-threaded pressure; already a PyTorch dependency on non-Arm Linux; strong on TorchBench.
+### Memory Allocation
 
-Llama 3.1 8B out-of-the-box: offline throughput ~**2.3×**; low-concurrency serving ~**7×**.
+LLM serving puts heavy pressure on the CPU allocator. During prefill and decode, vLLM repeatedly allocates and releases tensors for scheduling, KV-cache management, and intermediate operator outputs. In the first benches, allocation was a bottleneck: poor reuse of large allocations, many page faults.
 
-> Allocator gains are **excluded** from all plots in the post — they would dominate the scale.
+Root cause: PyTorch’s glibc `malloc`. Large allocations were not reused well across repeated inference steps; alloc/free contended as thread counts rose. Early workaround: preload a caching allocator — extra manual setup, performance tied to runtime config.
 
-### Synchronization at high core counts
+For out-of-the-box speed, they made [mimalloc](https://github.com/microsoft/mimalloc) PyTorch’s **default** allocator on Arm CPUs. Mimalloc is a caching allocator designed to scale under multi-threaded allocation pressure. Chosen because it was strong across a broad TorchBench set and already a PyTorch dependency on non-Arm Linux builds.
 
-Beyond a point, more cores did not help and could regress. One profile: **74%** of paged-attention time in OpenMP dynamic scheduling:
+Llama 3.1 8B out of the box: offline throughput **2.3×**; about **7×** in low-concurrency serving.
+
+> Allocator gains are **excluded** from every performance plot in the post — they would dominate the scale and hide the other optimizations. Plots therefore show the rest of the stack.
+
+### Synchronization at High Core Counts
+
+After allocation, the next bottleneck appeared when scaling to higher core counts. Beyond a point, more cores did not help and could regress.
+
+They profiled individual layers at high thread counts. One profile: **74%** of paged-attention time in OpenMP dynamic scheduling:
 
 ```text
 97.94% gomp_thread_start
@@ -52,7 +67,7 @@ Beyond a point, more cores did not help and could regress. One profile: **74%** 
      7.00% reduceValueBlock::lambda(int)
 ```
 
-`gomp_iter_dynamic_next` is libgomp’s dynamic loop scheduling: atomic fetch-add to hand chunks to workers. The libgomp in PyTorch wheels used load-linked / store-conditional retries:
+`gomp_iter_dynamic_next` is libgomp’s dynamic loop-scheduling path. The runtime uses an atomic fetch-add to assign loop chunks to workers. The libgomp in PyTorch wheels implemented that atomic update as a load-linked / store-conditional retry loop:
 
 ```c
 for (;;) {
@@ -66,76 +81,94 @@ for (;;) {
 }
 ```
 
-High core counts: many workers contend on one atomic → failed stores and retry traffic. The bench box was Neoverse V2, which has [Arm LSE](https://learn.arm.com/learning-paths/servers-and-cloud-computing/lse/example/) (`LDADDAL`). PyTorch’s OpenMP runtime did not use it.
+High core counts: many workers contend on the same atomic → repeated failed stores and retry traffic.
 
-Fix: a libgomp in PyTorch that uses LSE atomics on capable CPUs. Llama 3.1 8B: offline **+9%**; low-concurrency TPOT **−15%**.
+Tracing to assembly showed a missed hardware opportunity. The bench box was Neoverse™ V2, which supports [Arm Large System Extensions (LSE)](https://learn.arm.com/learning-paths/servers-and-cloud-computing/lse/example/). LSE provides hardware atomics such as `LDADDAL` that replace that inefficient loop. PyTorch’s OpenMP runtime did not use LSE atomics.
 
-### Dense-layer layout overhead
+Fix: a libgomp in PyTorch that uses LSE atomics on capable CPUs.
 
-High-performance GEMM wants blocked weight layout. Without prepack, each call transforms framework layout → kernel format. Expensive at low concurrency (not amortized). Fast oneDNN path for dense layers (Compute Library for Arm): pack BF16 weights at **warmup**, reuse at inference.
+Llama 3.1 8B: offline throughput **+9%**; low-concurrency serving TPOT **−15%**.
 
-Llama 3.1 8B: offline **+16%**; low-concurrency TPOT **−60%**.
+### Dense-Layer Layout Overhead
 
-### Paged attention
+After allocator and runtime, dense layers still left performance on the table. High-performance GEMM is sensitive to weight layout: efficient runs need a blocked format matching the kernel’s vectorization and cache access. Without prepacking, each call can pay to transform framework tensor layout into kernel format.
 
-CPU paged attention was not Arm-tuned. QK / PV matmuls and softmax exp fell back to reference. Prefill used PyTorch SDPA — so chunked prefill and prefix caching were off on the Arm CPU path.
+Especially expensive at low concurrency: packing is not amortized over large batches. Fix: a fast oneDNN path for dense layers, accelerated by the Compute Library for Arm Architecture. vLLM packs BF16 weights at model **warmup** into the kernel format, then reuses that packed representation at inference.
 
-QK / PV via custom GEMM with [BFMMLA](https://developer.arm.com/community/arm-community-blogs/b/ai-blog/posts/bfloat16-processing-for-neural-networks-on-armv8_2d00-a). Softmax exp: vectorized third-degree polynomial.
+Llama 3.1 8B: offline throughput **+16%**; low-concurrency TPOT **−60%**.
 
-Kernel up to ~**4×**; Llama 3.1 8B offline **+12%**. Paged attention for prefill unlocked chunked prefill and prefix caching.
+### Paged Attention
 
-### BF16, after the three cuts
+The CPU paged-attention kernel was not optimized for Arm CPUs. QK and PV matmuls, and the exponential in softmax, fell back to reference implementations. Prefill therefore used PyTorch Scaled Dot-Product Attention — so chunked prefill and prefix caching were off on the Arm CPU path.
 
-Sync + prepack + paged attention vs the October 2025 BF16 baseline:
+QK / PV via custom GEMM using Arm [BFMMLA](https://developer.arm.com/community/arm-community-blogs/b/ai-blog/posts/bfloat16-processing-for-neural-networks-on-armv8_2d00-a) Advanced SIMD. Softmax exponential: a fast vectorized third-degree polynomial approximation.
+
+Paged attention up to ~**4×**; Llama 3.1 8B offline throughput **+12%**. Prefill on Arm CPUs could then use paged attention, unlocking chunked prefill and prefix caching.
+
+### BF16 Performance Improvements
+
+Synchronization, weight prepacking, and paged attention together make a stronger BF16 serving baseline than October 2025.
 
 ![heatmap bf16 optimized vs bf16 baseline](../../../../assets/vllm/blog/architecture/arm-cpus/01-heatmap_bf16_optimized_vs_bf16_baseline.png)
 
 **Figure.** Optimized BF16 serving relative to the October 2025 BF16 baseline (study copy).
 
-### INT8 W8A8
+### INT8 W8A8 (8-bit weights and activations)
 
-INT8 weights vs BF16: less bandwidth, larger models in the same RAM. On Arm with I8MM, W8A8 maps to [`SMMLA`](https://developer.arm.com/documentation/dui0379/e/arm-and-thumb-instructions/smmla) — **2×** theoretical matmul throughput vs BF16.
+LLM inference repeatedly reads large weight matrices in prefill and decode. INT8 weights instead of BF16 cut bandwidth pressure and can fit larger models in the same memory budget.
 
-W8A8 path: [oneDNN](https://github.com/uxlfoundation/oneDNN) JIT kernels using `SMMLA` on SVE128 and SVE256. Hugging Face checkpoints named: `RedHatAI/Meta-Llama-3.1-8B-quantized.w8a8`, `RedHatAI/whisper-large-v3-quantized.w8a8`.
+On Arm CPUs with I8MM, W8A8 also maps to [`SMMLA`](https://developer.arm.com/documentation/dui0379/e/arm-and-thumb-instructions/smmla) — Arm’s signed INT8 matrix multiply-accumulate — **2×** theoretical matmul throughput vs BF16.
 
-Vs optimized BF16 (per-token activation quant, channelwise weight quant): up to **+88%** throughput, **−45%** TPOT, **−54%** TTFT, depending on concurrency.
+They accelerated the W8A8 path with [oneDNN](https://github.com/uxlfoundation/oneDNN) JIT kernels using `SMMLA` on SVE128 and SVE256.
+
+Multiple Hugging Face INT8 W8A8 checkpoints then perform well out of the box, including `RedHatAI/Meta-Llama-3.1-8B-quantized.w8a8` and `RedHatAI/whisper-large-v3-quantized.w8a8`.
+
+Vs the optimized BF16 baseline, W8A8 with per-token activation quantization and channelwise weight quantization: up to **+88%** throughput, **−45%** TPOT, **−54%** TTFT, depending on concurrency.
 
 ![heatmap int8 vs bf16 optimized](../../../../assets/vllm/blog/architecture/arm-cpus/02-heatmap_int8_vs_bf16_optimized.png)
 
-**Figure.** INT8 W8A8 vs optimized BF16 (study copy).
+**Figure.** INT8 W8A8 serving relative to the optimized BF16 path (study copy).
 
-Learning Path: [INT8 W8A8 on Arm](https://learn.arm.com/learning-paths/servers-and-cloud-computing/vllm-benchmark-quantisation/).
+> INT8 W8A8 on Arm CPUs: [this Arm Learning Path](https://learn.arm.com/learning-paths/servers-and-cloud-computing/vllm-benchmark-quantisation/).
 
-### INT8 W4A8
+### INT8 W4A8 (4-bit weights, 8-bit activations)
 
-INT4 weights, still 8-bit activations — more bandwidth relief, especially at low concurrency. Accelerated by [KleidiAI](https://github.com/ARM-software/kleidiai) INT4 micro-kernels.
+W4A8 pushes the same idea: INT4 weights, still less bandwidth at inference. Especially useful at low concurrency, where there is less batching to amortize reading weights.
 
-Vs the W8A8 baseline: up to **+29%** throughput, **−26%** TPOT, **−18%** TTFT. Largest at low concurrency (memory-bound).
+Accelerated through [KleidiAI](https://github.com/ARM-software/kleidiai) INT4 micro-kernels.
+
+Vs the W8A8 baseline above, same per-token activation quant and channelwise weight quant: up to **+29%** throughput, **−26%** TPOT, **−18%** TTFT, depending on concurrency.
+
+Largest W4A8 speedups at low concurrency, where inference is mostly memory-bound — as expected.
 
 ![heatmap int4 vs int8](../../../../assets/vllm/blog/architecture/arm-cpus/03-heatmap_int4_vs_int8.png)
 
-**Figure.** INT8 W4A8 vs INT8 W8A8 (study copy).
+**Figure.** INT8 W4A8 serving relative to the INT8 W8A8 path (study copy).
 
-How to quantize: [llm-compressor INT8 W4A8](https://docs.vllm.ai/en/latest/features/quantization/llm_compressor/int8_w4a8/).
+> How to quantize to INT8 W4A8 with llm-compressor: [these docs](https://docs.vllm.ai/en/latest/features/quantization/llm_compressor/int8_w4a8/).
 
 ## Summary
 
-Vs October 2025 BF16:
+vLLM on Arm CPUs saw large gains in usability, robustness, model and feature coverage, and performance.
+
+Relative to the October 2025 BF16 baseline:
 
 - Optimized BF16: up to **2.7×** serving throughput
-- INT8 W8A8: up to **4.8×** throughput, **5.7×** TPOT
-- INT8 W4A8: up to **6.2×** throughput, **7.8×** TPOT, **2.6×** TTFT
+- INT8 W8A8: up to **4.8×** throughput and a **5.7×** TPOT speedup
+- INT8 W4A8: best — up to **6.2×** throughput, **7.8×** TPOT, **2.6×** TTFT
 
-Gains from the full CPU stack: allocation, OpenMP, dense prepack, paged attention, quantization — not GEMM kernels alone.
+Gains from the full CPU inference stack: memory allocation, OpenMP synchronization, dense-layer prepacking, paged attention, quantization — not GEMM kernels alone.
 
 ![bars all vs bf16 baseline](../../../../assets/vllm/blog/architecture/arm-cpus/04-bars_all_vs_bf16_baseline.png)
 
 **Figure.** Serving speedups for optimized BF16, INT8 W8A8, and INT8 W4A8 vs October 2025 BF16 (study copy).
 
-Also claimed: broader features, better out-of-the-box usability, upstream integration, more models — a more production-ready Neoverse stack.
+Beyond measured performance: broader features, better out-of-the-box usability, upstream integration, more models — a more production-ready Neoverse inference stack.
 
 ## Acknowledgements
 
-vLLM community. **[Li Jiang](https://github.com/bigPYJ1151)** (Intel) for the CPU backend. **[Sanket Kale](https://github.com/sanketkaleoss)** (Fujitsu) for initial Arm CPU enablement. **[Shreyas](https://github.com/Shreyas-fuj)** (Fujitsu) for SVE256 INT8 kernels in oneDNN.
+Thanks to the vLLM community for continued support and collaboration.
 
-Arm / PyTorch / Intel / oneDNN are trademarks of their owners. Post copyright 2026 Arm Limited (`open-source-office@arm.com`).
+Special thanks to **[Li Jiang](https://github.com/bigPYJ1151)** (Intel®) for maintaining the vLLM CPU backend and implementing much of the infrastructure this work builds on. Also **[Sanket Kale](https://github.com/sanketkaleoss)** (Fujitsu) for initial Arm CPU enablement in vLLM, and **[Shreyas](https://github.com/Shreyas-fuj)** (Fujitsu) for SVE256 INT8 kernels in oneDNN.
+
+Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates). PyTorch is a trademark of The Linux Foundation. Intel and oneDNN are trademarks of Intel Corporation or its subsidiaries. Post copyright 2026 Arm Limited and/or its affiliates (`open-source-office@arm.com`).

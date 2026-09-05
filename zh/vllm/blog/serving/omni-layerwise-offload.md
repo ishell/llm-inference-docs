@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Distributed Layerwise Offload：把 124 GB 的 DiT 挤进 64 GB HBM，再估一条 200B+ 的路
@@ -10,6 +10,8 @@ fetched: 2026-09-04
 英文对照：[en/vllm/blog/serving/omni-layerwise-offload.md](../../../../en/vllm/blog/serving/omni-layerwise-offload.md)  
 原文：https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload  
 2026-08-17。署名 **vLLM-Omni Diffusion Team**。DLO 把 DiT 权重切碎、流进来，测过的 **124 GB** Cosmos3-Super 能在 **64 GB** HBM 上跑；往 200B+ 走的是按内存模型外推，**没有**真跑过那档模型。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[minimax-h3.md](minimax-h3.md)、[omni-diffusion-cache.md](omni-diffusion-cache.md)。页上的测量是他们的实验合同，不是你的 SLA。
+
+## TL;DR
 
 开箱 DLO + AllGather 快路径：vLLM `0.27.0` 配 Omni `v0.27.0rc1`。meta 设备初始化 + mmap：Cosmos3-Nano DP4 冷启动 cgroup 可见峰值 **178 GB → 47 GB**（−73%）。每 rank 只留 `1/dp_size`，AllGather 在专用流上跟计算重叠。设备上固定 **双缓冲两层**，跟总层数无关。测到的 720p 10s `dist_offload+SP`：峰值 HBM **23.1 → 28.1 GB**（约 22%），空闲 HBM **11.5 → 14.6 GB**（约 27%）。DP 多并发相对单请求 HSDP **3.3×**，大约是理想 4× 的 **83%**。CUDA/NCCL 和昇腾 CANN/HCCL 走 Omni 的平台层。8× B300 上 MiniMax-H3：AllGather 赢 DP1×SP8 和 DP4×SP2；rank-local 赢 DP8×SP1，**183.78 videos/h**、**43.97 Wh/video**。
 

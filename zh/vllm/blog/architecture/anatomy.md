@@ -2,25 +2,27 @@
 source: https://vllm.ai/blog/2025-09-05-anatomy-of-vllm
 lang: zh
 voice: literary-study
-fetched: 2026-09-03
+fetched: 2026-09-05
 ---
 
 # 走进 vLLM：一套高吞吐推理系统的解剖
 
 英文对照：[en/vllm/blog/architecture/anatomy.md](../../../../en/vllm/blog/architecture/anatomy.md)  
-原文：https://vllm.ai/blog/2025-09-05-anatomy-of-vllm（Aleksa Gordić 先发在自己的站点）
+原文：https://vllm.ai/blog/2025-09-05-anatomy-of-vllm（Aleksa Gordić 先发在 [自己的站点](https://www.aleksagordic.com/blog/vllm)）。学习译文，不是官方译本。
 
-分析基于 commit `42172ad`（2025-08-09）。V0 已弃用，类名还会改；作者强调想法，不强调签名。结构草图仍是原文附图（字段名就是源码）；讲机制的换成学习图。
+副题原文：From paged attention, continuous batching, prefix caching, specdec, etc. to multi-GPU, multi-node dynamic serving at scale.
 
-它其实在讲一件很旧的事——怎样让许多人同时说话，而不让屋子塌掉。五部：
+这篇会把一套现代高吞吐 LLM 推理系统的核心零件和进阶功能，一层一层请上台。具体拆的是 vLLM [[1]](#ref-1) 怎么干活。它是系列的第一篇：倒金字塔——先给整栋房子的心智模型，再往细节里走，免得一上来淹死在签名里。后面的博文会把子系统再拉近。
 
-1. LLM engine / Engine Core（调度、paged attention、continuous batching）
-2. 进阶：chunked prefill、prefix cache、guided decoding、投机解码、分离的 P/D
-3. 从单卡 `UniProcExecutor` 到多卡 `MultiProcExecutor`
-4. 分布式 serving（API server、DP、负载均衡）
-5. 怎么量：延迟 vs 吞吐、`vllm bench`、auto-tune
+五部：
 
-读者：想弄懂现代 LLM 引擎的人，以及想给 vLLM / SGLang 提 PR 的人。焦点是 **V1**。Engine Core 那一节会干一点；后面有例子和图。
+1. [LLM engine / Engine Core](#llm-engine-与-engine-core)：调度、paged attention、continuous batching
+2. [进阶](#进阶在核心上长出来的房间)：chunked prefill、prefix cache、guided decoding、投机解码、分离的 P/D
+3. [从 UniProc 到 MultiProc](#从-uniproc-到-multiproc)：单卡到多卡
+4. [分布式 serving](#分布式-serving)：网上那层脚手架
+5. [怎么量](#延迟-vs-吞吐)：延迟 vs 吞吐、`vllm bench`、auto-tune
+
+分析基于 commit [`42172ad`](https://github.com/vllm-project/vllm/tree/42172ad)（2025-08-09）。读者：想弄懂现代 LLM 引擎的人，以及想给 vLLM / SGLang 提 PR 的人。焦点是 [V1](https://docs.vllm.ai/en/latest/usage/v1_guide.html)。作者也摸过现已 [废弃](https://github.com/vllm-project/vllm/issues/18571) 的 V0，许多想法还在。Engine Core 那一节会干一点；后面有例子和图。V0 弃用之后类名还会改；强调想法，不强调签名。结构草图仍是原文附图（字段名就是源码）；讲机制的换成学习图。
 
 ## LLM Engine 与 Engine Core
 
@@ -65,6 +67,8 @@ Engine core 内部：
 KV cache manager 维护 `free_block_queue`：一大池空闲块（量级可以到几十万，取决于显存和 block size）。Paged attention 用这些块当索引：token 住在哪一间房间。
 
 ![engine constructor](../../../../assets/vllm/blog/architecture/anatomy/01-engine_constructor.png)
+
+**Figure 1（原文）。** 这一节的核心零件，以及它们怎么互相说话。
 
 标准 Transformer 一层（非 MLA）一块的大小大致是：
 
@@ -115,9 +119,9 @@ Worker 起来时做三件事（`MultiProcExecutor` 里每个 GPU 进程各做一
 - 命中 `stop_token_ids`（会留在输出里）
 - 输出里出现 stop string（截到第一次出现并中止；stop string 自己不会留在输出里）
 
-流式会把中间 token 推出去；这篇先忽略。
-
 ![engine loop](../../../../assets/vllm/blog/architecture/anatomy/02-engine_loop.png)
+
+**Figure 2（原文）。** Engine loop。流式会把中间 token 推出去；这篇先忽略。
 
 ### Scheduler
 
@@ -435,7 +439,19 @@ vllm serve <model-name>
   --headless
 ```
 
-第二台去掉 `--headless`，把 `--data-parallel-start-rank` 改成 2。网络要通到 master IP 和 RPC 端口。
+第二台同一条命令，去掉 `--headless`，把 `--data-parallel-start-rank` 改成 **2**：
+
+```
+vllm serve <model-name>
+  --tensor-parallel-size 4
+  --data-parallel-size 4
+  --data-parallel-size-local 2
+  --data-parallel-start-rank 2
+  --data-parallel-address <master-ip>
+  --data-parallel-rpc-port 13345
+```
+
+网络要通到指定的 master IP 和 RPC 端口。
 
 ### Headless 节点
 
@@ -557,6 +573,24 @@ CI 配置在 `.buildkite/nightly-benchmarks/tests`。还有 auto-tune：驱动 s
 
 这一海拔分辨率不够。后面的博客会把子系统再拉近。
 
-致谢：Hyperstack 提供 H100；Nick Hill、Kaichao You、Mark Saroufim、Kyle Krannen、Ashish Vaswani 读过预发稿。
+作者欢迎纠错：[X](https://x.com/gordic_aleksa)、[LinkedIn](https://www.linkedin.com/in/aleksagordic/)、[匿名表单](https://docs.google.com/forms/d/1z1fEirrN2xtGxAsJvptpM7yV4ByT5SF25S-XiMPrXNA)。
 
-参考文献：vLLM；Attention Is All You Need；PagedAttention 论文；DeepSeek-V2；Jenga；Orca；XGrammar；投机采样原论文；EAGLE；Medusa；LMCache。
+### Acknowledgements
+
+感谢 [Hyperstack](https://www.hyperstack.cloud/) 过去一年提供 H100。
+
+预发稿读者：[Nick Hill](https://www.linkedin.com/in/nickhillprofile/)（vLLM core，Red Hat）、[Kaichao You](https://github.com/youkaichao)（vLLM core）、[Mark Saroufim](https://x.com/marksaroufim)（PyTorch）、[Kyle Krannen](https://www.linkedin.com/in/kyle-kranen/)（NVIDIA，Dynamo）、[Ashish Vaswani](https://www.linkedin.com/in/ashish-vaswani-99892181/)。
+
+### References
+
+1. <span id="ref-1"></span> vLLM https://github.com/vllm-project/vllm
+2. <span id="ref-2"></span> Attention Is All You Need https://arxiv.org/abs/1706.03762
+3. <span id="ref-3"></span> Efficient Memory Management for Large Language Model Serving with PagedAttention https://arxiv.org/abs/2309.06180
+4. <span id="ref-4"></span> DeepSeek-V2 https://arxiv.org/abs/2405.04434
+5. <span id="ref-5"></span> Jenga: Effective Memory Management for Serving LLM with Heterogeneity https://arxiv.org/abs/2503.18292
+6. <span id="ref-6"></span> Orca: A Distributed Serving System for Transformer-Based Generative Models https://www.usenix.org/conference/osdi22/presentation/yu
+7. <span id="ref-7"></span> XGrammar https://arxiv.org/abs/2411.15100
+8. <span id="ref-8"></span> Accelerating Large Language Model Decoding with Speculative Sampling https://arxiv.org/abs/2302.01318
+9. <span id="ref-9"></span> EAGLE https://arxiv.org/abs/2401.15077
+10. <span id="ref-10"></span> Medusa https://arxiv.org/abs/2401.10774
+11. <span id="ref-11"></span> LMCache https://github.com/LMCache/LMCache

@@ -1,14 +1,16 @@
 ---
 source: https://vllm.ai/blog/2026-09-01-minimax-h3-production-serving
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # MiniMax H3 on vLLM-Omni: From System-Wide Optimization to Real-Time Serving with FastVideo’s FastH3
 
 Chinese: [zh/vllm/blog/serving/minimax-h3.md](../../../../zh/vllm/blog/serving/minimax-h3.md)
 
-2026-09-01. **vLLM-Omni Team**. Two-stage story: first shrink overhead across the **complete** MiniMax H3 serving stack, then fuse FastVideo’s four-step **FastH3** so a complete MP4 is ready **faster than playback**. **Real-time** here means that complete-response criterion — **not** streaming delivery and **not** time to first frame. Same Omni family: [vllm-omni.md](vllm-omni.md), [omni-layerwise-offload.md](omni-layerwise-offload.md), [omni-diffusion-cache.md](omni-diffusion-cache.md). Text sibling: [minimax-m3.md](minimax-m3.md). Study note; do not scrape the post’s MP4s or SVG figures. No `assets/vllm/blog/serving/minimax-h3/` in-tree.
+2026-09-01. **vLLM-Omni Team**. Two-stage story: first shrink overhead across the **complete** MiniMax H3 serving stack, then fuse FastVideo’s four-step **FastH3** so a complete MP4 is ready **faster than playback**. **Real-time** here means that complete-response criterion — **not** streaming delivery and **not** time to first frame. Same Omni family: [vllm-omni.md](vllm-omni.md), [omni-layerwise-offload.md](omni-layerwise-offload.md), [omni-diffusion-cache.md](omni-diffusion-cache.md). Text sibling: [minimax-m3.md](minimax-m3.md). Study note; page MP4s / evidence clips not mirrored. Local SVG + SAGE diagram copies.
+
+One request crosses a large Qwen3-VL encoder, a long-sequence audio-video DiT, separate video and audio VAEs, device/process boundaries, then H.264/AAC muxing. Optimizing only the DiT leaves latency elsewhere. [vLLM-Omni](https://github.com/vllm-project/vllm-omni) therefore starts with the complete resident pipeline: attention and communication, fused DiT operators, parallel VAE decoding, compact output transport, and parallel MP4 construction. [FastVideo](https://github.com/hao-ai-lab/FastVideo)’s [FastH3](https://haoailab.com/blogs/fasth3-preview/) then attacks the remaining dominant term by replacing 49 DiT forwards with four.
 
 **TL;DR from the page:**
 
@@ -26,7 +28,9 @@ request -> encoder -> joint audio/video DiT -> video + audio VAEs
         -> GPU output preparation -> D2H/IPC -> H.264/AAC MP4
 ```
 
-**Figure 1** (not copied): multimodal inputs → shared encoders → joint audio-video diffusion → VAE decode → MP4. Text uses the H3/Qwen3-VL encoder; visual/audio conditions also use corresponding VAEs. Conditioning and noisy target latents pack into one sequence for joint denoising.
+![MiniMax H3 model pipeline](../../../../assets/vllm/blog/serving/minimax-h3/01-h3-model-pipeline.svg)
+
+**Figure 1.** Multimodal inputs → shared encoders → joint audio-video diffusion → VAE decode → MP4. Text uses the H3/Qwen3-VL encoder; visual/audio conditions also use corresponding VAEs. Conditioning and noisy target latents pack into one sequence for joint denoising.
 
 Released checkpoints cover three tasks:
 
@@ -64,9 +68,13 @@ Two **separate** evidence lanes. Do **not** derive a base-to-FastH3 speedup.
 
 Both lanes time from **synchronous request submit** through **complete MP4 receipt**. Downloads, startup, compilation, and excluded warmup are outside that interval. Accepted output must decode as H.264 + stereo 32 kHz AAC, expected frame count/FPS, nonzero video variance and audio RMS, and pass prompt-adherence review.
 
-Failed media check, missing audio, OOM, accelerator error, or unexpected fallback **stops** that profile before repeated measurement.
+For FastH3, retain the validated video and audio stream durations and define `T_media = max(T_video, T_audio)`, the effective complete-MP4 playback duration:
 
-Other hardware is **recipe coverage**, not another result matrix: H200/datacenter CUDA, RTX PRO 5000, RTX 4090, RTX 5090, GB10, ROCm (`gfx942` / `gfx950`) — links in the Omni MiniMax-H3 recipes.
+`RTF_client = T_client / T_media`
+
+`RTF_client <= 1.0` is the complete-response real-time criterion. A failed media check, missing audio, OOM, accelerator error, or unexpected fallback **stops** that profile before repeated measurement.
+
+Other hardware is **recipe coverage**, not another result matrix: [H200 and datacenter CUDA](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md), [RTX PRO 5000](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-RTX-PRO-5000.md), [RTX 4090](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-4090.md), [RTX 5090](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-5090.md), [GB10](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-Spark-GB10.md), [ROCm](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md#amd-rocm-gfx942--gfx950) (`gfx942` / `gfx950`).
 
 ## 3. System-wide optimization with vLLM-Omni
 
@@ -121,19 +129,25 @@ DLO and disaggregated encoding change **capacity and placement**. Quantized weig
 
 [DLO](https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload) (local: [omni-layerwise-offload.md](omni-layerwise-offload.md)) keeps a bounded window of DiT layers in HBM and streams the rest from host. AllGather reconstructs active layers from host shards; rank-local streams tensors from each rank’s normal loader.
 
-**Figure 2** (DLO article still; not recopied): next layer prepared while current layer computes.
+![DLO double-buffer pipeline](../../../../assets/vllm/blog/serving/minimax-h3/02-dlo-pipeline.png)
+
+**Figure 2.** Next layer prepared while current layer computes. Mechanism and deployment trade-offs: [omni-layerwise-offload.md](omni-layerwise-offload.md).
 
 #### 8× B300 BF16 DLO Pareto
 
 Official BF16 MiniMax-H3 FL2VA checkpoint (5.175 s, 1344×768, SP8/Ulysses8/Ring1/DP1/TP1, AllGather, CUDNN attention). First request excluded (lazy CUDA/cuDNN/JIT); remaining two averaged. Video/audio have expected shapes.
 
-**Figure 3** (not copied): latency–memory Pareto. *r* = resident DiT blocks. Non-dominated: no offload, then 50, 35, 30, and 0 leading blocks resident; 40, 20, and 10 are dominated. At **r = 35**, DLO lowers reported HBM by **37.5%** for a **5.1%** latency cost; **r = 0** is the min-memory endpoint.
+![B300 DLO Pareto](../../../../assets/vllm/blog/serving/minimax-h3/03-b300-dlo-pareto.svg)
+
+**Figure 3.** Latency–memory Pareto. *r* = resident DiT blocks. Filled points are non-dominated; open points are dominated. Non-dominated: no offload, then 50, 35, 30, and 0 leading blocks resident; 40, 20, and 10 are dominated. At **r = 35**, DLO lowers reported HBM by **37.5%** for a **5.1%** latency cost; **r = 0** is the min-memory endpoint.
 
 ### 4.2 Disaggregated encoding
 
 H3 keeps ~**51.5 GB** of Qwen3-VL encoder weights in BF16. [Disaggregated encoder](https://github.com/vllm-project/vllm-omni/pull/5885) moves that one-shot encoder into its own vLLM stage (placement, TP, replicas, queue, kernels, prefix cache). Orchestrator merges layer-50 hidden states + token-role tags with original media before DiT/VAE.
 
-**Figure 4** (not copied): encoder and diffusion scale independently. Merged single-node recipe returns conditioning through the orchestrator and keeps diffusion inline; it does **not** configure OmniConnector. SHM/RDMA is future cross-node work in [RFC #5707](https://github.com/vllm-project/vllm-omni/issues/5707).
+![Encoder and diffusion scale independently](../../../../assets/vllm/blog/serving/minimax-h3/04-h3-encoder-disaggregation.svg)
+
+**Figure 4.** Encoder and diffusion scale independently. Merged single-node recipe returns conditioning through the orchestrator and keeps diffusion inline; it does **not** configure OmniConnector. SHM/RDMA is future cross-node work in [RFC #5707](https://github.com/vllm-project/vllm-omni/issues/5707).
 
 ### 4.3 Optional quantization and attention acceleration
 
@@ -144,7 +158,9 @@ H3 keeps ~**51.5 GB** of Qwen3-VL encoder weights in BF16. [Disaggregated encode
 - **Online FP8.** Merged [global FP8 path](https://github.com/vllm-project/vllm-omni/pull/5910): from BF16 checkpoint, quantize eligible DiT and Qwen3-VL text-decoder linears at load. Embeddings, norms, RoPE, vision tower, both VAEs, and precision-sensitive projections keep declared precision.
 - **SVDQuant NVFP4 W4A4.** Merged [offline loader](https://github.com/vllm-project/vllm-omni/pull/6162): NVFP4 W4A4 base GEMM + BF16 low-rank correction. Evidence so far: checkpoint/correctness compatibility; native fused residual-GEMM performance path is **future work**.
 
-**Figure 5** (not copied): online FP8 vs offline SVDQuant.
+![Online FP8 vs offline SVDQuant](../../../../assets/vllm/blog/serving/minimax-h3/05-h3-quantization-paths.svg)
+
+**Figure 5.** Online FP8 creates FP8 weights and scales at load, then quantizes eligible activations online. Offline SVDQuant combines an NVFP4 W4A4 base branch with a BF16 low-rank correction. Sources: Omni [#5910](https://github.com/vllm-project/vllm-omni/pull/5910), [#6162](https://github.com/vllm-project/vllm-omni/pull/6162); cookbook [online FP8](https://github.com/hsliuustc0106/vllm-omni-cookbook/blob/main/blog/_posts/2026-08-18-online-quantization-fp8.md), [SVDQuant](https://github.com/hsliuustc0106/vllm-omni-cookbook/blob/main/blog/_posts/2026-08-16-understanding-pr-6162-svdquant-w4a4-blackwell.md).
 
 A quantized profile must report peak HBM, startup host RAM, checkpoint storage, latency, **and** same-seed video/audio quality. Capacity win ≠ latency win. Loader correctness ≠ fused-kernel gain.
 
@@ -164,7 +180,9 @@ Every measured request returned **243** RGB frames at 1344×768 and 32 kHz stere
 - **SAGE**: quantize QK and PV paths to FP8.
 - **Skip-Softmax**: use QK to skip unimportant Softmax and P×V ([BLASST](https://arxiv.org/abs/2512.12087)).
 
-**Figure 6** (not copied): SAGE around Skip-Softmax main loop.
+![SAGE around Skip-Softmax](../../../../assets/vllm/blog/serving/minimax-h3/06-trtllm-sage-skip-softmax.jpg)
+
+**Figure 6.** SAGE quantizes Q, K, P, and V to FP8 for Q×K and P×V; Skip-Softmax uses the [BLASST](https://arxiv.org/abs/2512.12087) tile-level decision to bypass selected Softmax and P×V tiles. Page also embeds four attention-policy MP4s; not copied.
 
 | Attention policy | SAGE configuration | Skip-Softmax configuration | Model execution | Speedup | LPIPS vs. baseline |
 |---|---|---|---:|---:|---:|
@@ -200,7 +218,9 @@ Measured Skip-Softmax is **conservative** for video quality. Higher threshold or
 
 FastH3 is **not** a request-switchable LoRA. Artifact includes full-rank deltas and replacement weights an ordinary LoRA layer cannot represent. Fuse **before** sharding.
 
-**Figure 7** (not copied): Turbo leaves base weights and applies request-selected A/B sidecars; FastH3 fuses low-rank + full-rank into a dedicated student. Turbo [#6476](https://github.com/vllm-project/vllm-omni/pull/6476), DLO support [#6550](https://github.com/vllm-project/vllm-omni/pull/6550), FastH3 [#6714](https://github.com/vllm-project/vllm-omni/pull/6714).
+![Turbo sidecars vs FastH3 load-time fusion](../../../../assets/vllm/blog/serving/minimax-h3/07-h3-few-step-adapters.svg)
+
+**Figure 7.** Turbo leaves base weights and applies request-selected A/B sidecars; FastH3 fuses low-rank + full-rank into a dedicated student. Turbo [#6476](https://github.com/vllm-project/vllm-omni/pull/6476), DLO support [#6550](https://github.com/vllm-project/vllm-omni/pull/6550), FastH3 [#6714](https://github.com/vllm-project/vllm-omni/pull/6714).
 
 | Profile | Activation model | Task scope | When to choose it |
 |---|---|---|---|
@@ -284,7 +304,7 @@ All six measured requests satisfy `RTF_client <= 1.0`.
 
 ### 6.5 Representative outputs and quality boundary
 
-Supplied FastH3 clips are **1280×736** presentation examples, **not** the 1344×768 timing artifacts of §6.4.
+Supplied FastH3 clips are **1280×736** presentation examples, **not** the 1344×768 timing artifacts of §6.4. Page embeds 5 / 10 / 15 s MP4s; not copied.
 
 | Request | Frames | MP4 duration | Resolution / FPS |
 |---:|---:|---:|---|
@@ -321,11 +341,20 @@ Post-training: vLLM-Omni can serve H3 rollouts in [VeRL-Omni](https://github.com
 
 System-wide stack makes the complete H3 pipeline efficient. FastVideo’s four-forward student then puts dedicated T2VA into faster-than-playback complete-response generation on the measured B300 system.
 
-Remaining work named on the page: FastH3 VSA variants and native fused NVFP4 kernels; [Sol-Attn](https://github.com/vllm-project/vllm-omni/pull/5851) on-the-fly sparse attention across Blackwell + multi-seed; matched base/FastH3 multi-seed quality; [chunkwise VAE→transport→MP4](https://github.com/vllm-project/vllm-omni/issues/6872) plus a GPU encoder; H3 post-training across VeRL-Omni, [UniRL](https://github.com/Tencent-Hunyuan/UniRL), [RLinf](https://github.com/RLinf/RLinf); qualify FastH3 with encoder disaggregation rather than inferring it.
+Remaining work named on the page:
+
+- integrate and qualify FastH3 VSA variants and native fused NVFP4 kernels
+- integrate and qualify [Sol-Attn](https://github.com/vllm-project/vllm-omni/pull/5851) on-the-fly sparse attention across Blackwell + multi-seed
+- complete a matched base/FastH3 multi-seed quality evaluation
+- implement [chunkwise VAE→transport→MP4](https://github.com/vllm-project/vllm-omni/issues/6872) and qualify a GPU encoder
+- enhance MiniMax H3 post-training across [VeRL-Omni](https://github.com/verl-project/verl-omni), [UniRL](https://github.com/Tencent-Hunyuan/UniRL), [RLinf](https://github.com/RLinf/RLinf) — scalable rollout, explicit resource placement, end-to-end training validation
+- qualify FastH3 with encoder disaggregation rather than inferring compatibility
 
 ## Acknowledgments
 
-Builds on vLLM, vLLM-Omni, VeRL-Omni, MiniMax H3, [FastVideo](https://github.com/hao-ai-lab/FastVideo), FastH3, Diffusers, NVIDIA. FastVideo team for [open-sourcing FastH3](https://huggingface.co/FastVideo/FastVideo-FastH3-4-step-Preview-v1-LoRA). Named GitHub handles on the page: Isotr0py (base H3); lishunyang12, evanchueng, Gaohan123, david6666666 (DLO / base / online-FP8); gcanlin, yuanwu2017 (encoder disaggregation); bobboli, fan2956, mo-ke-ke, mglyn, MosCloud, ultism (attention, fused kernels, quantization, VAE, transport, media); princepride (FastH3 integration + B300 validation); NancyFyong, mengchengTang (VeRL-Omni). Hongsheng Liu and Roger Wang for general support and blog prep.
+Builds on vLLM, vLLM-Omni, VeRL-Omni, MiniMax H3, [FastVideo](https://github.com/hao-ai-lab/FastVideo), FastH3, Diffusers, NVIDIA. FastVideo team for [open-sourcing FastH3](https://huggingface.co/FastVideo/FastVideo-FastH3-4-step-Preview-v1-LoRA).
+
+Named GitHub handles on the page: [Isotr0py](https://github.com/Isotr0py) (base H3); [lishunyang12](https://github.com/lishunyang12), [evanchueng](https://github.com/evanchueng), [Gaohan123](https://github.com/Gaohan123), [david6666666](https://github.com/david6666666) (DLO / base / online-FP8); [gcanlin](https://github.com/gcanlin), [yuanwu2017](https://github.com/yuanwu2017) (encoder disaggregation); [bobboli](https://github.com/bobboli), [fan2956](https://github.com/fan2956), [mo-ke-ke](https://github.com/mo-ke-ke), [mglyn](https://github.com/mglyn), [MosCloud](https://github.com/MosCloud), [ultism](https://github.com/ultism) (attention, fused kernels, quantization, VAE, transport, media); [princepride](https://github.com/princepride) (FastH3 integration + B300 validation); [NancyFyong](https://github.com/NancyFyong), [mengchengTang](https://github.com/mengchengTang) (VeRL-Omni). Hongsheng Liu and Roger Wang for general support and blog prep.
 
 ## Appendix A. Reproducibility
 

@@ -1,23 +1,26 @@
 ---
 source: https://vllm.ai/blog/2026-05-18-pegaflow
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # vLLM x Novita AI: PegaFlow for Production-Grade External KV Cache
 
-Chinese: [zh/vllm/blog/serving/pegaflow.md](../../../../zh/vllm/blog/serving/pegaflow.md)
+Chinese: [zh/vllm/blog/serving/pegaflow.md](../../../../zh/vllm/blog/serving/pegaflow.md)  
+Source: https://vllm.ai/blog/2026-05-18-pegaflow
 
-2026-05-18. **Novita AI and the vLLM Team**. Repo: [novitalabs/pegaflow](https://github.com/novitalabs/pegaflow). Rust daemon + external KV connector; **no vLLM source edits**, **no long-lived fork**. Examples in the post use `vllm>=0.20.0`. Same door as [mooncake.md](mooncake.md) / [kv-offload.md](kv-offload.md): the pool outlives the engine. Study note; production-oriented evals on the page, not your SLA.
+2026-05-18. **Novita AI and the vLLM Team**. Study extract, not an official reprint. Repo: [novitalabs/pegaflow](https://github.com/novitalabs/pegaflow). Rust daemon + external KV connector; **no vLLM source edits**, **no long-lived fork**. Examples in the post use `vllm>=0.20.0`. Same door as [mooncake.md](mooncake.md) / [kv-offload.md](kv-offload.md): the pool outlives the engine. Production-oriented evals on the page, not your SLA.
 
-**TL;DR from the page:**
+**TL;DR from the page.** With Novita AI, [PegaFlow](https://github.com/novitalabs/pegaflow) attaches to vLLM as an external KV cache: standalone Rust process, external KV connector. KV lifetime moves out of the vLLM worker; cache pools across local instances and remote nodes; pinned host memory, RDMA-accessible remote memory, and SSD form a three-level hierarchy.
+
+Production-oriented evaluations:
 
 - **2.15×** faster vLLM startup when a **500 GiB** host KV pool was already owned by the external cache service.
 - **56%** higher throughput for eight Qwen3-8B instances sharing one host cache instead of eight isolated caches.
 - **72%** higher throughput for DeepSeek-V3.2 MLA with TP8 by storing logical KV **once** instead of once per TP rank.
 - **194 GB/s** average remote-read throughput for large prefix pulls in an internal RDMA cluster with **8 × 400 Gbps** NICs per node.
 
-Core claim: KV cache should be a **long-lived serving asset**, not temporary state tied to one inference process. Wired through existing `kv_transfer_config`.
+Core claim: KV cache should be a **long-lived serving asset**, not temporary state tied to one inference process. Wired through existing `kv_transfer_config`. No vLLM source change, no long-lived fork.
 
 Local figures (copyright remains with the original site; study copies):
 
@@ -35,13 +38,13 @@ Local figures (copyright remains with the original site; study copies):
 
 ## Why KV cache needs a process boundary
 
-KV is one of the most expensive runtime assets in production serving. It can occupy **hundreds of GiB per host**, takes time to allocate and warm, and often **outlives** the request mix that created it.
+KV is one of the most expensive runtime assets in production LLM serving. It can occupy **hundreds of GiB per host**, takes time to allocate and warm, and often **outlives** the request mix that created it.
 
 In-process, that asset dies with the engine: crashes, rolling upgrades, model switches. Restart → host KV pool gone. Fleet switches models → hundreds of GiB of pinned memory may need reallocating and warming before traffic.
 
 PegaFlow moves the KV runtime into a **standalone daemon per machine**. The server owns: host KV pool, SSD cache, topology metadata, RDMA resources, indexing, background tasks. vLLM workers attach with **CUDA IPC** (data) and **gRPC** (local control).
 
-**Figure 1.** PegaFlow beside vLLM. Local CUDA IPC + gRPC; PegaFlow manages pinned memory, SSD, RDMA, and optional cross-node indexing via the **MetaServer**.
+**Figure 1.** PegaFlow beside vLLM as an external KV cache. Local CUDA IPC + gRPC; PegaFlow manages pinned memory, SSD, RDMA, and optional cross-node indexing via the **MetaServer**.
 
 Production requirement on the page: **one cache server, many engines and models** on the same host. Different models, TP layouts, and engine versions coexist under **namespace isolation**, sharing the same memory pool, SSD, and cross-node bandwidth.
 
@@ -51,18 +54,19 @@ Failure domains split: vLLM can crash, upgrade, or switch models while the cache
 
 Startup-path isolation: **8 × RTX 5090**, **Qwen3-8B TP8**, **dummy weights**, **eager** — strip weight-load and compile, measure a ~**500 GiB** host KV pool only.
 
-- Embedded / in-process: vLLM **71.4 s** to ready.
-- Pool pre-owned by PegaFlow: vLLM **33.2 s** after the server was ready → **2.15×** faster vLLM startup, from decoupling long-lived host allocation from the inference process.
+Embedded / in-process: the 500 GiB pool is owned by vLLM workers; vLLM **71.4 s** to ready.
 
-**Figure 2.** Those two bars.
+Pool pre-owned by the standalone PegaFlow server: vLLM **33.2 s** after the server was ready → **2.15×** faster vLLM startup, from decoupling long-lived host allocation from the inference process.
+
+**Figure 2.** vLLM startup with a 500 GiB host KV pool. External ownership cuts 71.4 s to 33.2 s in this setup.
 
 ## Rust data path and tail-latency stability
 
 The process move was first about lifecycle, sharing, and CPU isolation. Implementing it in **Rust** also bought latency stability.
 
-The data plane avoids Python interpreter overhead, **GIL** contention, and stop-the-world GC. A production cache does more than move bytes: statistics, index uploads, prefetch, health checks, metrics, eviction, SSD management. Those tasks live in the same standalone Rust service and **do not share an interpreter** with vLLM.
+The data plane avoids Python interpreter overhead, **GIL** contention, and stop-the-world GC. A production cache does more than move bytes: statistics, index uploads, prefetch, health checks, metrics, eviction, SSD management. Those tasks live in the same standalone Rust service and **do not share an interpreter** with vLLM. More room for control-plane and maintenance without disturbing the data path.
 
-**Figure 3.** Tail and average latency under baseline vs GIL-load. The **Rust Tokio** path is much less affected by background load than **Python uvloop** and **Python ZMQ** baselines.
+**Figure 3.** Tail and average latency under baseline vs GIL-load. The **Rust Tokio** path is much less affected by background load than **Python uvloop** and **Python ZMQ**.
 
 ## Pooling cache across instances and nodes
 
@@ -75,13 +79,13 @@ The same logical KV is often stored many times because process, model, or node b
 
 PegaFlow turns those fragments into a shared pool.
 
-On one host, all local instances talk to the same PegaFlow server and share one CPU KV pool. Identical blocks can be stored **once physically** and reused by multiple engines (small-model multi-instance, WideEP DP replicas, TP workers).
+On one host, all local instances talk to the same PegaFlow server and share one CPU KV pool. Small-model multi-instance, WideEP DP replicas, TP workers: identical blocks stored **once physically**, reused by multiple engines.
 
 Across hosts, a **PegaFlow MetaServer** keeps an **approximate global index**. Nodes fetch remote KV with **one-sided RDMA READ**; after connection setup the remote side spends **zero CPU**. A remote hit can be used much more like a local hit, skipping expensive Prefill recompute.
 
 ## Results
 
-Fixed cache **budget**; only **visibility** of that cache changes.
+Fixed cache **budget**; only **visibility** of that cache changes across processes, TP ranks, or nodes.
 
 ### Single-node multi-instance sharing
 
@@ -123,6 +127,8 @@ At that rate a **24 GiB** KV segment pulls from a remote node in roughly **100 m
 
 Pooling helps; host memory is still finite. Long reuse-distance prefixes get evicted; simple LRU is disrupted by **scan-like** traffic (many one-time blocks).
 
+Hot local blocks stay in pinned DRAM; remote hits fetch over RDMA; colder reusable blocks spill to local SSD:
+
 | Level | Medium | Access path | Typical role |
 | --- | --- | --- | --- |
 | L1 | Local pinned DRAM | Local memory | Fast local KV reuse |
@@ -135,9 +141,11 @@ Scan-heavy workloads or smaller budgets can enable **TinyLFU** admission: admit 
 
 **Figure 6.** Policy comparison at small cache sizes. Scan-heavy traces make recency-only policies ineffective; admission-aware policies (TinyLFU) protect the cache from one-time blocks.
 
-## Distance from the theoretical hit-rate ceiling
+## Measuring distance from the theoretical hit-rate ceiling
 
-Online hit rate alone misleads. **3%** may be good if the workload has almost no reuse; **90%** may still be slack if the theoretical ceiling is much higher. The operator question is: **how close are we to the best hit rate this workload could reasonably achieve?**
+Online hit rate alone misleads. **3%** may be good if the workload has almost no reuse; **90%** may still be slack if the theoretical ceiling is much higher.
+
+The operator question is not only “what is the hit rate?” It is: **how close are we to the best hit rate this workload could reasonably achieve?**
 
 PegaFlow estimates the ceiling online with **HyperLogLog**:
 
@@ -153,13 +161,17 @@ Rolling HLL windows, defaults: **15 minutes**, **1 hour**, **24 hours**. Put mea
 - Far below → room in capacity, admission, prefetch, or cross-node discovery.
 - Ceiling itself low → the workload has little reuse; the bottleneck is not primarily the cache implementation.
 
-## Integrating through the external connector
+## Integrating with vLLM through the external connector
 
 Many external KV systems want invasive edits to scheduler, block manager, or attention kernels. PegaFlow uses vLLM’s **external KV connector**. Configure `kv_transfer_config`; load the package dynamically with `kv_connector_module_path`. Runtime takeover of key KV operations; **no vLLM source change**, **no fork**.
 
-From vLLM’s side, PegaFlow is not a replacement engine. It is an external cache backend on the KV transfer interface. vLLM still owns scheduling, execution, batching, and the OpenAI-compatible serving path. That boundary lets PegaFlow iterate the Rust data plane / SSD / RDMA / index / connector on its own clock.
+From vLLM’s side, PegaFlow is not a replacement engine. It is an external cache backend on the KV transfer interface. vLLM still owns scheduling, execution, batching, and the OpenAI-compatible serving path.
+
+That boundary helps both projects. PegaFlow iterates the Rust data plane / SSD / RDMA / index / connector on its own clock. vLLM keeps improving the core engine while exposing a stable connector contract.
 
 ## Quick start
+
+Install for your CUDA version:
 
 ```bash
 uv pip install pegaflow-llm        # CUDA 12
@@ -192,7 +204,7 @@ pegaflow-server \
   --metaserver-addr http://metaserver-host:50056
 ```
 
-Connect vLLM (`vllm>=0.20.0` in the post’s examples):
+Connect vLLM without modifying vLLM source. Examples in the post use `vllm>=0.20.0`:
 
 ```bash
 vllm serve <model> \
@@ -205,11 +217,13 @@ vllm serve <model> \
 
 `PEGAFLOW_HOST` and `PEGAFLOW_PORT` point the connector at the service. Defaults: `http://127.0.0.1` and `50055`.
 
-Repo also documents installation, server config, P2P RDMA, metrics, and connector examples.
-
 ## Public reference benchmark
 
 In-repo KV cache bench: **H800**, **Llama-3.1-8B**, **8** prompts, **10K-token** Prefill, **1-token** Decode, **4.0 req/s**. Warm cache: mean TTFT **572.5 ms → 61.5 ms**; P99 TTFT **1113.7 ms → 77.0 ms**.
+
+## Try PegaFlow
+
+GitHub: [novitalabs/pegaflow](https://github.com/novitalabs/pegaflow). Repo also documents installation, server config, P2P RDMA, metrics, and vLLM connector examples.
 
 ## Acknowledgements
 

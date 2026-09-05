@@ -2,7 +2,7 @@
 source: https://vllm.ai/blog/2026-07-21-vllm-sr-new-chapter-mom
 lang: zh
 voice: literary-study
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # Mixture-of-Models：从选模型到造系统
@@ -76,6 +76,8 @@ runtime 背后有两篇论文。
 
 **Figure 3.** 白皮书：可编程路由引擎。愿景文：工作负载和物理 pool 共设计。
 
+两篇论文一起：路由可编程，并把它绑到工作负载和硬件——MoM 收到同一份模型合同下面的两块地基。
+
 runtime 当时已经越过单模选择。[Fusion](semantic-router-fusion.md)、ReMoM、Confidence、Ratings、有界 Workflows，让一条请求能调用受控的模型协作。[Micro-Agent](semantic-router-micro-agent.md) 写过：客户端调一个模型名，serving 层选配方、扇出到 worker、校验或合成，交回一条普通响应。
 
 | First chapter | New chapter |
@@ -118,6 +120,8 @@ Mixture-of-Models 把这责任收到一条模型边界后面。在那条边界�
 **Mixture-of-Models** 是一份带版本的复合模型：引擎按偏好、在资源边界里，穿过独立模型和 operator 实现每一条请求。用一个模型界面交给用户，交回一条可归因的结果。
 
 多上游 gateway 可以转发流量，不必拥有系统质量。MoM 拥有目标、评测合同、可复现的组成、以及执行它的 runtime。
+
+MoM 也不同于 Mixture-of-Experts。MoE 在一次前向里按 token 选内部专家；MoM 协调架构、所有者、许可、modality、协议、上下文窗口、硬件都可以不同的独立模型。一只 MoE checkpoint 本身可以当 MoM 的一个零件。
 
 | | Conventional model | Mixture-of-Models |
 | --- | --- | --- |
@@ -281,4 +285,4 @@ Iris、Athena、Themis 变好，是因为贡献者带来真实负载、加 backe
 - 模型：[Hugging Face MoM family](https://huggingface.co/LLM-Semantic-Router)
 - Slack：[vLLM Slack](https://vllm-dev.slack.com/archives/C09CTGF8KCN) 的 `#semantic-router`
 
-收束：Semantic Router 起手帮基础设施给每条请求选对模型。现在把地基从单模往外推——往能在设备和环境之间协调、评测、运营多只模型的系统走。
+收束：Semantic Router 起手帮基础设施给每条请求选对模型。现在把地基从单模往外推——往能在设备和环境之间协调、评测、运营多只模型的系统走。邀请社区把这套做法公开造、公开压。

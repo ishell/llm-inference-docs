@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-06-05-v0.3-vllm-sr-themis-release
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # vLLM Semantic Router v0.3 Themis: From Signals to Stateful Production Routing
@@ -485,7 +485,7 @@ Resources:
 
 ## Looking ahead: v0.4 Hermes
 
-Next codename **Hermes**. Core goal: a **self-improving router**. Loop: auto research for router performance at GPU scale, tune DSL recipes with router evaluation, feed validated evidence back into the codebase and encoder-model fine-tuning. Highest-value work named:
+Next codename **Hermes**. Themis makes the contract stable enough to operate. Hermes should make the router faster to improve, easier to evaluate, and safer to adapt under real workloads. Core goal: a **self-improving router**. Loop: auto research for router performance at GPU scale, tune DSL recipes with router evaluation, feed validated evidence back into the codebase and encoder-model fine-tuning. Highest-value work named:
 
 - **Self-improving router**: GPU-scale performance research, DSL recipe tuning, codebase plus encoder fine-tuning. Generated changes still have to be reviewable, replayable, versioned, and rollback-safe.
 - **SAAR as the agentic routing layer**: switch economics, tool-loop continuity, provider-state portability, replay diagnostics, router memory.

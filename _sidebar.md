@@ -67,7 +67,7 @@
   - [Hardware Plugin：把卡从主干里请出去](/zh/vllm/blog/architecture/hardware-plugin.md)
   - [Intel Arc Pro B：把 MoE 专家塞进一张消费级卡](/zh/vllm/blog/architecture/intel-arc.md)
   - [LF AI 孵化与 2024 年中的路线图](/zh/vllm/blog/architecture/lfai-roadmap.md)
-  - [2024 年在 MI300X 上侍候 Llama：八个旋钮](/zh/vllm/blog/architecture/mi300x-serving.md)
+  - [在 AMD MI300X 上侍候 LLM：当时的最佳实践](/zh/vllm/blog/architecture/mi300x-serving.md)
   - [Model Runner V2：给执行核换一块更干净的底板](/zh/vllm/blog/architecture/mrv2.md)
   - [vLLM 立项：用 PagedAttention 让 serving 便宜下来](/zh/vllm/blog/architecture/paged-attention.md)
   - [插件系统：改 vLLM 不必养一座 fork](/zh/vllm/blog/architecture/plugin-system.md)

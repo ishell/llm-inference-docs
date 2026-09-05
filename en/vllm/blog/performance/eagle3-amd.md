@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/blog/2026-07-13-eagle-3-amd-instinct
 lang: en
-fetched: 2026-09-04
+fetched: 2026-09-05
 ---
 
 # EAGLE3 on Instinct: Quark MXFP4, then a served acceptance length
@@ -57,7 +57,7 @@ A high-acceptance draft is a systems problem. vLLM sits in the training loop, no
 
 5. **Export.** Hugging Face format, vLLM-ready draft directory, ROCm EAGLE speculative decoding.
 
-### SPEED-Bench: MiniMax-M3 draft
+### Draft quality on SPEED-Bench: 11 domains and long context
 
 Acceptance length (AL) = mean tokens emitted per target verification step. AL = 1 is one emitted token per verify, before drafting overhead.
 
@@ -97,8 +97,6 @@ vllm serve amd/MiniMax-M3-MXFP4 --trust-remote-code --tensor-parallel-size 8 \
 - **Draft:** EAGLE3 training (this work for M3), FP8/MXFP4 with Quark, ROCm/vLLM.
 - **Glue:** on-policy data, hidden extract, serve-eval, export, speculative serve — all through vLLM.
 
-EAGLE3 draft-training support on Instinct is **planned for the next AMD Quark release**; quantization workflows are in the released toolkit.
-
 ## Acceleration results
 
 Only **1K/1K** (ISL=1024, OSL=1024) in this section. Speedup = EAGLE3 TPS / matching no-spec TPS from the **same** vLLM build and MML. MML = `--max-model-len` (prompt + generated). These are random-prompt throughput microbenchmarks, not application benches.
@@ -128,11 +126,19 @@ Image: `vllm/vllm-openai-rocm:nightly-4eafc729285e459a5fc96efd6f7b313b155cad48`.
 
 Sweep summary: Kimi-K2.5 **1.69–2.00×**, MiniMax-M2.5 **1.38–1.79×**.
 
-## Acknowledgements / resources (from the page)
+## Summary
 
-AMD Quark, ROCm and vLLM contributors, InferenceX maintainers, EAGLE3 research community. Special thanks: Chang Liu, Xinjun Niu, Wei Luo, Lin Zhao.
+EAGLE3 speculative decoding on Instinct raises throughput while preserving target-model decode semantics: **1.69× to 2.00×** for Kimi-K2.5 and up to **1.79×** for MiniMax-M2.5 in the 1K/1K sweeps. What makes that practical end to end is (1) AMD Quark MXFP4/FP8 for the target and selected draft checkpoints, (2) a vLLM-centric training loop that synthesizes on-policy data, extracts hidden states, and picks checkpoints by served acceptance, and (3) ROCm/vLLM speculative serving. Quantization workflows are in the released AMD Quark toolkit; EAGLE3 draft-training support on Instinct is **planned for the next AMD Quark release**.
 
-- [EAGLE3 project](https://github.com/SafeAILab/EAGLE) / [paper](https://arxiv.org/abs/2503.01840)
+## Acknowledgements
+
+AMD Quark team, AMD ROCm and vLLM contributors, InferenceX maintainers and reviewers, and the EAGLE3 research community. Special thanks: Chang Liu, Xinjun Niu, Wei Luo, Lin Zhao.
+
+## Additional Resources
+
+- [EAGLE3 project](https://github.com/SafeAILab/EAGLE)
+- [EAGLE3 paper](https://arxiv.org/abs/2503.01840)
 - [SPEED-Bench](https://arxiv.org/abs/2604.09557)
 - [InferenceX](https://github.com/SemiAnalysisAI/InferenceX)
-- [AMD Quark](https://github.com/amd/Quark) / [vLLM](https://github.com/vllm-project/vllm)
+- [AMD Quark](https://github.com/amd/Quark)
+- [vLLM](https://github.com/vllm-project/vllm)
