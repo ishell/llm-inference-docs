@@ -1,0 +1,239 @@
+---
+source: https://docs.vllm.ai/en/stable/configuration/optimization/
+lang: zh
+voice: literary-study
+fetched: 2026-09-05
+---
+
+# 优化与调优 — vLLM V1
+
+英文对照：[en/vllm/optimization/optimization.md](../../../en/vllm/optimization/optimization.md)  
+来源：https://docs.vllm.ai/en/stable/configuration/optimization/
+
+官方建议的顺序很像一套礼貌：先确认这座房子里的 **CPU 核够不够**（V1 是多进程，核不够时 GPU 会像一位等待端菜的厨师），再选优化等级 `-O0`～`-O3`（默认 `-O2`，cudagraph + fusion），再调 **`max_num_batched_tokens`**（小值更护 ITL，大值更护 TTFT；吞吐常要 >8192），然后才是 TP/PP/DP/EP 和 cache。显存不够时另见官方 memory conservation——那是另一本更瘦的手册。 旋钮对应哪篇博客，见 [FLAG-MAP.md](../blog/FLAG-MAP.md)。
+
+## 优化等级
+
+四档，是启动时间和稳态速度之间的交易：
+
+- `-O0`：不优化。门开得最快，跑得最慢。适合你只想确认模型还活着。
+- `-O1`：快优化。简单编译 + 快 fusion + PIECEWISE cudagraph。
+- `-O2`：默认。更大编译范围、更多 fusion、FULL_AND_PIECEWISE cudagraph。
+- `-O3`：名义上更激进。目前等于 `-O2`，以后可能塞进更耗时或实验性的魔法。
+
+## 加快重复启动
+
+同一套模型、配置、硬件反复启动时，不要每次都从头烤蛋糕：
+
+- **复用 compile cache。** `torch.compile` 产物在 `VLLM_CACHE_ROOT`（默认 `~/.cache/vllm`），可在机器间拷贝或打进镜像。`VLLM_FORCE_AOT_LOAD=1` 在 cache miss 时直接失败，而不是默默重编译——失败比假装很快更诚实。模型、配置、相关 `VLLM_*`、torch 版本、GPU 型号变了，cache 都会失效。
+- **`--kv-cache-memory` 跳过 memory profiling。** 启动日志会打出当前分配的精确值，下次原样传入可跳过 profiling 和 CUDA graph 显存估算。给小了限制并发；给大了分配时失败。只在同一块 GPU、相近空闲显存下有效。OOM 就去掉该参数重新 profile。
+- **`--enforce-eager` 不用 CUDA graph。** 跳过编译和 capture，启动最快，稳态 decode 更慢。适合开发循环，或测量启动时间里 compile/capture 占多少。把烤箱关了，面包会更快进炉，也会更慢熟。
+
+## Preemption（抢占）
+
+Transformer 自回归导致 KV cache 不够同时扛住当前 batch 时，vLLM 会抢占部分请求、腾出 KV，空间够了再重算。日志类似：
+
+```
+Sequence group 0 is preempted by PreemptionMode.RECOMPUTE ... Increase gpu_memory_utilization or tensor_parallel_size
+```
+
+抢占能保证不崩，但伤害端到端延迟——被请出房间的请求，要重新把过去读一遍。频繁抢占时：
+
+- 提高 `gpu_memory_utilization`，给 KV 更多空间
+- 降低 `max_num_seqs` 或 `max_num_batched_tokens`，减小并发
+- 增大 `tensor_parallel_size`：权重切开，每卡给 KV 更多空间，但同步开销可能过大
+- 增大 `pipeline_parallel_size`：层切开，间接给 KV 腾空间，可能增加延迟
+
+可用 Prometheus 指标或 `disable_log_stats=False` 看累计抢占次数。V1 默认抢占模式是 `RECOMPUTE` 而不是 `SWAP`，V1 里重算开销更低。
+
+## Chunked Prefill
+
+把大 prefill 切成小块，和 decode 请求组在同一个 batch 里：compute-bound 的阅读，和 memory-bound 的说话，坐在同一张桌子上。
+
+V1 能开就默认开。调度：**先排所有 pending decode，再用 `max_num_batched_tokens` 预算去排 prefill**；单条 prefill 塞不下就自动切块。已经开口的人，先把这句说完。
+
+好处：decode 优先，ITL 更好；同一 batch 里既有 prefill 又有 decode，GPU 更不容易闲着发呆。
+
+### 用 `max_num_batched_tokens` 调
+
+- 小值（如 2048）：ITL 更好，因为 decode 较少被大 prefill 拖慢
+- 大值：TTFT 更好，一个 batch 能处理更多 prefill token
+- **追求吞吐：建议 `max_num_batched_tokens > 8192`**，尤其是大卡上的小模型
+- 若它等于 `max_model_len`，几乎相当于 V0 默认调度（仍会优先 decode）
+
+关掉 chunked prefill 时，`max_num_batched_tokens` 必须大于 `max_model_len`，否则启动可能直接崩。
+
+```python
+from vllm import LLM
+llm = LLM(model="meta-llama/Llama-3.1-8B-Instruct", max_num_batched_tokens=16384)
+```
+
+相关论文：https://arxiv.org/pdf/2401.08671 、 https://arxiv.org/pdf/2308.16369
+
+## 并行策略
+
+可组合使用。
+
+### Tensor Parallelism (TP)
+
+层内切参数。单机大模型最常见。
+
+何时用：单卡装不下；或想减轻每卡权重压力、给 KV 腾空间提高吞吐。
+
+```python
+llm = LLM(model="meta-llama/Llama-3.3-70B-Instruct", tensor_parallel_size=4)
+```
+
+70B 这类单卡装不下的模型，TP 是刚需。
+
+### Pipeline Parallelism (PP)
+
+按层切到不同 GPU，顺序流水。
+
+何时用：TP 已经用到头还要继续切，或跨节点；很深很窄、切层比切张量更合适。
+
+可与 TP 组合：`tensor_parallel_size=4, pipeline_parallel_size=2`。
+
+### Expert Parallelism (EP)
+
+MoE 专用：不同 expert 分到不同 GPU。`enable_expert_parallel=True` 后，MoE 层用 EP 替代 TP，并行度与 TP size 相同。适用于 DeepSeekV3、Qwen3MoE、Llama-4 等。
+
+### Data Parallelism (DP)
+
+整模复制多份，并行处理不同 batch。GPU 够、要扩吞吐而不是扩模型尺寸时用。`data_parallel_size=N`。MoE 层会按 `TP × DP` 来切。
+
+### 多路 NUMA 绑定
+
+多 socket GPU 服务器上，worker 的 CPU/内存若漂到离 GPU 远的 NUMA 节点会掉速。`--numa-bind` 在 Python 子进程起来前用 `numactl` 钉住，让解释器、import、早期 allocator 一开始就站在对的节点上。默认自动检测 GPU→NUMA，用 `--cpunodebind= --membind=`。自定义 CPU：加 `--numa-bind-cpus`，改成 `--physcpubind= --membind=`。
+
+只作用于 GPU 执行进程（EngineCore、multiprocessing worker）。不作用于 CPU backend 的线程亲和，也不绑 API server / DP coordinator。自动检测目前写在 CUDA/NVML 与 ROCm；别的 GPU backend 要用这些旗标，得自己给绑定列表。`--numa-bind-nodes` 按可见 GPU 顺序各给一个非负 NUMA 下标；`--numa-bind-cpus` 按同样顺序各给一份 `numactl --physcpubind` 列表，例如 `0-3`、`0,2,4-7`、`16-31,48-63`。
+
+```
+vllm serve meta-llama/Llama-3.1-8B-Instruct \
+  --tensor-parallel-size 4 \
+  --numa-bind
+vllm serve meta-llama/Llama-3.1-8B-Instruct \
+  --tensor-parallel-size 4 \
+  --numa-bind \
+  --numa-bind-nodes 0 0 1 1
+vllm serve meta-llama/Llama-3.1-8B-Instruct \
+  --tensor-parallel-size 4 \
+  --numa-bind \
+  --numa-bind-nodes 0 0 1 1 \
+  --numa-bind-cpus 0-3 4-7 48-51 52-55
+```
+
+CLI 会把 multiprocessing 强制成 `spawn`。Python API 自己开 NUMA 绑定时，也要设 `VLLM_WORKER_MULTIPROC_METHOD=spawn`。自动检测靠宿主 NVML 与 NUMA；看不准就显式传 `--numa-bind-nodes`。vLLM 只做少量校验，真正语义仍是 `numactl` 的。容器里可能需要 `--cap-add SYS_NICE`。
+
+### CPU backend 线程亲和
+
+CPU backend 不走 `--numa-bind`，而是环境变量：`VLLM_CPU_OMP_THREADS_BIND`、`VLLM_CPU_NUM_OF_RESERVED_CPU`、`CPU_VISIBLE_MEMORY_NODES`。默认 `VLLM_CPU_OMP_THREADS_BIND=auto`，按每个 CPU worker 可见的 CPU/NUMA 拓扑放 OpenMP。要覆盖自动策略，按 CPU backend 文档的 CPU list 写；`nobind` 关掉这件事。GPU 侧的 `--numa-bind*` 不管 CPU worker。
+
+### 多模态 Encoder 的 batch-level DP
+
+默认 encoder 也用 TP 切权重。Encoder 很小，TP 收益小、每层 all-reduce 开销大。改用 TP 切 **batch 数据**（本质是 batch-level DP）在 `TP=8` 上吞吐/TTFT 大约 +10%；未优化的 Conv3D vision encoder 相对普通 TP 还可再 +40%。权重会在每个 TP rank 复制，勉强能装下的模型可能 OOM。
+
+```python
+from vllm import LLM
+llm = LLM(
+    model="Qwen/Qwen2.5-VL-72B-Instruct",
+    tensor_parallel_size=4,
+    mm_encoder_tp_mode="data",
+)
+```
+
+`mm_encoder_tp_mode="data"` 时，vision encoder 用 TP=4（不是 DP=1）去切输入，TP size 变成有效 DP size；这和 expert parallel 里语言 decoder 的请求级 DP 无关。语言 decoder 仍按 TP 切权重。
+
+这不是请求级 DP（请求级由 `data_parallel_size` 控制）。需要模型实现 `supports_encoder_tp_data = True`，引擎参数里仍要显式打开。已知支持（带对应 PR）：
+
+- dots_ocr（#25466）
+- GLM-4.1V 及以上（#23168）
+- InternVL（#23909）
+- Kimi-VL（#23817）
+- Llama4（#18368）
+- MiniCPM-V-2.5 及以上（#23327、#23948）
+- Qwen2-VL 及以上（#22742、#24955、#25445）
+- Step3（#22697）
+
+语言 decoder 仍按 TP 切权重，与 encoder 这一档无关。
+
+## 输入处理
+
+### fastokens
+
+默认用 Hugging Face `tokenizers`。BPE tokenizer（Qwen、Llama、DeepSeek、GPT-OSS 等）可切到 Rust 的 fastokens：`VLLM_USE_FASTOKENS=1`（v0.23.0+）。装的 vLLM 若不认这个环境变量，先升级再开。离线 API 等价于启动前 `os.environ["VLLM_USE_FASTOKENS"] = "1"`。
+
+需安装 `fastokens>=0.2.0`；没装会在 tokenizer load 时抛清晰的 `ImportError`。覆盖作用于最终会加载 HF fast tokenizer 的 `--tokenizer-mode`（`hf`、`deepseek_v32`、`deepseek_v4` …）。不用 HF fast tokenizer 的模型（`mistral`、`kimi_audio`）会忽略该旗标。
+
+对长共享前缀、短 prompt 突发、批量 detokenize 最明显。瓶颈在 GPU prefill/decode 时，换 tokenizer 端到端几乎看不出。
+
+### API server 横向扩展
+
+输入处理（tokenize 等）在 API server，模型执行在 engine core。输入处理成瓶颈且 CPU 有余量时：
+
+```
+vllm serve Qwen/Qwen2.5-VL-3B-Instruct --api-server-count 4
+vllm serve Qwen/Qwen2.5-VL-3B-Instruct --api-server-count 4 -dp 2
+```
+
+只对在线 serving 有效。每个 API server 默认 8 个线程加载媒体，扩进程时考虑调 `VLLM_MEDIA_LOADING_THREAD_COUNT`，避免 CPU 打满。API scale-out 会关掉多模态 IPC cache（它要求 API 与 engine 一对一），不影响 processor cache。
+
+## 多模态缓存
+
+避免多轮对话里同一张图反复传、反复处理。
+
+- Processor cache：默认开，避免 `BaseMultiModalProcessor` 重复处理同一多模态输入
+- IPC cache：API（`P0`）与 engine core（`P1`）一对一时默认开，避免反复传
+- 默认 key-replicated：key 在 P0 和 P1，数据只在 P1
+- TP>1 时共享内存更高效：`mm_processor_cache_type="shm"`。此时 key 在 P0，数据在所有进程都能摸到的共享内存
+- 大小：`mm_processor_cache_gb`（默认 4 GiB）；设 0 把 IPC 和 processor cache 一起关
+
+```python
+llm = LLM(model="Qwen/Qwen2.5-VL-3B-Instruct", mm_processor_cache_gb=8)
+llm = LLM(
+    model="Qwen/Qwen2.5-VL-3B-Instruct",
+    tensor_parallel_size=2,
+    mm_processor_cache_type="shm",
+    mm_processor_cache_gb=8,
+)
+llm = LLM(model="Qwen/Qwen2.5-VL-3B-Instruct", mm_processor_cache_gb=0)
+```
+
+按配置，P0 / P1 上放什么：
+
+| mm_processor_cache_type | Cache Type | `P0` Cache | `P1` Engine Cache | `P1` Worker Cache | Max. Memory |
+| --- | --- | --- | --- | --- | --- |
+| lru | Processor Caching | K + V | N/A | N/A | `mm_processor_cache_gb * data_parallel_size` |
+| lru | Key-Replicated Caching | K | K + V | N/A | `mm_processor_cache_gb * api_server_count` |
+| shm | Shared Memory Caching | K | N/A | V | `mm_processor_cache_gb * api_server_count` |
+| N/A | Disabled | N/A | N/A | N/A | `0` |
+
+K：多模态 item 的 hash。V：处理后的 tensor。
+
+## GPU 部署的 CPU 资源
+
+V1 是一座多进程的房子。CPU 核不够是最常见、也最容易被冤枉到 GPU 头上的掉速原因，虚拟机里更明显。
+
+N 张 GPU 至少：
+
+- 1 个 API server（HTTP、tokenize、输入处理）
+- 1 个 engine core（调度、协调 worker）
+- N 个 GPU worker
+
+至少 `2+N` 个进程抢 CPU。**物理核少于进程数会明显伤吞吐和延迟。** engine core 是 busy loop，对 CPU 饥饿特别敏感。
+
+实践中核要更多：OS、PyTorch 后台线程也要 CPU。有超线程时 1 vCPU = 半个物理核，最少需要 `2×(2+N)` 个 vCPU。
+
+DP 或多 API server：
+
+```
+最少物理核 = A + DP + N + (DP>1 则再 +1)
+```
+
+`A` 为 API server 数（默认等于 DP）。例如 `DP=4, TP=2` 共 8 GPU：4 API + 4 engine + 8 worker + 1 DP coordinator = 17 进程。
+
+CPU 不够时优先伤：输入处理吞吐、调度延迟、流式 detokenize/网络。GPU 利用率低于预期时，先查是不是 CPU 在饿着——厨师在等端盘的人。
+
+## Attention backend
+
+按 GPU 架构、模型、配置自动选。也可手动指定。详见官方 Attention Backend Feature Support。

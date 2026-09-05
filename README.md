@@ -1,0 +1,178 @@
+# LLM 推理笔记
+
+个人学习库，**不是官方译本**。对照 NVIDIA NIM / TensorRT-LLM / AIPerf 与 vLLM 的公开文档写成学习笔记：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。
+
+建议从网页首页或下面的阅读顺序读起。怎么把压测、性能测试和调优串起来，见 [zh/GUIDE.md](zh/GUIDE.md)。
+
+目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是官方译本。vLLM 博客全表在 [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md)；带日期的 **129 篇都有中英学习译文**（按原文分节写完，不是压缩 stub）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。NVIDIA 一侧仍是压缩对照，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
+
+- `en/` 英文（抓取或摘录）
+- `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
+
+正文图下在 `assets/`（按笔记相对路径），中英笔记里用 Markdown 引用。版权仍归原站，只作学习对照；站点 logo、作者头像、封面库存图不收。中文页里讲机制的图是另画的学习图（说明用中文，TTFT / ITL / Prefill / Decode 留英文），不是在官方原图上盖字；英文页仍用原站附图。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。
+
+## 目录
+
+```
+assets/                     # 正文图（与 zh/en 相对路径对齐）
+{en,zh}/
+  nvidia/
+    benchmarking/         # 压测 vs 性能测试、NIM 手册、博客 1–2、GenAI-Perf 客户端文
+    performance-tuning/   # Mastering、博客 3、TensorRT-LLM 全套
+    cost/                 # 博客 4 TCO
+    tools/                # AIPerf（入口/调度/指标/五类打法）、GenAI-Perf、Perf Analyzer、Triton
+  vllm/
+    getting-started/      # 文档入口、quickstart、serve CLI
+    optimization/
+    benchmarking/         # bench CLI、auto-tune
+    metrics/              # /metrics 表 + 设计
+    features/             # prefix cache、spec decode、V1
+    blog/                 # CATALOG 全表、必读列表、anatomy
+```
+
+## NVIDIA · benchmarking
+
+| 本地 | 原文 | 完整度 |
+|---|---|---|
+| [nim-index](zh/nvidia/benchmarking/nim-index.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/index.html | 目录 |
+| [nim-01-overview](zh/nvidia/benchmarking/nim-01-overview.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/overview.html | 全译 |
+| [nim-02-metrics](zh/nvidia/benchmarking/nim-02-metrics.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/metrics.html | 全译 |
+| [nim-03-parameters](zh/nvidia/benchmarking/nim-03-parameters.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/parameters.html | 全译 |
+| [nim-04-aiperf](zh/nvidia/benchmarking/nim-04-aiperf.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/quickstart.html | 全译 |
+| [nim-05-lora](zh/nvidia/benchmarking/nim-05-lora.md) | https://docs.nvidia.com/nim/benchmarking/llm/latest/benchmarking-lora.html | 全译 |
+| [nim-product-benchmarking](zh/nvidia/benchmarking/nim-product-benchmarking.md) | https://docs.nvidia.com/nim/large-language-models/latest/reference/benchmarking.html | 学习译文 |
+| [blog-01-fundamental-concepts](zh/nvidia/benchmarking/blog-01-fundamental-concepts.md) | https://developer.nvidia.com/blog/llm-benchmarking-fundamental-concepts/ | 学习译文 |
+| [blog-02-genai-perf-and-nim](zh/nvidia/benchmarking/blog-02-genai-perf-and-nim.md) | https://developer.nvidia.com/blog/llm-performance-benchmarking-measuring-nvidia-nim-performance-with-genai-perf/ | 学习译文 |
+| [blog-genai-perf-openai](zh/nvidia/benchmarking/blog-genai-perf-openai.md) | https://developer.nvidia.com/blog/measuring-generative-ai-model-performance-using-nvidia-genai-perf-and-an-openai-compatible-api/ | 学习译文 |
+
+## NVIDIA · performance-tuning
+
+| 本地 | 原文 | 完整度 |
+|---|---|---|
+| [mastering-llm-techniques](zh/nvidia/performance-tuning/mastering-llm-techniques.md) | https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/ | 学习译文 |
+| [blog-03-tensorrt-llm](zh/nvidia/performance-tuning/blog-03-tensorrt-llm.md) | https://developer.nvidia.com/blog/llm-inference-benchmarking-performance-tuning-with-tensorrt-llm/ | 学习译文 |
+| [trtllm-product](zh/nvidia/performance-tuning/trtllm-product.md) | https://developer.nvidia.com/tensorrt-llm | 入口 |
+| [trtllm-tuning-guide](zh/nvidia/performance-tuning/trtllm-tuning-guide.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/ | 学习译文 |
+| [trtllm-baseline](zh/nvidia/performance-tuning/trtllm-baseline.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/benchmarking-default-performance.html | 学习译文 |
+| [trtllm-build-flags](zh/nvidia/performance-tuning/trtllm-build-flags.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/useful-build-time-flags.html | 学习译文 |
+| [trtllm-max-batch](zh/nvidia/performance-tuning/trtllm-max-batch.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/tuning-max-batch-size-and-max-num-tokens.html | 学习译文 |
+| [trtllm-sharding](zh/nvidia/performance-tuning/trtllm-sharding.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/deciding-model-sharding-strategy.html | 学习译文 |
+| [trtllm-fp8](zh/nvidia/performance-tuning/trtllm-fp8.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/fp8-quantization.html | 学习译文 |
+| [trtllm-runtime-flags](zh/nvidia/performance-tuning/trtllm-runtime-flags.md) | https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/useful-runtime-flags.html | 学习译文 |
+| [trtllm-kvcache](zh/nvidia/performance-tuning/trtllm-kvcache.md) | https://nvidia.github.io/TensorRT-LLM/features/kvcache.html | 学习译文 |
+| [trtllm-paged-attention-ifb](zh/nvidia/performance-tuning/trtllm-paged-attention-ifb.md) | https://nvidia.github.io/TensorRT-LLM/features/paged-attention-ifb-scheduler.html | 学习译文 |
+| [trtllm-bench](zh/nvidia/performance-tuning/trtllm-bench.md) | https://nvidia.github.io/TensorRT-LLM/performance/perf-benchmarking.html | 英文全文 + 中文学习译文 |
+
+## NVIDIA · cost
+
+| 本地 | 原文 | 完整度 |
+|---|---|---|
+| [blog-04-tco](zh/nvidia/cost/blog-04-tco.md) | https://developer.nvidia.com/blog/llm-inference-benchmarking-how-much-does-your-llm-inference-cost/ | 学习译文 |
+
+## NVIDIA · tools
+
+| 本地 | 原文 | 完整度 |
+|---|---|---|
+| [aiperf](zh/nvidia/tools/aiperf.md) | https://github.com/ai-dynamo/aiperf · https://docs.nvidia.com/aiperf/ | 学习译文 |
+| [aiperf-load-generator](zh/nvidia/tools/aiperf-load-generator.md) | https://docs.nvidia.com/aiperf/benchmark-modes/load-generator-options-reference | 学习译文 |
+| [aiperf-metrics](zh/nvidia/tools/aiperf-metrics.md) | https://docs.nvidia.com/aiperf/reference/ai-perf-metrics-reference | 学习译文 |
+| [aiperf-comprehensive](zh/nvidia/tools/aiperf-comprehensive.md) | https://docs.nvidia.com/aiperf/getting-started/ai-perf-comprehensive-llm-benchmarking | 学习译文 |
+| [genai-perf](zh/nvidia/tools/genai-perf.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_analyzer/genai-perf/README.html | 学习译文（已停更） |
+| [perf-analyzer](zh/nvidia/tools/perf-analyzer.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_benchmark/perf-analyzer-README.html | 学习译文 |
+| [triton-performance-tuning](zh/nvidia/tools/triton-performance-tuning.md) | https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/performance_tuning.html | 学习译文 |
+
+## vLLM
+
+| 主题 | 本地 | 原文 | 完整度 |
+|---|---|---|---|
+| getting-started | [index](zh/vllm/getting-started/index.md) | https://docs.vllm.ai/en/stable/ 与 https://docs.vllm.ai/en/latest/ | 入口 |
+| getting-started | [quickstart](zh/vllm/getting-started/quickstart.md) | https://docs.vllm.ai/en/stable/getting_started/quickstart/ | 学习译文 |
+| getting-started | [serve](zh/vllm/getting-started/serve.md) | https://docs.vllm.ai/en/stable/cli/serve/ | 性能相关旗标（非整页 CLI） |
+| optimization | [optimization](zh/vllm/optimization/optimization.md) | https://docs.vllm.ai/en/stable/configuration/optimization/ | 全译 |
+| benchmarking | [cli](zh/vllm/benchmarking/cli.md) | https://docs.vllm.ai/en/stable/benchmarking/cli/ | 学习译文 |
+| benchmarking | [auto-tune](zh/vllm/benchmarking/auto-tune.md) | https://github.com/vllm-project/vllm/blob/main/benchmarks/auto_tune/README.md | 学习译文 |
+| metrics | [production-metrics](zh/vllm/metrics/production-metrics.md) | https://docs.vllm.ai/en/stable/usage/metrics/ | 学习译文 |
+| metrics | [design-metrics](zh/vllm/metrics/design-metrics.md) | https://docs.vllm.ai/en/stable/design/metrics/ | 学习译文 |
+| features | [prefix-caching](zh/vllm/features/prefix-caching.md) | https://docs.vllm.ai/en/stable/features/automatic_prefix_caching/ | 学习译文 |
+| features | [prefix-caching-design](zh/vllm/features/prefix-caching-design.md) | https://docs.vllm.ai/en/stable/design/prefix_caching/ | 学习译文 |
+| features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 学习译文 |
+| features | [v1-guide](zh/vllm/features/v1-guide.md) | https://docs.vllm.ai/en/stable/usage/v1_guide/ | 学习译文 |
+| blog | [MUST-READ](zh/vllm/blog/MUST-READ.md) | https://vllm.ai/blog · https://vllm.ai/blog/rss.xml | 必读 + 本地链接 |
+| blog | [FLAG-MAP](zh/vllm/blog/FLAG-MAP.md) | `optimization.md` 旋钮 → 博客 | 对照表 |
+| blog | [CATALOG](en/vllm/blog/CATALOG.md) | https://vllm.ai/llms.txt | 全表（英文） |
+| blog / architecture | [paged-attention](zh/vllm/blog/architecture/paged-attention.md) | https://vllm.ai/blog/2023-06-20-vllm | 学习译文 |
+| blog / architecture | [vs-deepspeed](zh/vllm/blog/architecture/vs-deepspeed.md) | https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed | 学习译文 |
+| blog / architecture | [v1-alpha](zh/vllm/blog/architecture/v1-alpha.md) | https://vllm.ai/blog/2025-01-27-v1-alpha-release | 学习译文 |
+| blog / architecture | [anatomy](zh/vllm/blog/architecture/anatomy.md) | https://vllm.ai/blog/2025-09-05-anatomy-of-vllm | 英文全文 + 中文导读 |
+| blog / architecture | [mrv2](zh/vllm/blog/architecture/mrv2.md) | https://vllm.ai/blog/2026-03-24-mrv2 | 学习译文 |
+| blog / performance | [v0.6-throughput](zh/vllm/blog/performance/v0.6-throughput.md) | https://vllm.ai/blog/2024-09-05-perf-update | 学习译文 |
+| blog / performance | [spec-decode](zh/vllm/blog/performance/spec-decode.md) | https://vllm.ai/blog/2024-10-17-spec-decode | 学习译文 |
+| blog / performance | [fp8-kvcache](zh/vllm/blog/performance/fp8-kvcache.md) | https://vllm.ai/blog/2026-04-22-fp8-kvcache | 学习译文 |
+| blog / performance | [production-quality](zh/vllm/blog/performance/production-quality.md) | https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality | 学习译文 |
+| blog / serving | [distributed-inference](zh/vllm/blog/serving/distributed-inference.md) | https://vllm.ai/blog/2025-02-17-distributed-inference | 学习译文 |
+| blog / serving | [production-stack](zh/vllm/blog/serving/production-stack.md) | https://vllm.ai/blog/2025-01-21-stack-release | 学习译文 |
+| blog / serving | [aibrix](zh/vllm/blog/serving/aibrix.md) | https://vllm.ai/blog/2025-02-21-aibrix-release | 学习译文 |
+| blog / serving | [router](zh/vllm/blog/serving/router.md) | https://vllm.ai/blog/2025-12-13-vllm-router-release | 学习译文 |
+| blog / serving | [epd](zh/vllm/blog/serving/epd.md) | https://vllm.ai/blog/2025-12-15-vllm-epd | 学习译文 |
+| blog / serving | [large-scale](zh/vllm/blog/serving/large-scale.md) | https://vllm.ai/blog/2025-12-17-large-scale-serving | 学习译文 |
+| blog / serving | [mooncake](zh/vllm/blog/serving/mooncake.md) | https://vllm.ai/blog/2026-05-06-mooncake-store | 学习译文 |
+| blog / serving | [elastic-ep](zh/vllm/blog/serving/elastic-ep.md) | https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism | 学习译文 |
+| blog / architecture | [torch-compile](zh/vllm/blog/architecture/torch-compile.md) | https://vllm.ai/blog/2025-08-20-torch-compile | 学习译文 |
+| blog / architecture | [sleep-mode](zh/vllm/blog/architecture/sleep-mode.md) | https://vllm.ai/blog/2025-10-26-sleep-mode | 学习译文 |
+| blog / performance | [struct-decode](zh/vllm/blog/performance/struct-decode.md) | https://vllm.ai/blog/2025-01-14-struct-decode-intro | 学习译文 |
+| blog / performance | [dcp](zh/vllm/blog/performance/dcp.md) | https://vllm.ai/blog/2026-08-07-decode-context-parallelism | 学习译文 |
+| blog / serving | [kv-offload](zh/vllm/blog/serving/kv-offload.md) | https://vllm.ai/blog/2026-01-08-kv-offloading-connector | 学习译文 |
+| blog / serving | [moriio](zh/vllm/blog/serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector | 学习译文 |
+| blog / serving | [hybrid-ssm](zh/vllm/blog/serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg | 学习译文 |
+| blog / serving | [afd](zh/vllm/blog/serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin | 学习译文 |
+| blog / architecture | [plugin-system](zh/vllm/blog/architecture/plugin-system.md) | https://vllm.ai/blog/2025-11-20-vllm-plugin-system | 学习译文 |
+| blog / architecture | [hardware-plugin](zh/vllm/blog/architecture/hardware-plugin.md) | https://vllm.ai/blog/2025-05-12-hardware-plugin | 学习译文 |
+| blog / architecture | [triton-attn](zh/vllm/blog/architecture/triton-attn.md) | https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive | 学习译文 |
+| blog / serving | [shm-ipc](zh/vllm/blog/serving/shm-ipc.md) | https://vllm.ai/blog/2025-11-13-shm-ipc-cache | 学习译文 |
+| blog / serving | [pegaflow](zh/vllm/blog/serving/pegaflow.md) | https://vllm.ai/blog/2026-05-18-pegaflow | 学习译文 |
+| blog / performance | [turboquant](zh/vllm/blog/performance/turboquant.md) | https://vllm.ai/blog/2026-05-11-turboquant | 学习译文 |
+| blog / serving | [native-rl](zh/vllm/blog/serving/native-rl.md) | https://vllm.ai/blog/2026-05-28-native-rl-apis | 学习译文 |
+| blog / serving | [ray-symmetric](zh/vllm/blog/serving/ray-symmetric.md) | https://vllm.ai/blog/2025-11-22-ray-symmetric-run | 学习译文 |
+| blog / architecture | [extract-hidden-states](zh/vllm/blog/architecture/extract-hidden-states.md) | https://vllm.ai/blog/2026-03-30-extract-hidden-states | 学习译文 |
+| blog / performance | [p-eagle](zh/vllm/blog/performance/p-eagle.md) | https://vllm.ai/blog/2026-03-13-p-eagle | 学习译文 |
+| blog / performance | [parallel-drafting](zh/vllm/blog/performance/parallel-drafting.md) | https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting | 学习译文 |
+| blog / performance | [dspark-adaptive](zh/vllm/blog/performance/dspark-adaptive.md) | https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification | 学习译文 |
+| blog / serving | [streaming-realtime](zh/vllm/blog/serving/streaming-realtime.md) | https://vllm.ai/blog/2026-01-31-streaming-realtime | 学习译文 |
+| blog / serving | [tilert](zh/vllm/blog/serving/tilert.md) | https://vllm.ai/blog/2026-07-14-vllm-tilert-pd | 学习译文 |
+| blog / architecture | [deepseek-v4](zh/vllm/blog/architecture/deepseek-v4.md) | https://vllm.ai/blog/2026-04-24-deepseek-v4 | 学习译文 |
+| blog / architecture | [rocm-attention](zh/vllm/blog/architecture/rocm-attention.md) | https://vllm.ai/blog/2026-02-27-rocm-attention-backend | 学习译文 |
+| blog / serving | [gb200-wideep](zh/vllm/blog/serving/gb200-wideep.md) | https://vllm.ai/blog/2026-02-03-dsr1-gb200-part1 | 学习译文 |
+| blog / serving | [openrlhf](zh/vllm/blog/serving/openrlhf.md) | https://vllm.ai/blog/2025-04-23-openrlhf-vllm | 学习译文 |
+| blog / architecture | [lfai-roadmap](zh/vllm/blog/architecture/lfai-roadmap.md) | https://vllm.ai/blog/2024-07-25-lfai-perf | 学习译文 |
+| blog / performance | [spec-decode-amd](zh/vllm/blog/performance/spec-decode-amd.md) | https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus | 学习译文 |
+| blog / serving | [rdt-weight-transfer](zh/vllm/blog/serving/rdt-weight-transfer.md) | https://vllm.ai/blog/2026-08-22-rdt-weight-transfer | 学习译文 |
+| blog / serving | [isoexec](zh/vllm/blog/serving/isoexec.md) | https://vllm.ai/blog/2026-08-21-isoexec | 学习译文 |
+| blog / serving | [bitwise-rl](zh/vllm/blog/serving/bitwise-rl.md) | https://vllm.ai/blog/2025-11-10-bitwise-consistent-train-inference | 学习译文 |
+| blog / serving | [agent-lightning](zh/vllm/blog/serving/agent-lightning.md) | https://vllm.ai/blog/2025-10-22-agent-lightning | 学习译文 |
+| blog / performance | [speculators-v030](zh/vllm/blog/performance/speculators-v030.md) | https://vllm.ai/blog/2025-12-13-speculators-v030 | 学习译文 |
+| blog / performance | [speculators-v050](zh/vllm/blog/performance/speculators-v050.md) | https://vllm.ai/blog/2026-05-28-speculators-v050 | 学习译文 |
+| blog / performance | [eagle-3-1](zh/vllm/blog/performance/eagle-3-1.md) | https://vllm.ai/blog/2026-05-26-eagle-3-1 | 学习译文 |
+| blog / architecture | [cuda-debugging](zh/vllm/blog/architecture/cuda-debugging.md) | https://vllm.ai/blog/2025-08-11-cuda-debugging | 学习译文 |
+| blog / architecture | [cuda-debugging-source](zh/vllm/blog/architecture/cuda-debugging-source.md) | https://vllm.ai/blog/2025-12-03-improved-cuda-debugging | 学习译文 |
+| blog / architecture | [vllm-tpu](zh/vllm/blog/architecture/vllm-tpu.md) | https://vllm.ai/blog/2025-10-16-vllm-tpu | 学习译文 |
+| blog / performance | [ptpc-fp8](zh/vllm/blog/performance/ptpc-fp8.md) | https://vllm.ai/blog/2025-02-24-ptpc-fp8-rocm | 学习译文 |
+| blog / architecture | [transformers-backend](zh/vllm/blog/architecture/transformers-backend.md) | https://vllm.ai/blog/2025-04-11-transformers-backend | 学习译文 |
+| blog / serving | [semantic-router](zh/vllm/blog/serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router | 学习译文 |
+| blog / serving | [semantic-router-iris](zh/vllm/blog/serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris | 学习译文 |
+| blog / serving | [vllm-omni](zh/vllm/blog/serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni | 学习译文 |
+| blog | [其余 129 篇](zh/vllm/blog/README.md) | [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md) | 学习译文（按原文分节）；全表见博客 README |
+
+## 建议阅读顺序
+
+1. [zh/GUIDE.md](zh/GUIDE.md)
+2. [zh/nvidia/benchmarking/blog-01-fundamental-concepts.md](zh/nvidia/benchmarking/blog-01-fundamental-concepts.md)
+3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
+4. 尺子本身：[zh/nvidia/tools/aiperf.md](zh/nvidia/tools/aiperf.md) → `aiperf-metrics.md` → `aiperf-load-generator.md` → `aiperf-comprehensive.md`（传统 Triton 模型再读 Perf Analyzer + Triton 调优）
+5. [zh/vllm/optimization/optimization.md](zh/vllm/optimization/optimization.md) 与 [zh/vllm/getting-started/serve.md](zh/vllm/getting-started/serve.md)
+6. [zh/vllm/blog/MUST-READ.md](zh/vllm/blog/MUST-READ.md)（主线 → 第二–五波机制；其余 CATALOG 按需）
+
+## 刻意不做的
+
+- `vllm serve` 生成页里每一个旗标
+- AIPerf 整页 CLI（https://docs.nvidia.com/aiperf/reference/command-line-options）以及 GenAI-Perf README 里逐条 `--help`
+- 官方 HTML 全文搬进仓库（vLLM 博客是分节学习摘录，不是压缩 stub，也不是官方全文）
