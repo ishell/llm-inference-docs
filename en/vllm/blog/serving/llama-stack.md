@@ -8,34 +8,40 @@ fetched: 2026-09-04
 
 Chinese: [zh/vllm/blog/serving/llama-stack.md](../../../../zh/vllm/blog/serving/llama-stack.md)
 
-2025-01-27. **Yuan Tang (Red Hat) and Ashwin Bharambe (Meta)**. Repos: [meta-llama/llama-stack](https://github.com/meta-llama/llama-stack), docs: [llama-stack.readthedocs.io](https://llama-stack.readthedocs.io). Demo: **Llama-3.2-1B-Instruct** on a **CPU** container. Sibling “vLLM as one backend”: [docker-model-runner.md](docker-model-runner.md). App-lifecycle packaging cousin: [production-stack.md](production-stack.md). Study note. **Inference is a swappable Provider, not a second engine.** Tutorial is 2025-01 `llama stack build` YAML — **APIs drift**. No TPS table.
-
-Two providers: [`remote::vllm`](https://llama-stack.readthedocs.io/en/latest/distributions/self_hosted_distro/remote-vllm.html) (OpenAI-compatible `/v1`) and [inline](https://github.com/meta-llama/llama-stack/tree/main/llama_stack/providers/inline/inference/vllm) (same process as Stack). Safety, agents, vectors stay other Stack providers. This post demos **remote**. K8s: vLLM Service DNS `http://vllm-server.default.svc.cluster.local:8000/v1`; Stack only fills the URL.
+2025-01-27. **Yuan Tang (Red Hat) and Ashwin Bharambe (Meta)**. Demo: Llama-3.2-1B **CPU** container. Stack: [meta-llama/llama-stack](https://github.com/meta-llama/llama-stack). Docs then: [remote vLLM distribution](https://llama-stack.readthedocs.io/en/latest/distributions/self_hosted_distro/remote-vllm.html), [vLLM OpenAI-compatible server](https://docs.vllm.ai/en/latest/getting_started/quickstart.html#openai-completions-api-with-vllm). Container cousin: [docker-model-runner.md](docker-model-runner.md). Study note. Tutorial is **2025-01** `llama stack build` YAML — APIs drift. The point: one app API across the lifecycle; the engine underneath is a **swappable Provider**, not a second engine.
 
 Local figures (copyright remains with the original site; study copies):
 
 ![llama stack](../../../../assets/vllm/blog/serving/llama-stack/01-llama-stack.png)
 
-**Figure.** Llama Stack: interoperable APIs, each implementation a Provider. vLLM backs **inference**.
-
 ## What is Llama Stack?
 
-Llama Stack standardizes the building blocks for generative apps: interoperable APIs plus Service Providers that implement them. Pre-packaged “distributions” for local / mobile / desktop → on-prem / cloud, **same APIs** at every step. Models they name then: Llama 3.3, Llama Guard for safety, plus others. Swap providers in config. vLLM is the high-performance backing for the inference API — not a rewrite of Stack's agent/safety/vector layers.
+Llama Stack defines core building blocks for generative-AI apps as interoperable APIs, each with Service Providers. Pre-packaged **distributions** run locally, on mobile/desktop, on-prem, or in public cloud — **same APIs**, same developer experience.
 
-## vLLM inference provider
+Models in the pitch: Llama 3.3 through specialized ones like Llama Guard. Safety, agents, vectors stay **other** Stack providers. Each implementation of an API is a **Provider**; users swap providers in config. vLLM is the high-performance backing for the **inference** API.
 
-1. **Remote** — Stack HTTP-calls vLLM's OpenAI-compatible server.
-2. **Inline** — vLLM runs in-process with the Stack server.
+## vLLM Inference Provider
 
-Remote is what the rest of the page walks.
+Two:
+
+1. [Remote](https://llama-stack.readthedocs.io/en/latest/distributions/self_hosted_distro/remote-vllm.html) — `remote::vllm` against vLLM’s OpenAI-compatible `/v1`.
+2. [Inline](https://github.com/meta-llama/llama-stack/tree/main/llama_stack/providers/inline/inference/vllm) — runs in the same process as the Stack server.
+
+This tutorial demonstrates the **remote** path.
 
 ## Tutorial
 
-Prerequisites they list: Linux; Hugging Face CLI; Podman or Docker (`CONTAINER_BINARY`); Kind for K8s; Conda.
+### Prerequisites
 
-Paths they use: `/tmp/test-vllm-llama-stack`. Model needs [HF access](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct) + token.
+Linux; [Hugging Face CLI](https://huggingface.co/docs/huggingface_hub/main/en/guides/cli) if you download via CLI; Podman or Docker (`CONTAINER_BINARY` for `llama stack` CLI); [Kind](https://kind.sigs.k8s.io/) for Kubernetes; [Conda](https://github.com/conda/conda) for the Python env.
 
-### Start vLLM (CPU image)
+Paths below are the **original post’s** tutorial scratch dir (`/tmp/test-vllm-llama-stack`), not a machine-local home path.
+
+## Get Started via Containers
+
+### Start vLLM Server
+
+Need Hugging Face access to [`meta-llama/Llama-3.2-1B-Instruct`](https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct), then a token.
 
 ```bash
 mkdir /tmp/test-vllm-llama-stack
@@ -44,15 +50,13 @@ huggingface-cli download meta-llama/Llama-3.2-1B-Instruct \
   --local-dir /tmp/test-vllm-llama-stack/.cache/huggingface/hub/models/Llama-3.2-1B-Instruct
 ```
 
-Build the CPU image from source (`Dockerfile.cpu`). Other hardware images: [vLLM install docs](https://docs.vllm.ai/en/latest/getting_started/installation.html).
+Build the vLLM **CPU** image from source (demo). Other hardware images: [installation](https://docs.vllm.ai/en/latest/getting_started/installation.html).
 
 ```bash
 git clone git@github.com:vllm-project/vllm.git /tmp/test-vllm-llama-stack
 cd /tmp/test-vllm-llama-stack/vllm
 podman build -f Dockerfile.cpu -t vllm-cpu-env --shm-size=4g .
 ```
-
-Run (entrypoint is the **then** OpenAI API module):
 
 ```bash
 podman run -it --network=host \
@@ -67,9 +71,7 @@ podman run -it --network=host \
     vllm-cpu-env
 ```
 
-**Caveat on the sample:** `--device /dev/kfd` is an AMD ROCm device node on a **CPU** Dockerfile demo. Historical copy-paste; not a ROCm bake-off. Entrypoint `vllm.entrypoints.openai.api_server` is the 2025-01 module path.
-
-Smoke:
+Smoke test:
 
 ```bash
 curl http://localhost:8000/v1/models
@@ -84,13 +86,20 @@ curl http://localhost:8000/v1/completions \
     }'
 ```
 
-### Start Llama Stack
+### Start Llama Stack Server
 
-Clone, Conda **python=3.10**, `pip install .` from the Stack tree.
+```bash
+git clone git@github.com:meta-llama/llama-stack.git /tmp/test-vllm-llama-stack/llama-stack
+cd /tmp/test-vllm-llama-stack/llama-stack
+conda create -n stack python=3.10
+conda activate stack
+pip install .
+```
 
-Build spec they print (`image_type: container`). **This YAML is the 2025-01 provider map** — names drift; read current docs before copying:
+Build config — inference is `remote::vllm`; safety / agents / vectors / etc. stay inline Stack providers:
 
-```yaml
+```
+cat > /tmp/test-vllm-llama-stack/vllm-llama-stack-build.yaml << "EOF"
 name: vllm
 distribution_spec:
   description: Like local, but use vLLM for running LLM inference
@@ -105,18 +114,17 @@ distribution_spec:
     post_training: inline::torchtune
     telemetry: inline::meta-reference
 image_type: container
-```
+EOF
 
-```bash
 export CONTAINER_BINARY=podman
 LLAMA_STACK_DIR=. PYTHONPATH=. python -m llama_stack.cli.llama stack build \
   --config /tmp/test-vllm-llama-stack/vllm-llama-stack-build.yaml \
   --image-name distribution-myenv
 ```
 
-Edit generated `vllm-run.yaml` → `vllm-llama-stack-run.yaml`. Models block they want:
+Edit generated `vllm-run.yaml` → `/tmp/test-vllm-llama-stack/vllm-llama-stack-run.yaml`, `models` field:
 
-```yaml
+```
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}
@@ -133,26 +141,24 @@ export INFERENCE_MODEL=meta-llama/Llama-3.2-1B-Instruct
 export LLAMA_STACK_PORT=5000
 
 LLAMA_STACK_DIR=. PYTHONPATH=. python -m llama_stack.cli.llama stack run \
-  --env INFERENCE_MODEL=$INFERENCE_MODEL \
-  --env VLLM_URL=http://$INFERENCE_ADDR:$INFERENCE_PORT/v1 \
-  --env VLLM_MAX_TOKENS=8192 \
-  --env VLLM_API_TOKEN=fake \
-  --env LLAMA_STACK_PORT=$LLAMA_STACK_PORT \
-  /tmp/test-vllm-llama-stack/vllm-llama-stack-run.yaml
+--env INFERENCE_MODEL=$INFERENCE_MODEL \
+--env VLLM_URL=http://$INFERENCE_ADDR:$INFERENCE_PORT/v1 \
+--env VLLM_MAX_TOKENS=8192 \
+--env VLLM_API_TOKEN=fake \
+--env LLAMA_STACK_PORT=$LLAMA_STACK_PORT \
+/tmp/test-vllm-llama-stack/vllm-llama-stack-run.yaml
 ```
 
-Alternate `podman run` of `localhost/distribution-myenv:dev`, same env, entrypoint `python -m llama_stack.distribution.server.server --yaml-config /app/config.yaml`.
+Or `podman run` with the same env, mounting the YAML and source, entrypoint `python -m llama_stack.distribution.server.server --yaml-config /app/config.yaml`, image `localhost/distribution-myenv:dev`.
 
-CLI check:
+Client:
 
 ```bash
 llama-stack-client --endpoint http://localhost:5000 inference chat-completion \
   --message "hello, what model are you?"
 ```
 
-Page sample: `ChatCompletionResponse` with `role='assistant'`, `stop_reason='end_of_turn'`, empty `tool_calls`. Text content is a canned assistant reply — not a benchmark.
-
-Python they print:
+Python:
 
 ```python
 import os
@@ -172,25 +178,29 @@ response = client.inference.chat_completion(
 print(response.completion_message.content)
 ```
 
-Listed model: `identifier='meta-llama/Llama-3.2-1B-Instruct'`, `provider_id='vllm'`, `api_model_type='llm'`.
+Sample `models.list()` on the page: `provider_id='vllm'`, identifier `meta-llama/Llama-3.2-1B-Instruct`. The haiku in the post is a demo completion, not a quality claim.
 
-## Kubernetes
+## Deployment on Kubernetes
 
-Kind: `kind create cluster --image kindest/node:v1.32.0 --name llama-stack-test`.
+Kind cluster for the demo:
 
-vLLM as Pod + Service: PVC `vllm-models` **50Gi**; Secret `hf-token-secret` with placeholder `"<YOUR-HF-TOKEN>"` (page prints it under `data.token`, not a real base64 blob); container image `localhost/vllm-cpu-env:latest`. Inside the container they `huggingface-cli download` then:
+```bash
+kind create cluster --image kindest/node:v1.32.0 --name llama-stack-test
+```
 
-```text
+vLLM as Pod + Service (replace `<YOUR-HF-TOKEN>`; the post’s Secret `data.token` field is shown as that placeholder):
+
+PVC `vllm-models` 50Gi; Secret `hf-token-secret`; Pod `vllm-server` image `localhost/vllm-cpu-env:latest`, downloads the model then:
+
+```
 python3 -m vllm.entrypoints.openai.api_server --model $MODEL_PATH --served-model-name $MODEL --port 8000
 ```
 
-Service name **`vllm-server`**, port **8000**, `type: NodePort`. Stack does not scrape Pod IPs; it uses DNS.
+Service `vllm-server` port 8000. Logs (model download can take minutes): Uvicorn on `http://0.0.0.0:8000`.
 
-Ready log they wait for: `Uvicorn running on http://0.0.0.0:8000`.
+Stack run YAML for K8s — the only inference URL that matters:
 
-Run YAML inference provider for in-cluster Stack:
-
-```yaml
+```
 providers:
   inference:
   - provider_id: vllm
@@ -201,13 +211,7 @@ providers:
       api_token: fake
 ```
 
-**That URL is the whole integration.** Swap the engine by swapping the Service behind `/v1`.
-
-They bake a `Containerfile` `FROM distribution-myenv:dev`, clone llama-stack source, `ADD` the k8s run YAML, tag `llama-stack-run-k8s`. Pod `llama-stack-pod` + Service `llama-stack-service` ClusterIP **5000**. PVC `llama-pvc` **1Gi** on `/root/.llama`.
-
-**Caveat they print:** the “check Llama Stack logs” snippet is `$ kubectl logs vllm-server` — that is the **vLLM** Pod name. Treat as a copy-paste slip on the page; the Stack Pod is `llama-stack-pod`. Ready line they show for Stack: Uvicorn on `http://['::', '0.0.0.0']:5000`.
-
-Forward and hit the **Stack** API, not vLLM directly:
+Build an image that clones Stack source and `ADD`s that YAML. Deploy Pod `llama-stack-pod` + Service `llama-stack-service` ClusterIP **5000**. The post’s log check command is `kubectl logs vllm-server` (same name as the vLLM pod); expected Stack lines: Uvicorn on port **5000**.
 
 ```bash
 kubectl port-forward service/llama-stack-service 5000:5000
@@ -215,8 +219,8 @@ llama-stack-client --endpoint http://localhost:5000 inference chat-completion \
   --message "hello, what model are you?"
 ```
 
-More providers: [official docs](https://llama-stack.readthedocs.io).
+More providers: [Llama Stack docs](https://llama-stack.readthedocs.io).
 
 ## Acknowledgement
 
-Red Hat AI Engineering (vLLM providers, fixes, design). Meta Llama Stack team and vLLM team (reviews).
+Red Hat AI Engineering: vLLM inference providers, bug fixes, design. Llama Stack team at Meta and the vLLM team: reviews and fixes.
