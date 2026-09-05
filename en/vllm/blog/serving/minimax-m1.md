@@ -8,9 +8,9 @@ fetched: 2026-09-04
 
 Chinese: [zh/vllm/blog/serving/minimax-m1.md](../../../../zh/vllm/blog/serving/minimax-m1.md)
 
-2025-06-30. **MiniMax**. Paper: [arXiv 2506.13585](https://arxiv.org/pdf/2506.13585). Checkpoints: [`MiniMaxAI/MiniMax-M1-40k`](https://huggingface.co/MiniMaxAI/MiniMax-M1-40k), [`MiniMaxAI/MiniMax-M1-80k`](https://huggingface.co/MiniMaxAI/MiniMax-M1-80k). **456B** total, ~**45.9B** active. Later MSA / 1M multimodal: [minimax-m3.md](minimax-m3.md). Later Omni: [minimax-h3.md](minimax-h3.md). V1 alpha (the thing they were still migrating toward): [../architecture/v1-alpha.md](../architecture/v1-alpha.md). Hybrid KV relatives: [qwen3-next.md](qwen3-next.md), [hybrid-ssm.md](hybrid-ssm.md). Study note. Architecture + then-deploy; **not** M3 MSA. Docker sample pins `VLLM_USE_V1=0` — **historical**; hybrid allocator later landed in V1.
+2025-06-30. **MiniMax**. Paper: [arXiv:2506.13585](https://arxiv.org/pdf/2506.13585). 456B total, ~45.9B active. Later MSA / 1M cousin: [minimax-m3.md](minimax-m3.md). Omni stack later still: [minimax-h3.md](minimax-h3.md). V1 then-planned: [v1-alpha.md](../architecture/v1-alpha.md). PagedAttention background: [paged-attention.md](../architecture/paged-attention.md). Study note; architecture + then-deploy. The Docker sample pins **`VLLM_USE_V1=0`** — **historical**; hybrid allocator later landed in V1.
 
-They quote ~**25%** FLOPs vs DeepSeek R1 at 100k generated tokens. `--quantization experts_int8`. Lightning Attention via Triton. PagedAttention: they claim fragmentation <4% vs traditional 60–80%.
+This post is how MiniMax-M1’s hybrid architecture is served in vLLM: model features, inference challenges, and the then-current technical path.
 
 Local figures (copyright remains with the original site; study copies):
 
@@ -22,37 +22,34 @@ Local figures (copyright remains with the original site; study copies):
 
 ## Introduction
 
-[MiniMax-M1](https://arxiv.org/pdf/2506.13585) is an open-source large MoE inference model. Hybrid architecture: sparse experts + linearized attention, aimed at long-context reasoning. This post is MiniMax's own write-up of how vLLM served it then — model features, inference pain, and the vLLM pieces they used. Not a bake-off against later MiniMax generations.
+[MiniMax-M1](https://arxiv.org/pdf/2506.13585) is an open-source large-scale MoE inference model. Hybrid architecture aimed at long-context reasoning and complex tasks. vLLM is the recommended serving path.
 
-**Figure (left).** Benchmarks they print: math, code, SWE, tool use, long-context; MiniMax-M1 “leads among open-source” on that board.
+**Figure (left).** Benchmark comparison of commercial and open-source models on math, code, software engineering, tool use, long-context understanding. MiniMax-M1 leads among open-source models on that figure.
 
-**Figure (right).** Theoretical inference FLOPs vs sequence length. Versus DeepSeek R1, MiniMax-M1 uses **25%** of the FLOPs when generating **100k** tokens. Theoretical curve on the page, not a vLLM measured TPS table.
+**Figure (right).** Theoretical inference FLOPs vs token length. Versus DeepSeek R1, MiniMax-M1 uses about **25%** of the FLOPs when generating **100k** tokens.
 
 ## Deploying MiniMax-M1 with vLLM
 
-Benefits they list (no numbers beside “outstanding throughput”):
+Claimed benefits in their tests: throughput, memory management, batched requests, backend performance.
 
-- Throughput
-- Memory management
-- Batched requests
-- Backend optimizations
+### Model Download
 
-### Model download
+Hugging Face: `MiniMaxAI/MiniMax-M1-40k` (or `MiniMax-M1-80k`).
 
 ```bash
 pip install -U huggingface-hub
-
 huggingface-cli download MiniMaxAI/MiniMax-M1-40k
 # huggingface-cli download MiniMaxAI/MiniMax-M1-80k
 ```
 
-### Deployment (Docker sample as printed)
+### Deployment
+
+Then-current Docker + vLLM snippet. **`VLLM_USE_V1=0` is historical** — do not treat it as today’s default.
 
 ```bash
 IMAGE=vllm/vllm-openai:latest
 MODEL_DIR=<model storage path>
 NAME=MiniMaxImage
-
 DOCKER_RUN_CMD="--network=host --privileged --ipc=host --ulimit memlock=-1 --rm --gpus all --ulimit stack=67108864"
 
 sudo docker run -it \
@@ -67,62 +64,55 @@ vllm serve \
 --model <model storage path> \
 --tensor-parallel-size 8 \
 --trust-remote-code \
---quantization experts_int8  \
+--quantization experts_int8 \
 --max_model_len 4096 \
 --dtype bfloat16
 ```
 
-**Caveat they print in the sample, and the later fact:** `VLLM_USE_V1=0` and `--max_model_len 4096` are **what the 2025-06 snippet pinned**. Hybrid allocator + V1 support are named as future work in this same post; they landed later. Do not treat this Docker block as current M3 recipe — that is [minimax-m3.md](minimax-m3.md).
-
-## Hybrid architecture highlights
+## MiniMax-M1 Hybrid Architecture Highlights
 
 ### Mixture-of-Experts (MoE)
 
-**456B** total. Routing activates a sparse subset ~**45.9B** (~**10%**) per token, from a gating network over token semantics.
+**456B** total. Routing activates a sparse subset (~**45.9B**, ~**10%**) from token semantics. Gating network computes expert-selection probabilities.
 
-They claim classification-style compute cut **up to 90%** versus dense at similar accuracy. That is their architecture claim, not a vLLM kernel microbenchmark.
+Classification: they claim up to **90%** less compute vs dense at comparable accuracy.
 
-**Figure.** Isoflop MoE vs dense, both trained on **1T** tokens. Gray dashed lines: compute difference to match performance.
+**Figure.** Isoflop MoE vs Dense, both trained on 1T tokens. Gray dashed lines: compute difference to reach the same performance.
 
 ### Lightning Attention
 
-Quadratic softmax attention replaced by a **linear combination of matrix multiplications**, plus dynamic memory tiling and gradient approximation.
+Quadratic softmax attention → linearized approximation: softmax as a **linear combination of matrix multiplications**, with dynamic memory tiling and gradient approximation.
 
-Code-completion numbers they print for **100k-token** sequences: memory **−83%**, inference latency **−67%**. Again model-paper numbers, not a vLLM serving table.
+Code-completion claim at **100k**-token sequences: memory **−83%**, inference latency **−67%**.
 
-**Figure.** Lightning Attention algorithm overview.
+**Figure.** Lightning Attention algorithm overview — memory and latency for long sequences.
 
-### Efficient computation and activation
+### Efficient Computation & Activation Strategy
 
-Lightning Attention for runtime; sparse expert activation to skip unused compute. Pointer back to the [paper](https://arxiv.org/pdf/2506.13585).
+Lightning Attention for runtime; sparse expert activation to skip unnecessary compute. Paper for architecture depth: [arXiv:2506.13585](https://arxiv.org/pdf/2506.13585).
 
-## Efficient inference with vLLM
+## Efficient Inference with vLLM
 
-### Advanced memory management
+### Advanced Memory Management
 
-PagedAttention: KV in pages, not one contiguous slab. They quote vLLM's usual claim: waste **<4%** versus traditional **60–80%** fragmentation. Needed for M1's long context so the run does not die on over-allocation.
+PagedAttention: KV in pages instead of one contiguous allocation. They claim fragmentation **<4%** vs traditional **60–80%**. Matters for ultra-long context: inference without walking into a memory wall.
 
-### Deep kernel-level optimizations
+### Deep Kernel-Level Optimizations
 
-They list vLLM's then-menu: FlashAttention, FlashInfer, GPTQ / AWQ / INT4 / INT8 / FP8. Quantization for memory/compute; FlashAttention for the attention op. **This post's actual M1 flag is `--quantization experts_int8`**, not a full GPTQ/AWQ recipe.
+FlashAttention, FlashInfer; quantization GPTQ, AWQ, INT4, INT8, FP8. Quantization cuts memory and compute with (claimed) minimal accuracy loss; FlashAttention accelerates attention itself.
 
 ### Lightning Attention in vLLM
 
-Implemented via **Triton**. Triton path runs Lightning Attention's core math inside vLLM — no separate serving engine.
+Implemented via **Triton**. Triton execution covers Lightning Attention’s core compute so the hybrid path sits inside vLLM.
 
-## Future work (as of 2025-06-30)
+## Future Work
 
-Two items, both **then-roadmap**:
-
-- **Hybrid allocator** for models that mix attention styles (M1 class).
-- **Full vLLM V1** support; migrate the hybrid architecture into V1 ([v1-alpha.md](../architecture/v1-alpha.md)).
-
-Those are the reason the Docker sample still says `VLLM_USE_V1=0`. Historical. M3 day-0 is a different attention (MSA) and a different recipe.
+Hybrid-allocator work for models like MiniMax-M1. Full support for [vLLM V1](../architecture/v1-alpha.md) planned then, with the hybrid architecture expected to migrate into V1. That later happened; this page is the 2025-06 snapshot.
 
 ## Conclusion
 
-M1 hybrid = long-context + sparse MoE. vLLM side = paged KV, batching, Triton Lightning Attention, `experts_int8`. Together they meant “can actually serve,” not a 25k TPS/GPU Pareto. Later stack: [minimax-m3.md](minimax-m3.md).
+MiniMax-M1’s hybrid path is long-context reasoning and complex-task inference. vLLM’s then-pitch: paged KV, batching, kernel-level backends. Together: code generation, document analysis, conversational AI. M3 later replaces Lightning Attention with MSA — [minimax-m3.md](minimax-m3.md).
 
 ## Acknowledgement
 
-vLLM: [Tyler Michael Smith](https://github.com/tlrmchlsmth), [Simon Mo](https://github.com/simon-mo), [Cyrus Leung](https://github.com/DarkLight1337), [Roger Wang](https://github.com/ywang96), [Zifeng Mo](https://github.com/Isotr0py), [Kaichao You](https://github.com/youkaichao). MiniMax: [Gangying Qing](https://github.com/ZZBoom), [Jun Qing](https://github.com/qscqesze), [Jiaren Cai](https://github.com/sriting).
+vLLM community, in particular Tyler Michael Smith, Simon Mo, Cyrus Leung, Roger Wang, Zifeng Mo, Kaichao You. MiniMax engineering: Gangying Qing, Jun Qing, Jiaren Cai.
