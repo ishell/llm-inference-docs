@@ -4,11 +4,11 @@ lang: en
 fetched: 2026-09-04
 ---
 
-# Building Mixture-of-Models on AMD GPUs with vLLM-SR
+# Live MoM on AMD: six models, eleven decisions
 
 Chinese: [zh/vllm/blog/serving/semantic-router-mom-amd.md](../../../../zh/vllm/blog/serving/semantic-router-mom-amd.md)
 
-2026-01-23. **The AMD and vLLM Semantic Router Team**. Repo: [vllm-project/semantic-router](https://github.com/vllm-project/semantic-router). Launch: [semantic-router.md](semantic-router.md). Spine: [Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md). v0.1 ships this live path. Partnership essay: [amd](semantic-router-amd.md). Later model refresh / `--platform amd`: [athena](semantic-router-athena.md). MoM as a system: [mom](semantic-router-mom.md). Do not confuse with the in-engine [router.md](router.md). Signal latencies and the playground matrix are **their** demo, not your SLA.
+2026-01-23. **The AMD and vLLM Semantic Router Team**. Repo: [vllm-project/semantic-router](https://github.com/vllm-project/semantic-router). Launch: [semantic-router.md](semantic-router.md). Spine: [Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md). v0.1 ships this live path. Partnership essay: [amd](semantic-router-amd.md). Later model refresh / `--platform amd`: [athena](semantic-router-athena.md). Themis later **removes `vllm-sr init`**: [themis](semantic-router-themis.md). MoM as a system: [mom](semantic-router-mom.md). Do not confuse with the in-engine [router.md](router.md). Signal latencies and the playground matrix are **their** demo, not your SLA.
 
 Siblings: [modular](semantic-router-modular.md), [halugate](halugate.md), [session](semantic-router-session.md), [themis](semantic-router-themis.md), [fusion](semantic-router-fusion.md), [micro-agent](semantic-router-micro-agent.md), [vision](semantic-router-vision.md).
 
@@ -166,7 +166,7 @@ A **second**, shorter decision table later on the page (names and default target
 
 ## How to run it on AMD GPU (MI300X / MI355X)
 
-Full playbook: [deploy/amd/README.md](https://github.com/vllm-project/semantic-router/blob/main/deploy/amd/README.md). This is a **2026-01** snapshot; Athena later makes `vllm-sr serve --platform amd` the canonical image-first flow.
+Full playbook: [deploy/amd/README.md](https://github.com/vllm-project/semantic-router/blob/main/deploy/amd/README.md). This is a **2026-01 / v0.1** snapshot. Athena later makes `vllm-sr serve --platform amd` a first-class flow. [Themis](semantic-router-themis.md) later **deletes `vllm-sr init`** (empty-dir `vllm-sr serve` becomes dashboard-first).
 
 ```bash
 python -m venv vsr

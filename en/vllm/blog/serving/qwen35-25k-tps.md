@@ -8,9 +8,9 @@ fetched: 2026-09-04
 
 Chinese: [zh/vllm/blog/serving/qwen35-25k-tps.md](../../../../zh/vllm/blog/serving/qwen35-25k-tps.md)
 
-2026-08-06. **vLLM Team**. GB200 NVL72. Model: [`nvidia/Qwen3.5-397B-A17B-NVFP4`](https://huggingface.co/nvidia/Qwen3.5-397B-A17B-NVFP4). ISL/OSL=**8192/1024**. Hybrid-attention ancestor: [qwen3-next.md](qwen3-next.md). Later Max-class day-0: [qwen38.md](qwen38.md). Heterogeneous cache / dual descriptors: [hybrid-ssm.md](hybrid-ssm.md). Decode-side relative: [../performance/dcp.md](../performance/dcp.md). NIXL P/D roadmap: [issue #33702](https://github.com/vllm-project/vllm/issues/33702). Study note. **System TPS/GPU ≠ per-user TPS.** They sweep the **left** Pareto (aggregate throughput), concurrency **64–5120**, not 1–32.
+2026-08-06. **vLLM Team**. GB200 NVL72. Model: [Qwen3.5-397B-A17B-NVFP4](https://huggingface.co/nvidia/Qwen3.5-397B-A17B-NVFP4). ISL/OSL = **8192/1024**. Earlier hybrid: [qwen3-next.md](qwen3-next.md). Heterogeneous cache transfer: [hybrid-ssm.md](hybrid-ssm.md). Later 3.8: [qwen38.md](qwen38.md). Decode-side long context: [dcp.md](../performance/dcp.md). Study note. **System TPS/GPU ≠ per-user TPS.** They sweep the **left** Pareto (aggregate throughput), concurrency **64–5120**, not 1–32.
 
-Decode fixed **1×DEP8**; prefill **4–8×DEP2**. Peak **25,000 tok/s/GPU**. GSM8K **88%** on all five topologies, matching aggregated. Reproduce with Docker `vllm/vllm-openai:nightly-d223c90`, Dynamo `1.2.0.dev20260526`, srt-slurm `v1.0.32`. Recipes: [srt-slurm-recipes …/Qwen3.5/GB200/8k1k/vllm/disagg](https://github.com/NVIDIA/srt-slurm-recipes/tree/main/recipes/multi-node/Qwen3.5/GB200/8k1k/vllm/disagg).
+Qwen3.5’s hybrid attention (full attention + Gated Delta Network) makes disaggregated serving both harder and more interesting. Community work matured the P/D path. This post: major contributions, GB200 NVL72 numbers, recipes so **you** can get over **25K total TPS/GPU**.
 
 Local figures (copyright remains with the original site; study copies):
 
@@ -18,110 +18,102 @@ Local figures (copyright remains with the original site; study copies):
 
 ![pareto frontier qwen35 nvfp4](../../../../assets/vllm/blog/serving/qwen35-25k-tps/02-pareto-frontier-qwen35-nvfp4.png)
 
-## Introduction
+## Challenges and Key Optimizations
 
-Qwen3.5 (early 2026) is a hybrid: full-attention layers interleaved with **Gated Delta Network (GDN)**. Disaggregated serving then has two extra jobs: Blackwell GDN kernels, and moving **heterogeneous** attention/GDN state between Prefill and Decode. Community work made that path mature. This post is how **you** get over **25K total TPS/GPU** on GB200 NVL72 — contributions, numbers, recipes. Not a 1–32 user latency sweep.
+Two problems: accelerate GDN on Blackwell, and transfer heterogeneous attention/GDN state correctly between Prefill and Decode workers.
 
-## Challenges and key optimizations
+SSM support for P/D: [NIXL disaggregation roadmap](https://github.com/vllm-project/vllm/issues/33702). Layouts, logical/physical mapping, TP state transfer: [hybrid SSM disaggregation](hybrid-ssm.md).
 
-SSM P/D was driven through the [NIXL disaggregation roadmap](https://github.com/vllm-project/vllm/issues/33702). Layout / logical vs physical blocks / TP state transfer: [hybrid-ssm.md](hybrid-ssm.md). Three cuts matter for Qwen3.5.
+### 1. Blackwell-Optimized GDN Prefill
 
-### 1. Blackwell-optimized GDN Prefill
+[FlashInfer #3001](https://github.com/flashinfer-ai/flashinfer/pull/3001). Versus FLA/Triton: about **1.02×–5.78×** across Qwen3.5 sizes, TP, sequence lengths, batch shapes.
 
-[FlashInfer PR #3001](https://github.com/flashinfer-ai/flashinfer/pull/3001) — Blackwell GDN prefill kernel. Versus previous FLA/Triton: about **1.02×–5.78×** across Qwen3.5 sizes, TP, sequence lengths, batch shapes.
+Enabled on Prefill in [vLLM PR #40717](https://github.com/vllm-project/vllm/pull/40717). On **8×B200**, Qwen3.5-397B-A17B-NVFP4:
 
-Enabled on vLLM Prefill: [vLLM PR #40717](https://github.com/vllm-project/vllm/pull/40717). On **8×B200**, Qwen3.5-397B-A17B-NVFP4:
+- Up to **5.92×** GDN kernel in the tested microbenchmarks
+- **1.13×** e2e Prefill throughput on a Prefill-only workload (ISL/OSL = 8192/1)
+- **12%** lower mean TTFT (same Prefill-only 8K/1)
 
-- Up to **5.92×** GDN kernel in microbenchmarks
-- **1.13×** end-to-end Prefill throughput on Prefill-only (ISL/OSL = **8192/1**)
-- **−12%** mean TTFT on that same 8K/1 Prefill-only load
+On supported Blackwell, vLLM picks FlashInfer when the GDN backend is `auto`. Explicit:
 
-On supported Blackwell, `auto` picks FlashInfer. Explicit:
-
-```text
+```
 --gdn-prefill-backend flashinfer
 ```
 
-### 2. Hybrid cache and GDN-state transfer
+### 2. Hybrid Cache and GDN-State Transfer
 
-P/D for hybrid SSM-attention sits on [[Core][KVConnector] Support HMA+NixlConnector #35758](https://github.com/vllm-project/vllm/pull/35758) plus the connector stack in [hybrid-ssm.md](hybrid-ssm.md). Necessary prerequisite: map HMA logical blocks onto the right physical regions so NIXL transfers only the cache that belongs to each layer type. Descriptors **4284 → 1650**; up to ~**7%** throughput on a small-scale intra-node H100 setup. **HMA alone is not enough** for Mamba-style state (layout, size, transfer semantics).
+Builds on [[Core][KVConnector] Support HMA+NixlConnector #35758](https://github.com/vllm-project/vllm/pull/35758) and the stack in [hybrid-ssm.md](hybrid-ssm.md). HMA logical blocks map onto the correct physical regions so NIXL transfers only the cache that belongs to each layer type: descriptors **4,284 → 1,650**, throughput up to ~**7%** in a small-scale intra-node H100 setup. Mamba-style state still differs enough that HMA alone would not have been enough for correct or efficient P/D.
 
-Main hybrid SSM-FA P/D PR: [[PD][Nixl] Add support for hybrid SSM-FA models #36687](https://github.com/vllm-project/vllm/pull/36687) — dual descriptor views + homogeneous-TP, so Prefill and Decode can move full-attention KV **and** Mamba-style SSM state over NIXL. Same stack:
+Main PR: [[PD][Nixl] Add support for hybrid SSM-FA models #36687](https://github.com/vllm-project/vllm/pull/36687) — dual descriptor views, homogeneous-TP, Prefill and Decode transfer both full-attention KV and Mamba-style SSM over NIXL. Follow-ups: [#37416](https://github.com/vllm-project/vllm/pull/37416) (conv-state layout), [#37635](https://github.com/vllm-project/vllm/pull/37635) (heterogeneous TP, 3-read conv state), [#37310](https://github.com/vllm-project/vllm/pull/37310) (N-1 Prefill for P/D).
 
-- [[Kernel] Mamba support different layout for Conv state #37416](https://github.com/vllm-project/vllm/pull/37416)
-- [[NIXL][Mamba][3/N] Heterogeneous TP: 3-read conv state transfer #37635](https://github.com/vllm-project/vllm/pull/37635)
-- [[SSM/Mamba] Follow-up: N-1 prefill for P/D disaggregation #37310](https://github.com/vllm-project/vllm/pull/37310)
+Qwen3.5 specifically: [PD disagg with NIXL Connector: GDN support (Qwen3.5) #41869](https://github.com/vllm-project/vllm/pull/41869).
 
-Qwen3.5-specific GDN: [PD disagg with NIXL Connector: GDN support (Qwen3.5) #41869](https://github.com/vllm-project/vllm/pull/41869).
+### 3. Race-Free Async Scheduling
 
-### 3. Race-free async scheduling
+Two patches. Without them, `--async-scheduling` drove **accuracy to zero**. Async scheduling was one of the keys to crossing 25K tok/s/GPU.
 
-Two patches. Without them, `--async-scheduling` was unusable — **accuracy collapsed to zero**. Async scheduling is one of the features behind crossing 25K tok/s/GPU, so both races had to land first.
-
-- [[KV Connector] Fix PD async scheduling race condition for hybrid attn models #48481](https://github.com/vllm-project/vllm/pull/48481)
+- [[KV Connector] Fix PD async scheduling race for hybrid attn models #48481](https://github.com/vllm-project/vllm/pull/48481)
 - [[Bugfix] Defer block freeing until in-flight steps finish under async scheduling + PD KV consumer #45357](https://github.com/vllm-project/vllm/pull/45357)
 
 ## Performance
 
-### Environment
+### 1. Environment Setup
 
-GB200 cluster, NVLink72. ISL/OSL = **8192/1024**. Model [`nvidia/Qwen3.5-397B-A17B-NVFP4`](https://huggingface.co/nvidia/Qwen3.5-397B-A17B-NVFP4). Decode topology **fixed**: one endpoint, **DEP8** (DP+EP across 8 GPUs). Prefill: **4 to 8** endpoints, each **DEP2**.
+GB200 cluster, NVLink72. ISL/OSL = 8192/1024. Decode: **one** endpoint, **DEP8**. Prefill: **4–8** endpoints, each **DEP2**.
 
-Reproduce: latest `vllm/vllm-openai:nightly-d223c90` ([Hub layer](https://hub.docker.com/layers/vllm/vllm-openai/nightly-d223c900d85224c02f2162ee2c757a769e99f519/images/sha256-987393f42c48b8a649961a3484d95d400db184b64e4e1bb7f77cb91536d0f05e)), [Dynamo](https://github.com/ai-dynamo/dynamo) `1.2.0.dev20260526`, [srt-slurm](https://github.com/NVIDIA/srt-slurm) `v1.0.32`. Recipes in [srt-slurm-recipes](https://github.com/NVIDIA/srt-slurm-recipes).
+Reproduce: latest vLLM image `vllm/vllm-openai:nightly-d223c90` (digest on the page), [Dynamo](https://github.com/ai-dynamo/dynamo) `1.2.0.dev20260526`, [srt-slurm](https://github.com/NVIDIA/srt-slurm) `v1.0.32`. Recipes: [srt-slurm-recipes](https://github.com/NVIDIA/srt-slurm-recipes).
 
-### Accuracy
+### Accuracy Results
 
-GSM8K on every serving topology, via srt-slurm:
+GSM8K on **all five** topologies: **88%**, matching the aggregated Qwen3.5 run.
 
 ```yaml
 benchmark:
   type: "gsm8k"
 ```
 
-All **five** configurations: **88%**, matching the aggregated Qwen3.5 run. If this is not ~88, the P/D path is wrong — do not read the Pareto.
+### 2. Comments on Recipe Settings Choice
 
-### Recipe settings (measurement)
+Fixed ISL/OSL, random dataset, `random_range_ratio=0.8`. Settings that matter: next section.
 
-Fixed ISL/OSL, random dataset, `random_range_ratio=0.8`. Flags below.
+### 3. Performance Results
 
-### Results
+**Figure 1.** Pareto curves by number of Prefill instances.
 
-**Figure 1.** Pareto curves for disaggregated Qwen3.5 with different numbers of Prefill instances.
+**Figure 2.** Combined Pareto frontier.
 
-**Figure 2.** Combined Pareto frontier, Qwen3.5 NVFP4.
+Total TPS per GPU reaches **25,000** tok/s. Concurrency **64 → 5120**. They did **not** measure 1–32: the goal was the left Pareto — maximize total TPS/GPU. They stopped at 5120 because Decode KV capacity ran out on a single 8×GB200 endpoint. Higher concurrency is possible; it needs more Decode GPUs.
 
-Total TPS per GPU reaches **25,000** tok/s. Concurrency **64…5120**. They **did not** measure 1–32: the goal is the **left** Pareto (max total TPS/GPU), not per-user Gen TPS. Past 5120 they ran out of KV on the **single** 8×GB200 Decode endpoint they froze. Higher concurrency is possible; it needs more Decode GPUs.
+## Recipes & best practices
 
-## Recipes and best practices
-
-Launch:
+[srt-slurm-recipes … Qwen3.5/GB200/8k1k/vllm/disagg](https://github.com/NVIDIA/srt-slurm-recipes/tree/main/recipes/multi-node/Qwen3.5/GB200/8k1k/vllm/disagg). One command:
 
 ```shell
 srtctl run --file <recipe>.yaml
 ```
 
-Naming: `NxDEP2-1xDEP8` — N Prefill endpoints at DEP2 against one DEP8 Decode. Five bases: **4×DEP2 … 8×DEP2**. Each has three derived files: base sweeps sa-bench over cc **64…3072**; `-acc` runs GSM8K **five** times on the same topology; `-cc4096` / `-cc5120` are single high-cc points with Decode `--max-cudagraph-capture-size` raised to **640** and **768**.
+Naming: `NxDEP2-1xDEP8` — N Prefill endpoints on DEP2 against one DEP8 Decode. Five bases, **4×DEP2** through **8×DEP2**. Each has three derived variants: base sweeps sa-bench over cc 64…3072; `-acc` runs GSM8K five times on the same topology; `-cc4096` / `-cc5120` capture one high-concurrency point with Decode `max-cudagraph-capture-size` raised to **640** and **768**.
 
-Call-outs (most other settings are shared boilerplate):
+Flags worth calling out:
 
-- `VLLM_SSM_CONV_STATE_LAYOUT=DS` — **mandatory** for SSM models in P/D; conv-state transfer does not work without it. Recipes also passed `--no-disable-hybrid-kv-cache-manager`; HMA is default in later vLLM, so that flag is no longer required.
-- `--async-scheduling` — key to 25K tok/s/GPU. Needs a build that already contains the two race fixes.
-- `--mamba-ssm-cache-dtype bfloat16` — raises effective Decode KV capacity.
+- `VLLM_SSM_CONV_STATE_LAYOUT=DS` — **mandatory** for SSM models in disaggregated serving; conv-state transfer does not work without it. Recipes also passed `--no-disable-hybrid-kv-cache-manager`; HMA has since been default, that flag is no longer required.
+- `--async-scheduling` — key to 25K tok/s per GPU. Needs a build with the race fixes above.
+- `--mamba-ssm-cache-dtype bfloat16` — raises effective KV capacity on Decode.
 - `--language-model-only` — Qwen3.5 is multimodal; for text-only this disables multimodal **and** unlocks fused QK-norm + RoPE + gate.
-- `--max-num-batched-tokens 16384` on Prefill = **2×ISL**. With fewer Prefill endpoints ({4,5,6}×DEP2) Prefill starved Decode; batching two full prompts per step ≈ **+8%** total TPS/GPU at high cc.
-- `--max-cudagraph-capture-size` on Decode — `cc/8 + 128` at the two highest points (640 @ cc=4096, 768 @ cc=5120); 8 = DP ranks on Decode. Default cap **512** is enough through cc=3072. They are **not sure** this was required for the Pareto numbers; precaution.
-- Prefix caching **off** — buys nothing on a random dataset.
-- `--stream-interval 100` — cuts frontend at high cc; **buffers 100-token chunks**, so it moves ITL/TPOT. Skip if you are optimizing per-token latency, not aggregate TPS.
+- `--max-num-batched-tokens 16384` on Prefill = **2× ISL**. With fewer Prefill endpoints ({4, 5, 6}×DEP2) Prefill starved Decode; batching two full prompts per Prefill step was worth about **+8%** total TPS/GPU at high concurrency.
+- `--max-cudagraph-capture-size` on Decode — `cc/8 + 128` at the two highest points (640 at cc=4096, 768 at cc=5120); 8 = DP ranks on Decode. Default caps captured graphs at 512, enough through cc=3072. They are not sure this was required for the reported Pareto; set as precaution.
+- Prefix caching **off**: buys nothing on a random dataset.
+- `--stream-interval 100` — cuts frontend overhead at high concurrency. Buffers streamed output in 100-token chunks, so it **does** affect measured per-token latency. Skip if you are optimizing ITL/TPOT rather than aggregate throughput.
 
-Practical ops:
+Practical:
 
-`--api-server-count 1` while investigating. On a DP endpoint vLLM defaults API server count to DP size; more than one API server **disables default stats** so it does not print incomplete numbers. Forcing 1 brings logging back every 10 s (`VLLM_LOG_STATS_INTERVAL`): prompt/generation throughput and KV utilization. Without that they say they would not have found per-config bottlenecks.
+`--api-server-count 1` while investigating a config. On a DP endpoint vLLM defaults API-server count to DP size; more than one API server **disables** default stats logging so incomplete numbers are not printed. Forcing 1 brings logging back: every 10 s (`VLLM_LOG_STATS_INTERVAL`) prompt and generation throughput plus KV utilization. Without those metrics they would not have found per-config bottlenecks.
 
-Three env vars: `DYN_LOG=error`, `DYN_SDK_DISABLE_ANSI_LOGGING=1`, `VLLM_LOGGING_COLOR=0`. First cuts Dynamo noise; the other two strip some (not all) ANSI. Otherwise logs are unreadable.
+Also: `DYN_LOG=error`, `DYN_SDK_DISABLE_ANSI_LOGGING=1`, `VLLM_LOGGING_COLOR=0`. First cuts Dynamo logs; the other two suppress some (not all) ANSI. Otherwise log files are often unreadable.
 
 ## What's next
 
-This work squeezed the **left** Pareto (total TPS/GPU). Next they want PD configs that maximize **Gen TPS per user**. That regime shifts off DEP toward **TEP** (TP+EP) or plain TP. More GPUs is the other lever. Later architecture reuse at 2.4T: [qwen38.md](qwen38.md). Earlier hybrid GDN/full interleave: [qwen3-next.md](qwen3-next.md).
+So far: left Pareto, total TPS/GPU. Next: PD configs that maximize **Gen TPS per user**. That regime shifts from DEP toward **TEP** or plain **TP**, which as a rule deliver better per-user performance. More GPUs is another lever.
 
 ## Acknowledgements
 

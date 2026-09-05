@@ -9,9 +9,9 @@ fetched: 2026-09-04
 
 英文对照：[en/vllm/blog/serving/inkling.md](../../../../en/vllm/blog/serving/inkling.md)  
 原文：https://vllm.ai/blog/2026-07-15-inkling  
-2026-07-15。署名 **vLLM Team**。数字是 **4× GB200** 上的演示。权重：[`thinkingmachines/Inkling-NVFP4`](https://huggingface.co/thinkingmachines/Inkling-NVFP4)、[`thinkingmachines/Inkling`](https://huggingface.co/thinkingmachines/Inkling)（BF16）。接入：[PR #48768](https://github.com/vllm-project/vllm/pull/48768)。FA4 kernel：[vllm-project/tml-fa4](https://github.com/vllm-project/tml-fa4)。TML 预告：[interaction models](https://thinkingmachines.ai/blog/interaction-models/)。model-runner 旗：[../architecture/mrv2.md](../architecture/mrv2.md)。投机路径：[../performance/spec-decode.md](../performance/spec-decode.md)。**不是新引擎**——sconv cache 被当成虚拟 SWA 层的 KV。当时 **AMD 未支持**（缺 relative-attn kernel）。
+2026-07-15。署名 **vLLM Team**。数字是 **4× GB200** 上的演示。权重：[`thinkingmachines/Inkling-NVFP4`](https://huggingface.co/thinkingmachines/Inkling-NVFP4)、[`thinkingmachines/Inkling`](https://huggingface.co/thinkingmachines/Inkling)（BF16）。集成：[PR #48768](https://github.com/vllm-project/vllm/pull/48768)。Runner：[mrv2.md](../architecture/mrv2.md)。投机：[spec-decode.md](../performance/spec-decode.md)。P/D：[large-scale.md](large-scale.md)。当时 **AMD 未支持**（缺 relative-attention kernel）。**不是新引擎**——sconv cache 被当成虚拟 SWA 层的 KV。
 
-Thinking Machines 的 1T 多模：text/image/audio → text，原生 1M（Tinker 暴露 64K/256K）。66 层：11 full + 55 sliding-window GQA。位置不是 RoPE，是 **relative attention**。每层四个 window-4 **sconv**。MoE：256 routed top-6 + 2 shared **expert sink**。NVFP4 只量化 routed expert；MTP 8 头全 BF16。
+TML Inkling 是 [Thinking Machines Lab](https://thinkingmachines.ai/) 的 **1T** 多模：**text / image / audio** 进、text 出，原生 **1M**。相对 attention、短卷积、shared expert sink，都接进 vLLM。演示：MTP 最高 **380 tok/s/user**，无 MTP **140**，4 张 GB200。声称功能对齐：LoRA、TP/DP/EP/PP、前缀缓存、分离 serving。准确率和工具解析验过。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -20,10 +20,6 @@ Thinking Machines 的 1T 多模：text/image/audio → text，原生 1M（Tinker
 ![inkling model architecture](../../../../assets/vllm/blog/serving/inkling/02-inkling-model-architecture.png)
 
 ![sconv tp sharding](../../../../assets/vllm/blog/serving/inkling/03-sconv-tp-sharding.png)
-
-**Figure（社交 / logo）。** vLLM × Thinking Machines。
-
-## Quick start
 
 ```bash
 export VLLM_USE_V2_MODEL_RUNNER=1
@@ -40,65 +36,63 @@ vllm serve thinkingmachines/Inkling-NVFP4 \
       --trust-remote-code
 ```
 
-页上命令写的是 `--tensor-parallel-size 8`；下面 TPS 是 **4× GB200** 演示。两件事不要捏成一件。
-
 ## TL;DR
 
-- **模型：** 上面两个 Hub ID，声称功能对齐。
-- **硬件：** NVIDIA Blackwell 和 Hopper。更广的硬件「进行中」。**当时不支持 AMD GPU。**
-- **模态：** text/image/audio 进 → text 出。
-- **上下文：** 原生到 **1M**（Tinker 窗口 64K / 256K）。
-- **功能：** LoRA、MTP 投机解码、TP/DP/EP/PP、prefix caching、拆开 serving。
-- **优化：** 认 sconv 的 TP 切分、Lamport fused collective、kernel fusion、multi-streaming、PDL。
-- **性能（演示）：** SPEED-Bench 8K in / 1K out，4× GB200：MTP8 **380 tok/s/user**（mean accept **4.5**），无 MTP **140**。
-- **精度：** MMAU、MMMU-Pro、BFCL、NIAH-1M、HLE，对一份参考 NVFP4。
+- **模型：** Inkling-NVFP4 和 Inkling（BF16）
+- **硬件：** NVIDIA Blackwell 和 Hopper。更宽的硬件还在做。
+- **模态：** text/image/audio → text
+- **上下文：** 原生到 1M（Tinker 暴露 64K 和 256K）
+- **功能：** LoRA、MTP、TP/DP/EP/PP、前缀缓存、分离 serving
+- **优化：** 认 sconv 的 TP 切法、低延迟 fused collective、kernel 融合、多流、PDL
+- **性能：** 4 张 GB200 上 **380 tok/s/user（MTP）**、**140（无 MTP）**
+- **准确率：** MMAU、MMMU-Pro、BFCL、NIAH-1M、HLE 对参考实现
 
-## Model architecture
+## 模型架构
 
-**Figure 1.** 骨架；图上省略 RMSNorm / residual。
+**Figure 1。** TML Inkling 架构（图上省略了 RMSNorm 和残差）。
 
-**模态。** 1T，原生多模。图像编码器很轻：**hMLP**；音频嵌入 **dMel**（[TML 预告](https://thinkingmachines.ai/blog/interaction-models/)）。嵌入进 decoder-only Transformer。
+**模态。** 1T，原生多模态。很轻的图像编码器（hMLP）和音频 embedding（dMel）；见 [TML 的 interaction model preview](https://thinkingmachines.ai/blog/interaction-models/)。Embedding 进 decoder-only Transformer 骨干。
 
-**注意力。** 66 层：**11** 满 + **55** sliding-window。SWA 比重大，1M 上下文才买得起。所有层 **GQA**，head size **128**。
+**Attention。** 66 层：**11** 满 attention + **55** sliding-window。SWA 用得重，**1M** 上下文才买得起。全部 GQA，head size 128。
 
-位置机制是 *relative attention*：学来的相对位置项加在 **pre-softmax** logits 上。**不是 RoPE。**
+位置不是 RoPE，是 **relative attention**：学来的相对位置项加到 pre-softmax logits。细节在 TML 博。
 
-**Sconv。** 短卷积，窗口 **4**。每层四个模块：attention 的 K、V、输出，以及 MoE 输出。局部混合，算力和内存都小。
+**Sconv。** 短卷积用得很凶，窗口 **4**。每层四个 sconv：attention 的 K、V、输出，以及 MoE 输出。很小的局部 attention，算力和内存都轻。
 
-**MoE。** 256 routed，**top-6**，外加 **2** 个 shared。每个 token 过 **8** 个专家。shared 是 **expert sink**：参与 routing 分数（吃掉概率质量），但 **不进** top-6 候选。
+**MoE。** 256 routed，top-6，外加 **2 个 shared expert**——每 token 8 个专家。**Expert sink：** 两个 shared 参与 routing 分数（吃概率质量），但 **不进** top-6。
 
-`Inkling-NVFP4`：只有 **routed** 专家量化成 NVFP4；shared 和 qkvr 线性层仍是 BF16。`Inkling`：MoE 权重也是 BF16。
+`Inkling-NVFP4`：只有 **routed** 专家是 NVFP4；shared 和 qkvr 线性层仍 BF16。`Inkling`：MoE 权重也是 BF16。
 
-**MTP。** **8** 个 MTP 头，一步最多 **9** token。头是 **链式** 的：每个吃前一头的 hidden 和已采样 draft token。每头单层 Transformer（满或 SWA）+ dense MLP。**MTP 权重全 BF16。**
+**MTP。** **8 个 MTP 头**，一次 forward 最多 9 个 token。头是 **链式** 的：每个吃上一头的 hidden 和采样出的 draft token。每个头是单层 Transformer（满或 SWA）加稠密 MLP。MTP 权重全 **BF16**。
 
-## vLLM 接入与优化
+## vLLM 集成和优化
 
-**管 sconv cache。** 短卷积要留最后 `W-1` 个 hidden。vLLM 把它当成一层 **虚拟 sliding-window attention** 的 KV。统一 KV manager：滑出窗口的标成可驱逐；prefix caching 同样作用在 sconv 状态上。**不是新缓存池。**
+**管 sconv cache。** 短卷积要留最后 `W-1` 个 token 的 hidden。vLLM 把它当成 **虚拟 sliding-window attention 层** 的 KV。统一 KV cache manager：窗外的状态可驱逐；前缀缓存和 sconv cache 一起工作。
 
-**Figure 2.** 认 sconv 的 TP 切分。
+**Figure 2。** 认 sconv 的 TP 切法。
 
-**Sconv-aware TP sharding。** 朴素 TP：all-reduce（例如 `o_proj` 后）→ sconv → residual → RMSNorm。每张卡都对 **完整** hidden 做 sconv，compute 和 cache **整份复制**。
+**认 sconv 的 TP。** 朴素 TP：all-reduce（例如 `o_proj` 之后）→ sconv → 残差 → RMSNorm。每张 GPU 都对 **完整** hidden 做 sconv——计算和 sconv cache 都复制一份。
 
-sconv 沿 channel 独立，于是按 channel 切：**reduce-scatter / all-gather** 换掉 all-reduce。每卡只存一份 sconv cache 分片、只算自己的 channel。想法像 sequence parallelism，但切的轴是 **channel** 不是 token。
+Sconv 沿 channel 维独立，于是按 **channel** 切开：reduce-scatter / all-gather 走 channel 轴，而不是 all-reduce。每张 GPU 只存一份 sconv cache 分片，只算自己的 channel。像 sequence parallelism，但切的是 **channel**，不是 token。
 
-**低延迟 fused collective。** Lamport 协议的 reduce-scatter / all-gather（跟周围 op 焊在一起），从 FlashInfer 低延迟 all-reduce 扩出来。用 **数据值轮询** 同步，不用显式 barrier。bs=1：kernel **40 µs → 8 µs（5×）**。
+**低延迟 fused collective。** 把 FlashInfer 低延迟 all-reduce 的 **Lamport** 协议延到 fused reduce-scatter / all-gather（连周围的 op）。用数据值轮询同步，不要显式 barrier。bs=1：kernel **40 µs → 8 µs（5×）**。
 
-**带 sheared bias 的 FA4。** relative attention 把注意力 kernel 的访存打乱。TML 和 Colfax Research 发了 [FA4](https://github.com/vllm-project/tml-fa4)，带 **sheared-bias**；vLLM 直接用。再按配置（batch、TP、KV 长）选 FA4 的 `num_splits`。
+**带 sheared bias 的 FA4。** Relative attention 把访存弄复杂，attention 流水线变慢。TML 和 Colfax Research 发了 [带 sheared-bias 的 FA4](https://github.com/vllm-project/tml-fa4)；vLLM 接进来，并按配置（batch、TP、KV 长度）选 FA4 的 `num_splits`。
 
-**重算 MTP KV。** 每个 MTP 头吃前一头的 draft token，拒绝之后 KV 就脏了。vLLM 缓存基座模型最近几个 token 的 hidden，rejection sampling 之后用 **已接受 token 重跑 MTP 头**。
+**重算 MTP KV。** 每个 MTP 头吃上一头的 draft token。一拒绝，那份 KV 就脏了。vLLM 缓存骨干最后几个 token 的 hidden，拒绝采样之后用 **接受的 token 重跑** MTP 头。
 
-另外还有 kernel fusion、PDL、multi-streaming。细节在 [PR #48768](https://github.com/vllm-project/vllm/pull/48768)。
+另外还有 kernel 融合、PDL、多流。细节：[PR #48768](https://github.com/vllm-project/vllm/pull/48768)。
 
-### Performance（演示）
+### 性能
 
-4× GB200，SPEED-Bench **8K** in / **1K** out：MTP8 **380 tok/s/user**（mean acceptance length **4.5**），无 MTP **140**。
+**4× GB200**，SPEED-Bench **8K** 进 / **1K** 出：MTP8 **380 tok/s/user**（mean acceptance length **4.5**），无 MTP **140**。
 
-## Accuracy evals
+## 准确率
 
-他们列的每种模态，都对一份参考 NVFP4。长上下文：到 **221K** 完全对齐；到 **513K** 差在约 **1 pp** 内。**800K+** 的 NIAH 跑间方差大；他们说还在把那一档收紧。
+各模态和参考对齐。长上下文：到 **221K** 完全对齐，到 **513K** 大约 **1 pp** 内。800K+ 的 NIAH 跑间方差更大；他们在收紧可复现性。
 
 | Benchmark / metric | vLLM NVFP4 | Reference NVFP4 | Delta vs Reference |
-|---|---:|---:|---:|
+| --- | ---: | ---: | ---: |
 | MMAU overall | 76.10% (761/1,000) | 75.50% | +0.60 pp |
 | BFCL exact calls | 78.61% (1,062/1,351) | 78.16% | +0.45 pp |
 | BFCL All-Live macro | 75.86% | 73.54% | +2.32 pp |
@@ -108,18 +102,16 @@ sconv 沿 channel 独立，于是按 channel 切：**reduce-scatter / all-gather
 | MMMU-Pro Vision | 66.65% (1,153/1,730) | 65.26% (1,129/1,730) | +1.39 pp |
 | HLE | 29.33% (633/2,158) | 26.65% | +2.68 pp |
 | NIAH (2K-221K) | 99.09% (436/440) | 99.09% (436/440) | 0.00 pp |
-| NIAH (294K-513K) | 95.68% (421/440) | 96.82% (426/440) | −1.14 pp |
-| NIAH (586K-805K) | 81.36% (358/440) | 84.09% (370/440) | −2.73 pp |
-| NIAH (878K) | 70.91% (78/110) | 80.91% (89/110) | −10.00 pp |
+| NIAH (294K-513K) | 95.68% (421/440) | 96.82% (426/440) | -1.14 pp |
+| NIAH (586K-805K) | 81.36% (358/440) | 84.09% (370/440) | -2.73 pp |
+| NIAH (878K) | 70.91% (78/110) | 80.91% (89/110) | -10.00 pp |
 
-音频 = MMAU；视觉 = MMMU-Pro；tool calling = BFCL；reasoning = HLE；长上下文 = NIAH。
+## Roadmap
 
-## Roadmap（当时）
+- **全局 attention 的 FP8：** 现在是 BF16；算力和 KV 容量都可能卡。打算改新的 FA4 kernel 试 FP8。
+- **图像和音频编码器的 CUDA Graph：** 现在 eager。通常只在 Prefill；上 graph 是为了砍 CPU。
+- **AMD：** 还没有——relative attention 要专用 kernel。在路上。
 
-- **全局注意力上 FP8：** 全局 attn 仍是 BF16；算力和 KV 容量都会卡。计划改新的 FA4 kernel。
-- **图像 / 音频编码器上 CUDA graph：** 这两段当时 **eager**。通常只在 Prefill；上 graph 是为了干掉 CPU 开销。
-- **AMD GPU：** **还没有。** relative attention 要单独 kernel。页上写 “coming soon”——没有日期，没有 ROCm flag。
-
-## Acknowledgements
+## 致谢
 
 Thinking Machines Lab。模型支持由 [Inferact](https://inferact.ai/) 牵头。

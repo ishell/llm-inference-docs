@@ -9,7 +9,7 @@ fetched: 2026-09-04
 
 英文对照：[en/vllm/blog/serving/semantic-router-mom-amd.md](../../../../en/vllm/blog/serving/semantic-router-mom-amd.md)  
 原文：https://vllm.ai/blog/2026-01-23-mom-on-amd-gpu  
-2026-01-23。署名 **The AMD and vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。v0.1 就把这条现场路径发出去。合作愿景：[amd](semantic-router-amd.md)。后来换模型 / `--platform amd`：[athena](semantic-router-athena.md)。MoM 当系统：[mom](semantic-router-mom.md)。不要和引擎里的 [Router](router.md) 混。信号延迟和 playground 矩阵是**他们的**演示，不是你的 SLA。
+2026-01-23。署名 **The AMD and vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。v0.1 就把这条现场路径发出去。合作愿景：[amd](semantic-router-amd.md)。后来换模型 / `--platform amd`：[athena](semantic-router-athena.md)。Themis 后来 **删掉 `vllm-sr init`**：[themis](semantic-router-themis.md)。MoM 当系统：[mom](semantic-router-mom.md)。不要和引擎里的 [Router](router.md) 混。信号延迟和 playground 矩阵是**他们的**演示，不是你的 SLA。
 
 同目录还有：[modular](semantic-router-modular.md)、[halugate](halugate.md)、[session](semantic-router-session.md)、[themis](semantic-router-themis.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)、[vision](semantic-router-vision.md)。
 
@@ -167,7 +167,7 @@ MoM 像 **专家团队** 加一只调度。
 
 ## 怎么在 AMD GPU（MI300X / MI355X）上跑
 
-完整剧本：[deploy/amd/README.md](https://github.com/vllm-project/semantic-router/blob/main/deploy/amd/README.md)。这是 **2026-01** 快照；Athena 之后 `vllm-sr serve --platform amd` 才变成正经的镜像优先流程。
+完整剧本：[deploy/amd/README.md](https://github.com/vllm-project/semantic-router/blob/main/deploy/amd/README.md)。这是 **2026-01 / v0.1** 快照。Athena 之后 `vllm-sr serve --platform amd` 变成一等流程。[Themis](semantic-router-themis.md) 后来 **删掉 `vllm-sr init`**（空目录 `vllm-sr serve` 变成 dashboard-first）。
 
 ```bash
 python -m venv vsr
