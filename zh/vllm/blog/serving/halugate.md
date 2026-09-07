@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-12-14-halugate
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # HaluGate：工具已经说对了，模型还在编
@@ -19,7 +19,7 @@ fetched: 2026-09-04
 
 ## 问题：幻觉挡住投产
 
-原文把幻觉写成生产部署 LLM 的最大拦路石。各行同一出戏：**法律**（捏造判例）、**医疗**（药物相互作用写错）、**金融**（编造财务数字）、**客服**（不存在的政策）。听起来像权威，一查就碎。
+原文把幻觉写成生产部署 LLM 的最大拦路石。各行都有同类问题：**法律**（捏造判例）、**医疗**（药物相互作用写错）、**金融**（编造财务数字）、**客服**（不存在的政策）。听起来像权威，一查就碎。
 
 难的不是一眼假的胡话，是**嵌在大体正确的回答里的细伪造**——要领域知识或外部核验才抓得住。对企业来说，这种不确定是负债，不是资产。
 
@@ -149,7 +149,7 @@ Input: [CLS] context [SEP] question [SEP] answer [SEP]
 
 - **只分类 answer：** 不分类 context、不分类 question
 - **Span merging：** 连续幻觉 token 并成 span
-- **Confidence thresholding：** 可配；默认 **0.8**，在 precision / recall 之间拧
+- **Confidence thresholding：** 可配；默认 **0.8**，在 precision / recall 之间权衡
 
 #### NLI 解释层
 
@@ -399,7 +399,7 @@ LoRA：只更新 **2.2%** 参数（**149M** 里的 **3.4M**）。
 | NLI explainer | 18 ms | 42 ms | 每个 span 一次分类 |
 | **Total overhead** | **76 ms** | **162 ms** | 检测真跑的时候 |
 
-他们说 **76–162 ms** 比起典型 LLM 生成（**5–30 seconds**）可以忽略，所以能同步拦在请求路径上。以原文测量为准，不是你的 SLA。
+他们说 **76–162 ms** 比起典型 LLM 生成（**5–30 seconds**）可以忽略，所以能同步拦在请求路径上。以原文测量为准，不宜直接当作生产 SLA。
 
 ## 配置参考
 

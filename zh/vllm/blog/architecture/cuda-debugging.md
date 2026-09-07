@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-08-11-cuda-debugging
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # CUDA core dump：illegal memory access 落到哪只 kernel
 
 英文对照：[en/vllm/blog/architecture/cuda-debugging.md](../../../../en/vllm/blog/architecture/cuda-debugging.md)  
 原文：https://vllm.ai/blog/2025-08-11-cuda-debugging  
-2025-08-11。署名 **Kaichao You**。学习笔记。原文没有机制图（只有 logo，本地不搬）。续篇——挂死的 kernel、对回源码行：[cuda-debugging-source](cuda-debugging-source.md)。
+2025-08-11。署名 **Kaichao You**。学习译文，不是官方译本。原文没有机制图（只有 logo，本地不搬）。续篇——挂死的 kernel、对回源码行：[cuda-debugging-source](cuda-debugging-source.md)。
 
 **原文 TL;DR：** 撞上 `an illegal memory access was encountered`，打开 CUDA core dump。设下面这些环境变量，再跑一遍收集 coredump，然后用 `cuda-gdb` 看。
 
@@ -300,7 +300,7 @@ The exception was triggered at PC 0x7fc2afba5e30  void at::native::vectorized_el
 5. 打开 core dump 对 CUDA kernel **有性能税**（线程退出时要检查、归因）。**不要**在生产默认打开。能稳定复现 IMA 之后再开，用来查。
 6. 要对回源码行，建议带 debug 符号重编 vLLM，至少编进行号。默认二进制为了体积 **没有** 这些。要从源码编，见 [GPU 完整编译](https://docs.vllm.ai/en/latest/getting_started/installation/gpu.html#full-build-with-compilation)，并 `export NVCC_PREPEND_FLAGS='-lineinfo'` 或 `export NVCC_PREPEND_FLAGS='-G'`。先 `-lineinfo`，不够再 `-G`。行信息够了，dump 才能指到那一行。这一步的下文是 [cuda-debugging-source](cuda-debugging-source.md)。
 
-## 收束
+## 结语
 
 CUDA core dump 的原理和用例：不规范 launch、CUDA graph 里的 kernel 异常，IMA 以及更远一点的问题，它都用得上。
 

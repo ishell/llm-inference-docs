@@ -1,11 +1,11 @@
 ---
 source: https://vllm.ai/blog/2025-12-15-vllm-epd
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Encoder 分离（EPD）：别让一张图堵住整列车
+# Encoder 分离（EPD）：别让视觉编码器挡住文本路径
 
 英文对照：[en/vllm/blog/serving/epd.md](../../../../en/vllm/blog/serving/epd.md)  
 原文：https://vllm.ai/blog/2025-12-15-vllm-epd  
@@ -27,7 +27,7 @@ fetched: 2026-09-05
 [E PD] -> [E PD] -> [E PD]
 ```
 
-每个请求两段都走完，下一辆才能过。编码器不能和别人的 Prefill / Decode 重叠。
+每个请求两段都走完，下一个请求才能过。编码器不能和别人的 Prefill / Decode 重叠。
 
 后果：
 
@@ -102,7 +102,7 @@ E → P D   (Request 1)
 **Data Transfer Layer**
 
 - 编码器产出的多模态 embedding（Encoder Cache，简称 EC）的远程存储。
-- 编码器 worker 和 PD worker 之间的共享走廊。
+- 编码器 worker 和 PD worker 之间的共享传输路径。
 
 **EC Connectors**
 

@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-05-26-eagle-3-1
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# EAGLE 3.1：压住 attention drift
+# EAGLE 3.1：EAGLE、vLLM 与 TorchSpec 三家推进投机解码
 
 英文对照：[en/vllm/blog/performance/eagle-3-1.md](../../../../en/vllm/blog/performance/eagle-3-1.md)  
 原文：https://vllm.ai/blog/2026-05-26-eagle-3-1  
-2026-05-26。署名 **EAGLE Team、vLLM Team、and TorchSpec Team**。学习笔记。仓库：[SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE)、[vllm-project/vllm](https://github.com/vllm-project/vllm)、[lightseekorg/TorchSpec](https://github.com/lightseekorg/TorchSpec)。验收数学仍是 [spec-decode](spec-decode.md)。一次前向猜 K 个字的亲戚：[P-EAGLE](p-eagle.md)。EAGLE-3 训练底座：[speculators-v030](speculators-v030.md)。页上的吞吐是他们的 SPEED-Bench，不是你的 SLA。
+2026-05-26。署名 **EAGLE Team、vLLM Team、and TorchSpec Team**。学习译文，不是官方译本。仓库：[SafeAILab/EAGLE](https://github.com/SafeAILab/EAGLE)、[vllm-project/vllm](https://github.com/vllm-project/vllm)、[lightseekorg/TorchSpec](https://github.com/lightseekorg/TorchSpec)。验收数学仍是 [spec-decode](spec-decode.md)。一次前向猜 K 个 token 的亲戚：[P-EAGLE](p-eagle.md)。EAGLE-3 训练底座：[speculators-v030](speculators-v030.md)。页上的吞吐是他们的 SPEED-Bench，不是你的 SLA。
 
 EAGLE 系列（1 / 2 / 3）已经是研究和生产里用得最广的投机解码家族之一。这篇是三家一起推的 **EAGLE 3.1**：更稳、更敢上 serving。
 
@@ -17,7 +17,7 @@ EAGLE 系列（1 / 2 / 3）已经是研究和生产里用得最广的投机解�
 
 受控评测里投机解码可以很好看；换 chat template、拉长上下文、换 OOD system prompt，接受长度就掉。
 
-EAGLE 团队把这种脆归结为 [attention drift](https://arxiv.org/pdf/2605.09992)：猜得越深，草稿注意力离开 sink token，盯住自己刚吐的字。
+EAGLE 团队把这种脆归结为 [attention drift](https://arxiv.org/pdf/2605.09992)：猜得越深，草稿注意力离开 sink token，盯住自己刚生成的 token。
 
 底下两处。一是融合输入越来越不平衡，高层 hidden 把草稿输入占满。二是未归一化的 residual 让 hidden 幅度跨投机步膨胀。合在一起，越深越不稳。
 
@@ -45,7 +45,7 @@ EAGLE 团队把这种脆归结为 [attention drift](https://arxiv.org/pdf/2605.0
 
 ## 用 TorchSpec 训
 
-[TorchSpec](https://github.com/lightseekorg/torchspec) 现在能训 [EAGLE 3.1](https://github.com/lightseekorg/TorchSpec/pull/97)，也给后面的投机算法留门。训练税更低，试新算法更快。
+[TorchSpec](https://github.com/lightseekorg/torchspec) 现在能训 [EAGLE 3.1](https://github.com/lightseekorg/TorchSpec/pull/97)，也给后面的投机算法留门。训练开销更低，试新算法更快。
 
 基于 TorchSpec 和 vLLM，他们训并开源了 Kimi K2.6 的 EAGLE 3.1 草稿：
 

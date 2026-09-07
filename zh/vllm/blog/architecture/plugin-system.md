@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-11-20-vllm-plugin-system
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 插件系统：改 vLLM 不必养一座 fork
@@ -11,7 +11,7 @@ fetched: 2026-09-05
 原文：https://vllm.ai/blog/2025-11-20-vllm-plugin-system  
 2025-11-20。署名 **Dhruvil Bhatt (AWS SageMaker)**。先发在 [Medium](https://medium.com/@dhruvilbhattlm10/building-clean-maintainable-vllm-modifications-using-the-plugin-system-e80df0f62861)。页上那句副题：*Avoiding forks, avoiding monkey patches, and keeping sanity intact*。架构图来源页上写的是 [vllm-ascend](https://github.com/vllm-project/vllm-ascend)。硬件那扇专门的门：[hardware-plugin](hardware-plugin.md)。后来走 `vllm.general_plugins` 的亲戚：[AFD](../serving/afd.md)。同样是「留门、别 fork」：[sleep-mode](sleep-mode.md)、[KV offload](../serving/kv-offload.md) / [Mooncake](../serving/mooncake.md)（`KVConnector`）、[RDT](../serving/rdt-weight-transfer.md) / [native-rl](../serving/native-rl.md)（`WeightTransferEngine`）。
 
-适用：自定义调度、KV 行为、硬件、执行路径上的补丁。不适合：改引擎心脏、又想跟主线每一周对齐——那种还是该上游，或接受 fork 的税。
+适用：自定义调度、KV 行为、硬件、执行路径上的补丁。不适合：改引擎核心、又想跟主线每一周对齐——那种还是该上游，或接受 fork 的税。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -41,7 +41,7 @@ vLLM 已经是高吞吐、低延迟的 serving 引擎：continuous batching、�
 
 - 常常 **整类、整模块替换**，十行改动也要 **复印大段源码**——包括你根本没改的部分。
 - **每次升级都碎**，因为你换的是文件，不是那十行。
-- **调试难受**：bug 在补丁里？在没改过的 vanilla 里？还是 monkey patch 把调用关系拧歪了？
+- **调试难受**：bug 在补丁里？在没改过的 vanilla 里？还是 monkey patch 把调用关系弄乱了？
 - 运维成本会涨：每个发版都要 **diff、再同步复印出来的文件**——fork 的税，只是藏在 Python 包里。
 - 有些模块（原文点名 **`Scheduler`**）monkey patch **经常无效**：它们跑在 **`EngineCore` 的另一个进程** 里。`EngineCore` 仍调用 **旧实现**。这是进程同步问题，不是 import 顺序能糊弄过去的。
 
@@ -49,7 +49,7 @@ vLLM 已经是高吞吐、低延迟的 serving 引擎：continuous batching、�
 
 ## 更干净的路：插件系统
 
-作者走的是 vLLM 正在长的 [general_plugin 架构](https://docs.vllm.ai/en/stable/design/plugin_system.html)：把针对性改动注入引擎，**不改上游源码**。宣称的好处：结构化、模块化补丁；运行时启用；外科手术式覆盖；兼容性闸门；不必整文件复印；不必 monkey patch 杂技；不必养 fork。夹在「全部上游」和「整文件替换」中间。
+作者走的是 vLLM 正在长的 [general_plugin 架构](https://docs.vllm.ai/en/stable/design/plugin_system.html)：把针对性改动注入引擎，**不改上游源码**。宣称的好处：结构化、模块化补丁；运行时启用；针对性覆盖；兼容性闸门；不必整文件复印；不必 monkey patch；不必养 fork。夹在「全部上游」和「整文件替换」中间。
 
 > **原文注：** vLLM 提供 **四种** 插件组——**platform**、**engine**、**model**、**general**。这篇只讲 **general plugin**：它在 **每一个** vLLM 进程里加载，所以适合这种干净改法。分类见 [Types of Supported Plugins](https://docs.vllm.ai/en/latest/design/plugin_system/#types-of-supported-plugins)。platform 那条是 [hardware-plugin](hardware-plugin.md) 的故事。
 
@@ -62,7 +62,7 @@ vLLM 已经是高吞吐、低延迟的 serving 引擎：continuous batching、�
 - 可以声明 **最低 vLLM 版本**
 - 可以 **休眠**，直到某个模型配置点名要它
 
-插件在运行时生效，于是 **同一份容器镜像** 能伺候多个模型，按模型选择性开补丁。灵感来自 [ArcticInference](https://github.com/snowflakedb/ArcticInference)。
+插件在运行时生效，于是 **同一份容器镜像** 能跑多个模型，按模型选择性开补丁。灵感来自 [ArcticInference](https://github.com/snowflakedb/ArcticInference)。
 
 ## 实现：一个 `general_plugins` 包
 
@@ -456,7 +456,7 @@ docker run \
 
 不必复印整文件。`VLLMPatch` 可以只加一个方法，不必抄整类。
 
-### 2. 同一份 vLLM 构建伺候多个模型
+### 2. 同一份 vLLM 构建跑多个模型
 
 不同进程 / 镜像用不同的 `VLLM_CUSTOM_PATCHES`。
 
@@ -486,7 +486,7 @@ class MyPatch(VLLMPatch[TargetClass]):
 
 推理引擎跑得很快。假选择是：改内部，**或者** 跟上游兼容。插件模型把这道二选一撤了。运维开销小，长期灵活性还在。原文说它从原型能长到多模型生产，作者也在生产环境用过。
 
-## 收束 / 要点
+## 结语 / 要点
 
 先考虑 general plugin，再决定要不要 fork 或 monkey patch。
 

@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-10-23-now_serving_nvidia_nemotron_with_vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Nemotron Nano 2：9B hybrid，Thinking Budget 是客户端两刀，不是引擎旋钮
+# Nemotron Nano 2：9B hybrid，Thinking Budget 是客户端两刀，不是引擎配置
 
 英文对照：[en/vllm/blog/serving/nemotron-nano2.md](../../../../en/vllm/blog/serving/nemotron-nano2.md)  
 原文：https://vllm.ai/blog/2025-10-23-now_serving_nvidia_nemotron_with_vllm  
-2025-10-23。署名 **NVIDIA Nemotron Team**。这系列里第一篇 Nemotron 上 vLLM 的 day-0。后继 30B：[Nano](nemotron-3-nano.md)。同一家：[Super](nemotron-3-super.md)、[Ultra](nemotron-3-ultra.md)、[Lightning](nemotron-35-lightning.md)。多模态：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。Mamba 拆分：[hybrid-ssm.md](hybrid-ssm.md)。他们报 thinking token 相对同尺寸 dense 最高约 **6×**——页上的演示，不是你的 SLA。
+2025-10-23。署名 **NVIDIA Nemotron Team**。这系列里第一篇 Nemotron 上 vLLM 的 day-0。后继 30B：[Nano](nemotron-3-nano.md)。同一家：[Super](nemotron-3-super.md)、[Ultra](nemotron-3-ultra.md)、[Lightning](nemotron-35-lightning.md)。多模态：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。Mamba 拆分：[hybrid-ssm.md](hybrid-ssm.md)。他们报 thinking token 相对同尺寸 dense 最高约 **6×**——页上的演示，不是某一套集群上的 SLA。
 
 **原文 TL;DR：**
 
@@ -26,7 +26,7 @@ vLLM 是把这家人送到机房和边缘的路。开箱：开源权重、开源
 
 ## NVIDIA Nemotron Nano 2
 
-当时最新：小号推理模，[hybrid Transformer–Mamba](https://arxiv.org/pdf/2504.03624)，thinking budget 可拧——精度、吞吐、成本自己调。
+当时最新：小号推理模，[hybrid Transformer–Mamba](https://arxiv.org/pdf/2504.03624)，thinking budget 可调——精度、吞吐、成本自己调。
 
 - **Open。** [Hugging Face](https://huggingface.co/nvidia/NVIDIA-Nemotron-Nano-9B-v2)。声称 reasoning、coding、agentic（instruction following、tool calling、长上下文聊天）领先。超过 **9T** token 的 [pre- / post-training 数据](https://huggingface.co/nvidia/datasets?search=nemotron)，NVIDIA 产，许可宽松。
 
@@ -38,7 +38,7 @@ vLLM 是把这家人送到机房和边缘的路。开箱：开源权重、开源
 
 **Figure 1。** Nano 2 9B 在常见榜上的精度。分数在图里，不在表里。
 
-- **Optimized Thinking。** Thinking budget：别让代理 overthink；推理成本更好预期。放着不管，模型会想太多——钱上去，精度有时还下来。Budget 让你选精度–token 的甜区。
+- **Optimized Thinking。** Thinking budget：别让代理 overthink；推理成本更好预期。放着不管，模型会想太多——钱上去，精度有时还下来。Budget 让我们选精度–token 的折中区间。
 
 ![figure2](../../../../assets/vllm/blog/serving/nemotron-nano2/02-figure2.png)
 

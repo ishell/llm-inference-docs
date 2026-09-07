@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-06-05-v0.3-vllm-sr-themis-release
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Semantic Router v0.3 Themis：从信号到可运营的有状态路由
 
 英文对照：[en/vllm/blog/serving/semantic-router-themis.md](../../../../en/vllm/blog/serving/semantic-router-themis.md)  
 原文：https://vllm.ai/blog/2026-06-05-v0.3-vllm-sr-themis-release  
-2026-06-05。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。v0.2：[athena](semantic-router-athena.md)。SAAR 专篇：[session](semantic-router-session.md)。后来的 MoM 专章：[mom](semantic-router-mom.md)。不要和引擎里的 [Router](router.md) 混。页上的 commit 数和 RouterArena 快照是发版时的。
+2026-06-05。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。v0.2：[athena](semantic-router-athena.md)。SAAR 专篇：[session](semantic-router-session.md)。后来的 MoM 专章：[mom](semantic-router-mom.md)。不要和引擎里的 [Router](router.md) 混。页上的 commit 数和 RouterArena 快照是发版时的。
 
 同目录还有：[modular](semantic-router-modular.md)、[amd](semantic-router-amd.md)、[mom-amd](semantic-router-mom-amd.md)、[vision](semantic-router-vision.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)。
 
@@ -84,7 +84,7 @@ Breaking，但是原文说的那种该破：更少方言、所有权更清楚、
 | Projection | 把生证据收成策略能用的概念：verification、urgency、feedback、balance |
 | Decision | 带优先级、可解释条件的命名路由策略 |
 | Algorithm | 命中决策之后，在候选模型里挑 |
-| Model | 用选中的 backend alias / provider 伺候请求 |
+| Model | 用选中的 backend alias / provider 服务请求 |
 
 信号族更富、有 projection trace、选模算法更绕、还有响应侧插件——隐式行为不再能接受。目录不只看最新那句 prompt，还看安全姿态、工具环、用户角色、多模态意图、会话形状、结构化事件、可 replay 的知识库证据：
 
@@ -284,7 +284,7 @@ Projection trace 跟着 replay 存，dashboard 能解释：最终路由是哪条
 
 ### 6. Dashboard 变成 operator 控制台
 
-不只是 config 编辑器。首跑 setup、topology 图、靠 replay 的 insights、日志、status、评测流、auth、模型清单都拧紧了。Operator 可以导入 profile、校验、激活、发测试 prompt、看信号路径、读 router 日志、核 replay，不必离开 dashboard。
+不只是 config 编辑器。首跑 setup、topology 图、靠 replay 的 insights、日志、status、评测流、auth、模型清单都收紧了。Operator 可以导入 profile、校验、激活、发测试 prompt、看信号路径、读 router 日志、核 replay，不必离开 dashboard。
 
 ![operator console](../../../../assets/vllm/blog/serving/semantic-router-themis/07-operator-console.png)
 
@@ -304,7 +304,7 @@ Projection trace 跟着 replay 存，dashboard 能解释：最终路由是哪条
 - 更瘦的生产 route shell、更小的 backend runtime 依赖
 - Dashboard 能感知的模型列表和 status
 
-本地和远端同一套：setup 伺候首跑，topology 看策略，logs/status 做运维，insights 看真实流量。
+本地和远端同一套：setup 服务首跑，topology 看策略，logs/status 做运维，insights 看真实流量。
 
 ### 7. CLI 和部署更可预期
 
@@ -330,7 +330,7 @@ Kubernetes：Helm、发版默认值、OpenShift 部署修复、多个 `Intellige
 
 ### 8. 安全、Replay、记忆、检索更值得信
 
-Athena 把这些带进 router。Themis 把它们拧硬。
+Athena 把这些带进 router。Themis 把它们做扎实。
 
 **Replay 和可观测**
 
@@ -387,7 +387,7 @@ Athena 把这些带进 router。Themis 把它们拧硬。
 
 ### 10. 硬件 backend 路径变宽
 
-四条：NVIDIA CUDA 和 AMD ROCm 伺候被 serve 的 vLLM backend；Intel OpenVINO 做 router 自管的分类器和 embedding 推理；CPU/local 做开发和 smoke test。
+四条：NVIDIA CUDA 和 AMD ROCm 服务被 serve 的 vLLM backend；Intel OpenVINO 做 router 自管的分类器和 embedding 推理；CPU/local 做开发和 smoke test。
 
 v0.3 加了最初的 **OpenVINO binding**：原生 C++ 和 Go，对接 ModernBERT 的 sequence classification、token classification、embedding，还有对比 OpenVINO 和 Candle 的 benchmark 入口。**这是 backend / binding 里程碑，不是全面生产对等声明。**
 
@@ -435,7 +435,7 @@ vllm-sr serve --platform amd
 | Router 核 | 更富的信号、projection、响应状态、replay、安全、选模算法 |
 | 选模 | Session-aware、多因子、latency-aware、RL-driven、hybrid 等 |
 | 协议 | 更强的 OpenAI / Anthropic 兼容，翻译行为显式 |
-| Dashboard | Setup、topology、status、日志、insights、replay、auth、模型清单拧硬 |
+| Dashboard | Setup、topology、status、日志、insights、replay、auth、模型清单做扎实 |
 | CLI | 更清楚的 serve 模式、模型检查、chat/eval、config 迁移、平台边界 |
 | 部署 | AMD ROCm、OpenVINO binding、NVIDIA 本地透传、Helm/OpenShift/Gateway API 修复、发版制品合同 |
 | 存储和检索 | Valkey、Qdrant、Redis、Milvus、replay、cache、memory、向量库生命周期 |
@@ -492,7 +492,7 @@ helm install semantic-router oci://ghcr.io/vllm-project/charts/semantic-router
 
 ## 往前看：v0.4 Hermes
 
-下一版代号 **Hermes**。Themis 让合同稳到能运营。Hermes 该让 router 更快变好、更好评、在真实负载下更安全地适应。核心目标：**会自己变好的 router**。回路：GPU 规模上自动研究 router 性能，用 router 评测拧 DSL recipe，把验证过的证据喂回代码库和 encoder 微调。原文点名的高价值工作：
+下一版代号 **Hermes**。Themis 让合同稳到能运营。Hermes 该让 router 更快变好、更好评、在真实负载下更安全地适应。核心目标：**会自己变好的 router**。回路：GPU 规模上自动研究 router 性能，用 router 评测调 DSL recipe，把验证过的证据喂回代码库和 encoder 微调。原文点名的高价值工作：
 
 - **Self-improving router：** GPU 规模性能研究、DSL recipe 调、代码库加 encoder 微调。生成出来的改动仍要可审、可 replay、有版本、能回滚。
 - **SAAR 当 agentic 路由层：** 切换经济学、工具环连续、provider 状态可移植、replay 诊断、router 记忆。

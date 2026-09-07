@@ -1,7 +1,8 @@
 ---
 source: https://developer.nvidia.com/tensorrt-llm
 lang: zh
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # TensorRT-LLM（产品页）

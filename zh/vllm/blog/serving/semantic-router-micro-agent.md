@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-06-29-micro-agent-frontier-models
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Micro-agent：一个 model 名后面的有界协作
 
 英文对照：[en/vllm/blog/serving/semantic-router-micro-agent.md](../../../../en/vllm/blog/serving/semantic-router-micro-agent.md)  
 原文：https://vllm.ai/blog/2026-06-29-micro-agent-frontier-models  
-2026-06-29。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。面板–法官：[fusion](semantic-router-fusion.md)。MoM 当系统：[mom](semantic-router-mom.md)。会话连续：[session](semantic-router-session.md)。可运营合同：[themis](semantic-router-themis.md)。不要和引擎里的 [Router](router.md) 混。分数是他们 closed/hybrid 配方的 scorecard，不是「每个请求都该上全套闭源模型」。
+2026-06-29。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。面板–法官：[fusion](semantic-router-fusion.md)。MoM 当系统：[mom](semantic-router-mom.md)。会话连续：[session](semantic-router-session.md)。可运营合同：[themis](semantic-router-themis.md)。不要和引擎里的 [Router](router.md) 混。分数是他们 closed/hybrid 配方的 scorecard，不是「每个请求都该上全套闭源模型」。
 
 同目录还有：[athena](semantic-router-athena.md)、[amd](semantic-router-amd.md)、[mom-amd](semantic-router-mom-amd.md)、[modular](semantic-router-modular.md)、[vision](semantic-router-vision.md)、[halugate](halugate.md)。
 
@@ -64,11 +64,11 @@ Router 可以省：何时配得上前沿模型，何时开源或本地就够。�
 
 实现细节要紧。Looper 不是口号「再问几只模型」。它是一只小 runtime，带着 **预算、拓扑、迹、失败政策**。
 
-### Confidence：升级税只花在难的上
+### Confidence：升级成本只花在难的上
 
 成本感知的环。先小/便宜，再问这答够不够自信可以停。置信可以来自 token 级 logprob、logprob margin、混合分、自核、或 AutoMix 那种蕴含核验器。
 
-分过阈值，立刻返回。分太低，升到下一只候选。要紧的不是「有升级」，是升级变成显式的 router 政策：阈值、失败行为、停止条件，看得见、拧得动。
+分过阈值，立刻返回。分太低，升到下一只候选。要紧的不是「有升级」，是升级变成显式的 router 政策：阈值、失败行为、停止条件，看得见、改得动。
 
 ![confidence loop](../../../../assets/vllm/blog/serving/semantic-router-micro-agent/03-confidence-loop.png)
 

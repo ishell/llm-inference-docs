@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-10-27-semantic-router-modular
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 模块化 LoRA：别为每个分类器跑一整只 BERT
 
 英文对照：[en/vllm/blog/serving/semantic-router-modular.md](../../../../en/vllm/blog/serving/semantic-router-modular.md)  
 原文：https://vllm.ai/blog/2025-10-27-semantic-router-modular  
-2025-10-27。署名 **Ivar Flakstad (Hugging Face), OneZero-Y, Huamin Chen (Red Hat), Xunzhuo Liu (Tencent)**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。共享基座 LoRA 落进 [Iris](semantic-router-iris.md)。脊柱：[signal-decision](semantic-router-signal.md)。HaluGate 走同一扇 Candle 门：[halugate](halugate.md)。后来换 mmBERT：[athena](semantic-router-athena.md)。不要和引擎里的 [Router](router.md) 混。Flash Attention 的 2× / tok/s 是**文献引用**，不是 vLLM-SR 集群实测。
+2025-10-27。署名 **Ivar Flakstad (Hugging Face), OneZero-Y, Huamin Chen (Red Hat), Xunzhuo Liu (Tencent)**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。共享基座 LoRA 落进 [Iris](semantic-router-iris.md)。主干：[signal-decision](semantic-router-signal.md)。HaluGate 走同一条 Candle 路径：[halugate](halugate.md)。后来换 mmBERT：[athena](semantic-router-athena.md)。不要和引擎里的 [Router](router.md) 混。Flash Attention 的 2× / tok/s 是**文献引用**，不是 vLLM-SR 集群实测。
 
 同目录还有：[amd](semantic-router-amd.md)、[mom-amd](semantic-router-mom-amd.md)、[vision](semantic-router-vision.md)、[themis](semantic-router-themis.md)、[session](semantic-router-session.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)、[mom](semantic-router-mom.md)。
 

@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-05-11-vllm-tops-artificial-analysis
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Artificial Analysis 榜：三只模型三只瓶颈，融合和 draft 都在 main
+# Artificial Analysis：三只模型、三处瓶颈；fusion 与 draft 已在 main
 
 英文对照：[en/vllm/blog/performance/artificial-analysis.md](../../../../en/vllm/blog/performance/artificial-analysis.md)  
 原文：https://vllm.ai/blog/2026-05-11-vllm-tops-artificial-analysis  
-2026-05-11。署名 **vLLM Team**。学习笔记。2026-05 DigitalOcean / Artificial Analysis 当天的板，不是你的 SLA。Pareto 亲戚：[gpt-oss-optimizations.md](gpt-oss-optimizations.md) / [qwen35-25k-tps.md](../serving/qwen35-25k-tps.md)。V3.2 稀疏路径：[deepseek-v32.md](../architecture/deepseek-v32.md)。后来复用：[deepseek-v4.md](../architecture/deepseek-v4.md)。Draft 训练：[eagle-3-1.md](eagle-3-1.md) / [speculators-v050.md](speculators-v050.md)。MRV2：[mrv2.md](../architecture/mrv2.md)。系统 TPS ≠ 每用户 TPS。
+2026-05-11。署名 **vLLM Team**。学习译文，不是官方译本。2026-05 DigitalOcean / Artificial Analysis 当天的板，不是你的 SLA。Pareto 亲戚：[gpt-oss-optimizations.md](gpt-oss-optimizations.md) / [qwen35-25k-tps.md](../serving/qwen35-25k-tps.md)。V3.2 稀疏路径：[deepseek-v32.md](../architecture/deepseek-v32.md)。后来复用：[deepseek-v4.md](../architecture/deepseek-v4.md)。Draft 训练：[eagle-3-1.md](eagle-3-1.md) / [speculators-v050.md](speculators-v050.md)。MRV2：[mrv2.md](../architecture/mrv2.md)。系统 TPS ≠ 每用户 TPS。
 
 适用：看三只模型各自卡在哪、哪几个 fusion / draft 进了 main。不适合：把页上的 **230 TPS** 当 SLA。
 
@@ -35,7 +35,7 @@ fetched: 2026-09-04
 
 ## DeepSeek V3.2：低 batch 的 kernel fusion
 
-低 batch 时 V3.2 被 **kernel launch** 钉死，不是算力。每层几十个小 kernel（norm、RoPE、quant），GPU 微秒就跑完，launch 税占满墙钟。
+低 batch 时 V3.2 被 **kernel launch** 钉死，不是算力。每层几十个小 kernel（norm、RoPE、quant），GPU 微秒就跑完，launch 开销占满墙钟。
 
 Attention 路径上的 op fusion：Q / KV norm、Q / KV 的 RoPE、indexer 的 layer-norm + RoPE、FP8 quant、KV-cache 写入——收成一对 fused kernel，attention 和 MoE 以外都盖进去。每层 kernel 数约 **33 → ~10**。
 

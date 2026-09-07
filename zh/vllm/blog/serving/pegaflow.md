@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-05-18-pegaflow
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # PegaFlow：让 KV 活得比推理进程更长
 
 英文对照：[en/vllm/blog/serving/pegaflow.md](../../../../en/vllm/blog/serving/pegaflow.md)  
 原文：https://vllm.ai/blog/2026-05-18-pegaflow  
-2026-05-18。署名 **Novita AI and the vLLM Team**。学习译文，不是官方译本。仓库：[novitalabs/pegaflow](https://github.com/novitalabs/pegaflow)。Rust 守护进程 + 外部 KV connector，**不改 vLLM 源码**，**不必养长命 fork**。文中例子用 `vllm>=0.20.0`。和 [Mooncake](mooncake.md)、[KV offload](kv-offload.md) 同一扇门：池子活得比引擎久。页上是偏生产的评估，不是你的 SLA。
+2026-05-18。署名 **Novita AI and the vLLM Team**。学习译文，不是官方译本。仓库：[novitalabs/pegaflow](https://github.com/novitalabs/pegaflow)。Rust 守护进程 + 外部 KV connector，**不改 vLLM 源码**，**不必维护长命 fork**。文中例子用 `vllm>=0.20.0`。和 [Mooncake](mooncake.md)、[KV offload](kv-offload.md) 同一条接口：池子活得比引擎久。页上是偏生产的评估，不是某一套集群上的 SLA。
 
 **原文 TL;DR。** 和 Novita AI 合作，[PegaFlow](https://github.com/novitalabs/pegaflow) 作为外部 KV cache 服务接到 vLLM：独立 Rust 进程，走 external KV connector。KV 的寿命从 vLLM worker 进程里搬出去；本机实例和远端节点把 cache 攒成池；pinned 主机内存、RDMA 能读的远端内存、SSD 合成三层。
 
@@ -20,7 +20,7 @@ fetched: 2026-09-05
 - DeepSeek-V3.2 MLA TP8：逻辑 KV **存一份** 而不是每 TP rank 一份，吞吐 **+72%**。
 - 内部 RDMA 集群、每节点 **8 × 400 Gbps**：大前缀远端拉取平均 **194 GB/s**。
 
-核心判断：KV cache 该是一份 **长命的 serving 资产**，不是绑在某一个推理进程上的临时状态。对外走现成的 `kv_transfer_config`。PegaFlow 当外部 cache 后端用，不必改 vLLM 源码，也不必养长命 fork。
+核心判断：KV cache 该是一份 **长命的 serving 资产**，不是绑在某一个推理进程上的临时状态。对外走现成的 `kv_transfer_config`。PegaFlow 当外部 cache 后端用，不必改 vLLM 源码，也不必维护长命 fork。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -46,7 +46,7 @@ PegaFlow 把 KV 运行时搬到 **每机一台独立 daemon**。Server 管：主
 
 **Figure 1。** PegaFlow 坐在 vLLM 旁边当外部 KV cache。本机 CUDA IPC + gRPC；PegaFlow 管 pinned 内存、SSD、RDMA，以及可选的跨节点索引（经 **MetaServer**）。
 
-页上的生产要求：**一台 cache 伺候同一宿主机上的多引擎、多模型**。不同模型、TP 布局、引擎版本用 **namespace** 隔离，共享同一份内存池、SSD、跨节点带宽。
+页上的生产要求：**一台 cache 服务同一宿主机上的多引擎、多模型**。不同模型、TP 布局、引擎版本用 **namespace** 隔离，共享同一份内存池、SSD、跨节点带宽。
 
 故障域切开：vLLM 可以崩、可以升级、可以换模型，cache 还在。Cache 层的问题也不必把推理进程一起带走。
 
@@ -167,7 +167,7 @@ r* = (N − U) / N
 
 在 vLLM 看来，PegaFlow 不是另一台推理引擎，只是 KV transfer 接口上的外部 cache 后端。调度、执行、batch、OpenAI 兼容的 serving 路径仍归 vLLM。
 
-这道边界两边都有用。PegaFlow 可以按自己的钟迭代 Rust 数据面 / SSD / RDMA / 索引 / connector。vLLM 继续拧核心引擎，对外留一份稳定的 connector 契约给外部 cache。
+这道边界两边都有用。PegaFlow 可以按自己的钟迭代 Rust 数据面 / SSD / RDMA / 索引 / connector。vLLM 继续打磨核心引擎，对外留一份稳定的 connector 契约给外部 cache。
 
 ## Quick start
 

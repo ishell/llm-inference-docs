@@ -1,13 +1,13 @@
 ---
 source: https://docs.nvidia.com/aiperf/benchmark-modes/load-generator-options-reference
 lang: zh
-voice: literary-study
-fetched: 2026-09-01
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # AIPerf 负载发生器
 
-官方页是一张兼容性矩阵：哪些旗标能一起用，哪些会当场报错。调度是这场基准的性格。选错模式，你测到的不是模型，是你自己发明的到达过程。
+官方页是一张兼容性矩阵：哪些旗标能一起用，哪些会当场报错。调度决定这场基准测到的是哪种到达过程。选错模式，测到的往往不是模型，而是我们自己发明的到达过程。
 
 入口与安装见 `aiperf.md`。公式见 `aiperf-metrics.md`。
 
@@ -20,14 +20,14 @@ fetched: 2026-09-01
 3. `--request-rate` → 目标 QPS（`constant` / `poisson` / `gamma`）
 4. 只开 `--concurrency` → 打满 / 饱和（N 以内尽快发）
 
-| 你想问什么 | 用什么 |
+| 我们想问什么 | 用什么 |
 |---|---|
 | 这条 trace 当时长什么样？ | `--fixed-schedule` + mooncake_trace |
 | KV 还在不在、多轮间隔稳不稳？ | `--user-centric-rate` + `--num-users` |
 | 固定 QPS 下延迟如何？ | `--request-rate`（可选 `--arrival-pattern`） |
 | GPU 能被喂到多饱？ | 只开 `--concurrency`，不要带 rate |
 
-带速率时，`--concurrency` 是**天花板**：票按速率发，在途满了就等。不设 concurrency = 在途会话不封顶。官方提醒：user-centric 模式下，concurrency 至少要 ≥ `--num-users`，否则有的「用户」永远排不上队。
+带速率时，`--concurrency` 是**天花板**：票按速率发，在途满了就等。不设 concurrency = 在途会话不封顶。官方提醒：user-centric 模式下，concurrency 至少要 ≥ `--num-users`，否则有的会话永远排不上队。
 
 ## 到达过程
 
@@ -51,13 +51,13 @@ fetched: 2026-09-01
 
 ## Prefill 上限
 
-`--prefill-concurrency` 必须 `--streaming`，且必须 ≤ `--concurrency`。长上下文时，同时做 prefill 的人太多，显存先塌。这是给 decode 留座位，不是再发明一种 QPS。
+`--prefill-concurrency` 必须 `--streaming`，且必须 ≤ `--concurrency`。长上下文时，同时做 prefill 的请求太多，显存会先耗尽。这是给 decode 留并发额度，不是再发明一种 QPS。
 
 ## Warmup
 
 热身子流程**内部永远走 rate-based 调度**，和主基准的模式无关。停法：`--warmup-request-count` / `--warmup-duration` / `--num-warmup-sessions`（前两个 count 类互斥）。未指定的 warmup 并发、速率、到达过程，回落到主基准对应旗标。`--warmup-grace-period` 默认无穷，但必须先启用了 warmup。
 
-## 其它会咬人的组合
+## 其它会冲突的组合
 
 | 旗标 | 注意 |
 |---|---|

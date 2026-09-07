@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-11-11-intel-arc-pro-b
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Intel Arc Pro B：把 MoE 专家塞进一张消费级卡
 
 英文对照：[en/vllm/blog/architecture/intel-arc.md](../../../../en/vllm/blog/architecture/intel-arc.md)  
 原文：https://vllm.ai/blog/2025-11-11-intel-arc-pro-b  
-2025-11-11。署名 **Intel vLLM Team**。XPU / SYCL。数字是当时 **4–8 张 Intel Arc Pro B60** 上的演示，不是 SLA。Sleep 见 [sleep-mode](sleep-mode.md)；投机见 [spec-decode](../performance/spec-decode.md)；卡从主干请出去见 [hardware-plugin](hardware-plugin.md)。这张卡上的 W4A16 走 AutoRound：[autoround-llmc](autoround-llmc.md)；CPU 亲戚：[arm-cpus](arm-cpus.md)；`torch.compile` 的 FP16/BF16：[torch-compile](torch-compile.md)。镜像 `intel/vllm:0.10.2-xpu`。当时宿主 Ubuntu 25.04、KMD 6.14.0。MoE / gpt-oss 从 **0.10.2** XPU 镜像起。
+2025-11-11。署名 **Intel vLLM Team**。XPU / SYCL。数字是当时 **4–8 张 Intel Arc Pro B60** 上的演示，不是 SLA。Sleep 见 [sleep-mode](sleep-mode.md)；投机见 [spec-decode](../performance/spec-decode.md)；硬件从主干拆出去见 [hardware-plugin](hardware-plugin.md)。这张卡上的 W4A16 走 AutoRound：[autoround-llmc](autoround-llmc.md)；CPU 亲戚：[arm-cpus](arm-cpus.md)；`torch.compile` 的 FP16/BF16：[torch-compile](torch-compile.md)。镜像 `intel/vllm:0.10.2-xpu`。当时宿主 Ubuntu 25.04、KMD 6.14.0。MoE / gpt-oss 从 **0.10.2** XPU 镜像起。
 
 适用：DeepSeek 蒸馏 / Qwen / Llama / GPT-OSS 在 Arc Pro B60 上 serve，persistent MoE kernel、TP、`--enforce-eager`。不适合：把表里的 **1210.74 / 1495.12 tok/s** 当承诺——Intel 自己的免责声明就印在页上。
 
@@ -35,7 +35,7 @@ fetched: 2026-09-04
 - Sleep mode
 - Structured outputs
 - Tool calling
-- 混精度：BF16、FP16、INT4、FP8 菜谱
+- 混精度：BF16、FP16、INT4、FP8 recipe
 
 ## MoE：不要一只一只 GEMM
 
@@ -168,6 +168,6 @@ vllm bench serve --model openai/gpt-oss-120b \
 
 vLLM 团队——点名的合作。
 
-## 他们印的免责
+## 原文免责声明
 
 成绩随用法、配置和其他因素变：[Intel Performance Index](http://www.intel.com/PerformanceIndex)。数字是所示日期的测试，未必含后来的更新。详见 [MLCommons](https://mlcommons.org/)。没有产品绝对安全。Intel 技术可能要开硬件、软件或服务。

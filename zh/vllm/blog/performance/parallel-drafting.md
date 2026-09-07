@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# 并行草稿：一路并行到验收
+# 一路并行到底：投机解码里越过单 token 生成
 
 英文对照：[en/vllm/blog/performance/parallel-drafting.md](../../../../en/vllm/blog/performance/parallel-drafting.md)  
 原文：https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting  
-2026-07-28。署名 **Alexandre Marques、Megan Flynn、Helen Zhao、Krishna Teja Chitty Venkata、Chibueze Ukachi（Red Hat AI）**。学习笔记。Speculators + vLLM 给三只并行 drafter 开源支持：[P-EAGLE](https://arxiv.org/abs/2602.01469)、[DFlash](https://arxiv.org/abs/2602.06036)、[DSpark](https://arxiv.org/abs/2607.05147)。Checkpoint 在 [Speculators Collection](https://huggingface.co/collections/RedHatAI/speculator-models)。
+2026-07-28。署名 **Alexandre Marques、Megan Flynn、Helen Zhao、Krishna Teja Chitty Venkata、Chibueze Ukachi（Red Hat AI）**。学习译文，不是官方译本。Speculators + vLLM 给三只并行 drafter 开源支持：[P-EAGLE](https://arxiv.org/abs/2602.01469)、[DFlash](https://arxiv.org/abs/2602.06036)、[DSpark](https://arxiv.org/abs/2607.05147)。Checkpoint 在 [Speculators Collection](https://huggingface.co/collections/RedHatAI/speculator-models)。
 
 **勘误（2026-07-29），文末另有一节：** Figure 1 的图后来改过。原先数字和声称的评测环境对不上（环境配错了）。模型之间的 **相对** 排名仍一致，文中结论没改。Markdown 原文 **没有** 把那些曲线的 TPS / ITL / OTPS 写成表——不要从图里编数字。
 
@@ -37,10 +37,10 @@ P-EAGLE 细节和 B200 表：[p-eagle](p-eagle.md)。DSpark 按信心改验收�
 
 [EAGLE-3](https://arxiv.org/abs/2503.01840) 仍是 **自回归草稿**。一串候选 = **每个 draft token 一次前向**。
 
-生产上两笔税：
+生产上两笔开销：
 
 - **模型不能大。** 草稿成本跟投机长度线性涨，speculator 只能极瘦，免得把 verifier 刚省下的时间吃回去。
-- **参数要跟人盯。** 线性缩放实际上把 K 卡住。最优投机长度变成运维旋钮，要按用例和实时负载拧。
+- **参数要跟人盯。** 线性缩放实际上把 K 卡住。最优投机长度变成运维参数，要按用例和实时负载调。
 
 ![ar vs parallel](../../../../assets/vllm/blog/performance/parallel-drafting/04-ar_vs_parallel.jpg)
 
@@ -53,7 +53,7 @@ P-EAGLE 细节和 B200 表：[p-eagle](p-eagle.md)。DSpark 按信心改验收�
 原文点名的两件事：
 
 - **表达力有地方放。** Speculator 每块只跑一次，可以用更大、更深的 draft。上下文更够，接受率更高，却没有一串顺序延迟。
-- **调参简单。** 草稿成本不再跟着块长走，不必对着波动的负载去拧 K。
+- **调参简单。** 草稿成本不再跟着块长走，不必对着波动的负载去调 K。
 
 这想法并不新：[Medusa](https://arxiv.org/abs/2401.10774)、[PARD](https://arxiv.org/abs/2504.18583)。P-EAGLE、DFlash、DSpark 是在并行执行上再叠 **深层 verifier 状态条件**——EAGLE 真正管用的那一insight。
 
@@ -96,7 +96,7 @@ Figure 1 是对照 EAGLE-3。三组模型 × 算法：
 | Qwen3-30B-A3B | [DFlash](https://huggingface.co/RedHatAI/Qwen3-30B-A3B-speculator.dflash) | Coding (HumanEval) | 2×A100 |
 | gemma-4-31B-it | [DSpark](https://huggingface.co/RedHatAI/gemma-4-31B-it-speculator.dspark) | Coding (HumanEval) | 2×A100 |
 
-勘误之后原文仍说：三组里并行草稿都 **明显** 好过 EAGLE-3；环境修好后相对排名还在。绝对值 **没有** 写进正文。模型、任务、硬件都会变——作者让你用自己的负载去量。
+勘误之后原文仍说：三组里并行草稿都 **明显** 好过 EAGLE-3；环境修好后相对排名还在。绝对值 **没有** 写进正文。模型、任务、硬件都会变——作者让我们用自己的负载去量。
 
 ## 6. Production Serving with vLLM and Speculators
 

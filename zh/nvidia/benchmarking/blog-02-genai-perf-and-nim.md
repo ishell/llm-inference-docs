@@ -1,19 +1,19 @@
 ---
 source: https://developer.nvidia.com/blog/llm-performance-benchmarking-measuring-nvidia-nim-performance-with-genai-perf/
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 系列第 2 篇：用 GenAI-Perf 测 NIM
 
 英文对照：[en/nvidia/benchmarking/blog-02-genai-perf-and-nim.md](../../../en/nvidia/benchmarking/blog-02-genai-perf-and-nim.md)
 
-**今天请用 AIPerf。** GenAI-Perf 已停更，命令几乎同构；NIM 手册第 4 章是 AIPerf 版：`nim-04-aiperf.md`。本篇保留官方当时的 GenAI-Perf 流程，因为 NIM Performance 页面上那些数字，就是用这套仪式测出来的。换工具，不要换尺子的定义。
+**今天请用 AIPerf。** GenAI-Perf 已停更，命令几乎同构；NIM 手册第 4 章是 AIPerf 版：`nim-04-aiperf.md`。本篇保留官方当时的 GenAI-Perf 流程，因为 NIM Performance 页面上那些数字，就是用这套流程测出来的。换工具，不要换尺子的定义。
 
-第 1 篇讲等待第一个字意味着什么。本篇把 Llama 3.1 8B Instruct 用 NIM 拉起来，让秒表真的跑起来。
+第 1 篇讲 TTFT 从提交到第一个非空 token 意味着什么。本篇把 Llama 3.1 8B Instruct 用 NIM 拉起来，让基准真正跑起来。
 
-你需要这些数字，通常出于三种并不浪漫的理由：找出瓶颈、在服务质量与吞吐之间做交易、决定买多少机器。GenAI-Perf 是客户端工具，报 TTFT、ITL、TPS、RPS。它打任何符合 OpenAI API 的服务。本篇的服务端是 **NVIDIA NIM**：预打包微服务，后端可以是 TensorRT-LLM 或 vLLM，带企业级的门锁。
+我们需要这些数字，通常出于三种理由：找出瓶颈、在服务质量与吞吐之间做取舍、决定买多少机器。GenAI-Perf 是客户端工具，报 TTFT、ITL、TPS、RPS。它打任何符合 OpenAI API 的服务。本篇的服务端是 **NVIDIA NIM**：预打包微服务，后端可以是 TensorRT-LLM 或 vLLM，带企业级的鉴权和部署能力。
 
 
 本地图（原文版权仍归原站；学习对照用）：
@@ -24,7 +24,7 @@ fetched: 2026-08-31
 
 ## 为什么用它测
 
-NIM 是装好的容器，云上、机房、RTX 工作站都能跑。同一代硬件上，NIM 还会继续改内核。官网上的性能表不是神话，是 GenAI-Perf 打出来的成绩单。你的卡、你的机房、你的网线，只有自己测过才算数。
+NIM 是装好的容器，云上、机房、RTX 工作站都能跑。同一代硬件上，NIM 还会继续改内核。官网上的性能表不是神话，是 GenAI-Perf 打出来的成绩单。我们的卡、机房、网线，只有自己测过才算数。
 
 ## 起一个 OpenAI 兼容的 Llama-3 服务
 
@@ -47,14 +47,14 @@ docker run -it --rm --name=$CONTAINER_NAME \
   $IMG_NAME
 ```
 
-本地目录当模型缓存。启动时容器会把需要的东西下载下来，然后在 8000 端口开门。成功时像这样：
+本地目录当模型缓存。启动时容器会把需要的东西下载下来，然后在 8000 端口提供服务。成功时像这样：
 
 ```
 INFO: Application startup complete.
 INFO: Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-试探一下这扇门还在不在：
+试探一下服务是否起来了：
 
 ```python
 from openai import OpenAI
@@ -73,7 +73,7 @@ print(response.choices[0].text)
 
 ## 安装 GenAI-Perf，先打一轮热身
 
-客户端尽量和 NIM **同机**，除非你故意要把网线请进入场。远程测到的常常是网络的性格，不是模型的性格。
+客户端尽量和 NIM **同机**，除非我们故意要把网络延迟算进成绩。远程测到的常常是网络延迟，不是模型本身。
 
 ```bash
 export RELEASE="24.12"  # 建议最新 yy.mm
@@ -109,7 +109,7 @@ genai-perf profile \
     --max-threads=256
 ```
 
-`ignore_eos` 让模型说到钟响，OSL 才可控。Llama-3 tokenizer 在 Hugging Face 上是 gated 仓库，要申请权限再登录：
+`ignore_eos` 让模型生成到上限，OSL 才可控。Llama-3 tokenizer 在 Hugging Face 上是 gated 仓库，要申请权限再登录：
 
 ```bash
 pip install huggingface_hub
@@ -162,7 +162,7 @@ for description in "${!useCases[@]}"; do
 done
 ```
 
-`--measurement-interval 30000` 是每个测量窗口（毫秒）。窗口里要能结束足够多的请求。70B、并发 250 这种晚上，把窗口拉到 100000 ms（100 秒）。秒表也需要耐心。
+`--measurement-interval 30000` 是每个测量窗口（毫秒）。窗口里要能结束足够多的请求。70B、并发 250 这种负载，把窗口拉到 100000 ms（100 秒）。测量窗口也要留够。
 
 ## 读结果
 
@@ -196,14 +196,14 @@ for i, label in enumerate([1, 2, 5, 10, 50, 100, 250]):
 
 原文 Figure 2：横轴 TTFT，纵轴系统吞吐，点上写并发。
 
-- **有延迟预算**：取可接受的最大 TTFT，对应的纵轴和并发就是该预算下最高吞吐。用户愿意等这么久，你最多能卖这么快。
-- **有目标并发**：找到那个点，读出该负载下的延迟和吞吐。今晚有这么多人进店，菜会慢成什么样。
+- **有延迟预算**：取可接受的最大 TTFT，对应的纵轴和并发就是该预算下最高吞吐。用户愿意等这么久，我们最多能卖这么快。
+- **有目标并发**：找到那个点，读出该负载下的延迟和吞吐。
 
-图上也能看见延迟陡增、吞吐几乎不再涨的并发。NVIDIA 示例里是 **`concurrency=50`**。再往上加人，只是让队列变长。横轴也可以换成 ITL、e2e_latency 或 TPS_per_user——同一座山，不同的登山口。
+图上也能看见延迟陡增、吞吐几乎不再涨的并发。NVIDIA 示例里是 **`concurrency=50`**。再往上加并发，只是让队列变长。横轴也可以换成 ITL、e2e_latency 或 TPS_per_user——同一条曲线，不同的横轴。
 
 ## 定制模型 / LoRA
 
-通用问答、会议摘要，基座模型往往够用。公司内部的黑话、产品目录、流程，常常需要 LoRA 这种低成本的裁缝。NIM 能加载多个 adapter（NeMo 训练的，或 Hugging Face PEFT）。目录结构见 Parameter-Efficient Fine-Tuning。加载后，把 `model` 换成 LoRA 名字即可：
+通用问答、会议摘要，基座模型往往够用。公司内部的术语、产品目录、流程，常常需要 LoRA 这种低成本的微调。NIM 能加载多个 adapter（NeMo 训练的，或 Hugging Face PEFT）。目录结构见 Parameter-Efficient Fine-Tuning。加载后，把 `model` 换成 LoRA 名字即可：
 
 ```bash
 curl -X POST http://0.0.0.0:8000/v1/completions \
@@ -226,8 +226,8 @@ genai-perf profile \
     --streaming
 ```
 
-`--model-selection-strategy {round_robin,random}`：轮流叫，还是随机叫。多 adapter 时，流量会像一副洗过的牌。
+`--model-selection-strategy {round_robin,random}`：轮流选，还是随机选。多 adapter 时，流量按策略分配。
 
 ## 小结
 
-第 1 篇对齐尺子，本篇让 NIM 在你的硬件上留下自己的曲线。第 3 篇离开 HTTP，直接用 `trtllm-bench` 调引擎；第 4 篇把曲线变成钱。
+第 1 篇对齐尺子，本篇让 NIM 在我们的硬件上留下自己的曲线。第 3 篇离开 HTTP，直接用 `trtllm-bench` 调引擎；第 4 篇把曲线变成钱。

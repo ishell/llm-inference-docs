@@ -1,11 +1,11 @@
 ---
 source: https://vllm.ai/blog/2025-10-09-blackwell-inferencemax
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# InferenceMAX：Blackwell 相对 Hopper 是整条 Pareto，不是一个点
+# SemiAnalysis InferenceMAX：vLLM 与 NVIDIA 加速 Blackwell 推理
 
 英文对照：[en/vllm/blog/performance/blackwell-inferencemax.md](../../../../en/vllm/blog/performance/blackwell-inferencemax.md)  
 原文：https://vllm.ai/blog/2025-10-09-blackwell-inferencemax  
@@ -76,7 +76,7 @@ Blackwell 上的成绩来自整条软件栈。有的加快 GPU 上的 kernel；�
 
 - **自动认出量化和 backend。** 模型是否量化，vLLM 自己侦测、自己选 backend；attention backend 也按 GPU 选。Blackwell 上有则走 FlashInfer attention（里头带着 NVIDIA TensorRT-LLM kernel），否则退回 FlashAttention——不必手调一锅旗标或环境变量。
 - **FlashInfer GEMM / MoE 启动时 autotune。** 理想 kernel  сильно依赖 batch 和序列长度。GPU runner 里加了 autotuning：启动时 FlashInfer 做 tactic selection——打一轮、选 kernel——ISL / OSL 变了仍能贴着峰值。
-- **[Quick Start Recipes](https://github.com/vllm-project/recipes)。** 代码之外，和社区一起写常见场景的起手配置。按模型、按硬件：起服、拧参数、对精度、打基准。少走弯路，更快见到数字。
+- **[Quick Start Recipes](https://github.com/vllm-project/recipes)。** 代码之外，和社区一起写常见场景的起手配置。按模型、按硬件：起服、调参数、对精度、打基准。少走弯路，更快见到数字。
 
 ## Ongoing Work
 
@@ -99,4 +99,4 @@ InferenceMAX 全部结果：[http://inferencemax.ai](http://inferencemax.ai)。�
 
 感谢 SemiAnalysis 把硬件和开源软件共设计往前推，本意是给社区一套公平的尺子。点名 Kimbo Chen、Dylan Patel，以及其他人。
 
-他们说：后面几周、几个月还会继续拧，把能力再往外推。
+他们说：后面几周、几个月还会继续调，把能力再往外推。

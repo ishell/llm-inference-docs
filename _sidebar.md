@@ -1,9 +1,10 @@
 - 开始
   - [首页](/index.md)
   - [怎么读](/zh/GUIDE.md)
+  - [中文体例](/zh/STYLE.md)
   - [总目录](/README.md)
   - [必读博客](/zh/vllm/blog/MUST-READ.md)
-  - [旋钮对照](/zh/vllm/blog/FLAG-MAP.md)
+  - [旗标对照](/zh/vllm/blog/FLAG-MAP.md)
 - NVIDIA · 压测
   - [NIM LLM 压测手册（目录）](/zh/nvidia/benchmarking/nim-index.md)
   - [总览 — NVIDIA NIM LLM 压测指南](/zh/nvidia/benchmarking/nim-01-overview.md)
@@ -153,7 +154,7 @@
   - [TTS：Talker 要 TTFP，Code2Wav 要吞吐](/zh/vllm/blog/serving/omni-tts.md)
   - [OpenRLHF × vLLM：生成占 RLHF 的九成](/zh/vllm/blog/serving/openrlhf.md)
   - [PegaFlow：让 KV 活得比推理进程更长](/zh/vllm/blog/serving/pegaflow.md)
-  - [vLLM Playground：容器里点一下起 server，CLI 仍是同一套旋钮](/zh/vllm/blog/serving/playground.md)
+  - [vLLM Playground：容器里点一下起 server，CLI 仍是同一套旗标](/zh/vllm/blog/serving/playground.md)
   - [vLLM production-stack：从单机引擎到 K8s 上的一叠盘子](/zh/vllm/blog/serving/production-stack.md)
   - [Qwen3-Next：Gated DeltaNet + 满 attention …](/zh/vllm/blog/serving/qwen3-next.md)
   - [Qwen3-Omni：Thinker / Talker / Code2Wav 三截](/zh/vllm/blog/serving/qwen3-omni.md)

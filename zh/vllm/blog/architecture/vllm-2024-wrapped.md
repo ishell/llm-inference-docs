@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-01-10-vllm-2024-wrapped-2025-vision
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 2024 年报 / 2025 愿景：星标 2.3×，V1 重写，遥测可关
@@ -49,7 +49,7 @@ fetched: 2026-09-05
 
 **Figure。** serving 里按模型架构的用量（学习对照）。
 
-2024 年初：只伺候寥寥几种模型。年末：近 [**100 种架构**](https://docs.vllm.ai/en/latest/models/supported_models.html) 能跑得动——几乎每只显眼的开源 LLM、多模态（图 / 音频 / 视频）、encoder-decoder、投机解码、分类、embedding、reward。特别写了一笔：状态空间语言模型进了 **生产支持**，在探非 Transformer 语言模型的下一步。
+2024 年初：只支持寥寥几种模型。年末：近 [**100 种架构**](https://docs.vllm.ai/en/latest/models/supported_models.html) 能跑得动——几乎每只显眼的开源 LLM、多模态（图 / 音频 / 视频）、encoder-decoder、投机解码、分类、embedding、reward。特别写了一笔：状态空间语言模型进了 **生产支持**，在探非 Transformer 语言模型的下一步。
 
 ### Broadening Hardware Compatibility
 
@@ -102,9 +102,9 @@ vLLM 在模型训练流程里的位子也在扩。John Schulman 这类研究者�
 
 ### Practical Scale: Powering Thousands of Production Clusters
 
-LLM 变成现代应用的脊梁时，他们看见 vLLM 给 **上千个** 生产集群 24/7 值班。不是实验部署——是产品功能上不断来的流量，由专门的平台团队养着。
+LLM 变成现代应用的脊梁时，他们看见 vLLM 给 **上千个** 生产集群 24/7 跑着。不是实验部署——是产品功能上不断来的流量，由专门的平台团队养着。
 
-为了这个规模，vLLM 要真正 **battery-included**。量化、prefix caching、投机解码变成 **默认**，不是可选项。结构化输出当标配，而不是特例。他们在写 routing、caching、auto-scaling 的完整菜谱，覆盖生产部署的整段生命周期。
+为了这个规模，vLLM 要真正 **battery-included**。量化、prefix caching、投机解码变成 **默认**，不是可选项。结构化输出当标配，而不是特例。他们在写 routing、caching、auto-scaling 的完整 recipe，覆盖生产部署的整段生命周期。
 
 部署越过单副本之后，要给集群级方案留稳定接口。按流行模型和硬件给稳健默认；再给多样场景留灵活的优化路径。他们要养一个专门把 vLLM 效率往上推的社区，让平台跟着新挑战长。
 
@@ -132,7 +132,7 @@ LLM 变成现代应用的脊梁时，他们看见 vLLM 给 **上千个** 生产�
 
 ### Managing Growth While Maintaining Excellence
 
-2024 的指数增长带来机会，也带来麻烦。代码库和贡献者扩得太快，速度前所未有：能啃更大的技术题，能对社区需要很快反应。同一股速度也把代码库变复杂。他们没有让技术债堆着，而是决定把地基重做。2024 下半年对核心架构做了一次大胆的重设计，就是后来的 **V1**。不只是技术翻新——是故意让平台在 AI 生态继续膨胀时，仍然养得动、拆得开。
+2024 的指数增长带来机会，也带来麻烦。代码库和贡献者扩得太快，速度前所未有：能啃更大的技术题，能对社区需要很快反应。同一股速度也把代码库变复杂。他们没有让技术债堆着，而是决定把底层重做。2024 下半年对核心架构做了一次大胆的重设计，就是后来的 **V1**。不只是技术翻新——是故意让平台在 AI 生态继续膨胀时，仍然养得动、拆得开。
 
 ### Pioneering a New Model of Open Source Development
 
@@ -159,7 +159,7 @@ LLM 变成现代应用的脊梁时，他们看见 vLLM 给 **上千个** 生产�
 
 进入 2025，他们继续请人参加：
 
-- **Contributing Code：** 帮着拧核心，或把能力伸出去——许多 RFC 和功能还缺人手
+- **Contributing Code：** 帮着改核心，或把能力伸出去——许多 RFC 和功能还缺人手
 - **Providing Feedback：** 功能、用例，经 GitHub / Slack / Discord / 活动，去塑路线图
 - **Building with vLLM：** 用进自己的项目，把经验养出来，再把经验交回去
 

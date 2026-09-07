@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-08-19-glm45-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # GLM-4.5 / 4.5V：hybrid thinking，parser 叫 glm45，当时不要 V0
 
 英文对照：[en/vllm/blog/serving/glm45.md](../../../../en/vllm/blog/serving/glm45.md)  
 原文：https://vllm.ai/blog/2025-08-19-glm45-vllm  
-2025-08-19。署名 **Yuxuan Zhang**。当时 nightly，外加 `transformers-v4.55.0-GLM-4.5V-preview`。355B/32B 与 Air 106B/12B。FP8/BF16 同一条 serve。后续 5.2 生产见 [glm52-b300.md](glm52-b300.md)。**63.2** / **59.8** 是页上的分，不是你的 SLA。
+2025-08-19。署名 **Yuxuan Zhang**。当时 nightly，外加 `transformers-v4.55.0-GLM-4.5V-preview`。355B/32B 与 Air 106B/12B。FP8/BF16 同一条 serve。后续 5.2 生产见 [glm52-b300.md](glm52-b300.md)。**63.2** / **59.8** 是页上的分，不宜直接当作生产 SLA。
 
 **原文 TL;DR：**
 
@@ -91,7 +91,7 @@ vllm serve zai-org/GLM-4.5V \
 
 ## Cooperation with vLLM and GLM Team
 
-发模之前：vLLM 和 GLM 一起把启动问题拧平，让 `main` 在开源当天就吃满 GLM-4.5 系列。
+发模之前：vLLM 和 GLM 一起把启动问题收平，让 `main` 在开源当天就能完整支持 GLM-4.5 系列。
 
 ## Acknowledgement
 

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2024-07-25-lfai-perf
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # LF AI 孵化与 2024 年中的路线图
@@ -17,7 +17,7 @@ fetched: 2026-09-04
 
 ![vllm lfai light](../../../../assets/vllm/blog/architecture/lfai-roadmap/01-vllm-lfai-light.png)
 
-他们写 vLLM 正在变成 LLM 推理的默认件。Meta [Llama 3.1 发布](https://ai.meta.com/blog/meta-llama-3-1/) 里，实时推理的官方伙伴大约 **10 家里有 8 家** 用 vLLM 侍候 Llama 3.1。日常 AI 功能里也有不少口头反馈在用。
+他们写 vLLM 正在变成 LLM 推理的默认件。Meta [Llama 3.1 发布](https://ai.meta.com/blog/meta-llama-3-1/) 里，实时推理的官方伙伴大约 **10 家里有 8 家** 用 vLLM 部署 Llama 3.1。日常 AI 功能里也有不少口头反馈在用。
 
 成功被归到开源社区。当时点名的维护方：UC Berkeley、Anyscale、AWS、CentML、Databricks、IBM、Neural Magic、Roblox、Snowflake 等。所有权和治理也要公开、可核验。
 

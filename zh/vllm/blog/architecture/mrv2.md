@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-03-24-mrv2
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Model Runner V2：给执行核换一块更干净的底板
+# Model Runner V2：一块更干净、更快的执行核
 
 英文对照：[en/vllm/blog/architecture/mrv2.md](../../../../en/vllm/blog/architecture/mrv2.md)  
 原文：https://vllm.ai/blog/2026-03-24-mrv2  
-2026-03-24。署名 **vLLM Team**。学习重写，不是官方译本。V1 是引擎骨架；MRV2 是 **model runner** 的重写，不是整台引擎。用户 API 不变。当时还不是默认：
+2026-03-24。署名 **vLLM Team**。学习译文，不是官方译本。V1 是引擎骨架；MRV2 是 **model runner** 的重写，不是整台引擎。用户 API 不变。当时还不是默认：
 
 ```bash
 export VLLM_USE_V2_MODEL_RUNNER=1
@@ -43,7 +43,7 @@ V1 发布后，runner 上继续叠特性和优化。单独看每块都有用，�
 
 - **Tangled persistent batch state。** Persistent 状态和每步输入绑死。增删改序比该有的复杂。
 - **Fragile async execution。** Async 是后装到 V1 runner 上的。许多特性要绕路才能跟它共存，逻辑不自然、也不合理地复杂。
-- **CPU-bound bookkeeping。** 输入准备和采样是许多细碎的 CPU 手术。GPU 越快，这些小动作越显眼。
+- **CPU-bound bookkeeping。** 输入准备和采样是许多细碎的 CPU 操作。GPU 越快，这些小动作越显眼。
 - **Difficult extensibility。** 新模型、新特性越来越难干净地接上。
 
 MRV2 用更干净的状态归属和更明确的抽象来回答这些。
@@ -52,7 +52,7 @@ MRV2 用更干净的状态归属和更明确的抽象来回答这些。
 
 ### 1. A Better Persistent Batch Design and GPU-Native Input Preparation
 
-vLLM 为 batching、paged attention、采样参数做大量记账。历史上多是 CPU 上许多小手术。
+vLLM 为 batching、paged attention、采样参数做大量记账。历史上多是 CPU 上许多小操作。
 
 V1 已经引入 persistent batch：相邻两拍通常很像，增量改缓存状态，比每步从零长出大张量便宜。但 V1 把 persistent 状态**直接**当模型和 sampler 的输入，布局约束别扭，记账也跟着绕。
 
@@ -68,7 +68,7 @@ V1 已经引入 persistent batch：相邻两拍通常很像，增量改缓存状
 
 输入准备用 **Triton kernel** 搬到 **GPU**。请求状态大体留在设备上。`input_ids`、`positions`、`query_start_loc`、`seq_lens` 直接在 GPU 上长出来。三件具体的好处：
 
-- **更少 CPU** — 少 Python、少 CPU 张量手术。
+- **更少 CPU** — 少 Python、少 CPU 张量操作。
 - **更简单的代码** — 不再被 CPU 侧张量操作的约束牵着走。
 - **更好的 async + 投机解码** — GPU 上的准备可以直接吃设备上的 rejection-sampling 结果，**不必同步**（下一节）。
 
@@ -134,7 +134,7 @@ class ModelState(ABC):
 
 **Figure 6。** mean TPOT，`GLM-4.7-FP8`，MTP=1，4×GB200。MRV2 跨请求速率低 **6.3%**。
 
-他们预期：当 serving 把 async scheduling、投机解码、多模态预处理、越来越异构的 model state 叠在一起时，这块底板会更值钱。
+他们预期：当 serving 把 async scheduling、投机解码、多模态预处理、越来越异构的 model state 叠在一起时，这块执行核会更值钱。
 
 ## Limitations and Current Status
 

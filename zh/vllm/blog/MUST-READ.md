@@ -1,14 +1,15 @@
 ---
 source: https://vllm.ai/llms.txt
 lang: zh
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 建议先读的 vLLM 博客
 
 完整机器表：英文 [`CATALOG.md`](../../../en/vllm/blog/CATALOG.md)。入口 https://vllm.ai/blog ，RSS https://vllm.ai/blog/rss.xml
 
-旋钮对照：[FLAG-MAP.md](FLAG-MAP.md)（`optimization.md` 里的旗标 → 这篇博客）。
+旗标对照：[FLAG-MAP.md](FLAG-MAP.md)（「optimization.md」里的旗标 → 这篇博客）。
 
 **阅读顺序（最佳）：** 立项 → Anatomy → V1 → MRV2 →（可插 DeepSpeed 笔记）→ v0.6 CPU → 投机解码 → FP8 KV → 生产级 CI → 分布式切卡 → production-stack → AIBrix → Router → Encoder 分离 → 大规模 Wide-EP → Mooncake → Elastic EP。
 

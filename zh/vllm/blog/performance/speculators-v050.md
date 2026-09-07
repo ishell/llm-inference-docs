@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-05-28-speculators-v050
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Speculators v0.5.0：DFlash 与在线 hidden
+# Speculators v0.5.0：DFlash 与在线训练
 
 英文对照：[en/vllm/blog/performance/speculators-v050.md](../../../../en/vllm/blog/performance/speculators-v050.md)  
 原文：https://vllm.ai/blog/2026-05-28-speculators-v050  
-2026-05-28。署名 **Fynn Schmitt-Ulms、Helen Zhao、Rahul Tuli and Dipika Sikka（Red Hat AI Model Optimization Team）**。发版：[v0.5.0](https://github.com/vllm-project/speculators/releases/tag/v0.5.0)。学习笔记。上一拍离线 EAGLE-3：[v0.3.0](speculators-v030.md)。hidden 不再钩引擎内部，改走 [extract-hidden-states](../architecture/extract-hidden-states.md)（`vllm>=0.18.0`）。DFlash 和并行草稿族一起读：[parallel-drafting](parallel-drafting.md)。页上的 Gemma 4 数字是他们的评测，不是你的 SLA。
+2026-05-28。署名 **Fynn Schmitt-Ulms、Helen Zhao、Rahul Tuli and Dipika Sikka（Red Hat AI Model Optimization Team）**。发版：[v0.5.0](https://github.com/vllm-project/speculators/releases/tag/v0.5.0)。学习译文，不是官方译本。上一拍离线 EAGLE-3：[v0.3.0](speculators-v030.md)。hidden 不再钩引擎内部，改走 [extract-hidden-states](../architecture/extract-hidden-states.md)（`vllm>=0.18.0`）。DFlash 和并行草稿族一起读：[parallel-drafting](parallel-drafting.md)。页上的 Gemma 4 数字是他们的评测，不是你的 SLA。
 
 v0.5.0 把投机解码训练的架构往前推了一截：DFlash、统一的在线训练、以及彻底迁到 vLLM 原生 hidden 抽取。训练更活，也更像能上生产的工作流。
 
@@ -24,7 +24,7 @@ v0.5.0 把投机解码训练的架构往前推了一截：DFlash、统一的在�
 
 相对自回归的 Eagle 3，DFlash 是另一条草稿路。Eagle 3 多步前向、一个一个猜；DFlash 用 **block diffusion**，**一次前向**吐出整块草稿。
 
-一次前向能把投机解码的草稿税压下去，尤其草稿序列更长的时候。每个前缀，草稿吐出长度 **B** 的一块。块结构完全靠 attention mask。和 Eagle3 另一处不同：块内是 **非因果**——同一块里的 query 可以看见块内所有 token。
+一次前向能把投机解码的草稿开销压下去，尤其草稿序列更长的时候。每个前缀，草稿吐出长度 **B** 的一块。块结构完全靠 attention mask。和 Eagle3 另一处不同：块内是 **非因果**——同一块里的 query 可以看见块内所有 token。
 
 训练时多块并行。最笨的做法：序列每个位置都开一块预测。序列一长，attention mask 炸开，显存和算力都撑不住。所以他们 **并不到处开块**：只在真正贡献 loss 的位置里，随机抽一小撮 **anchor**，预测块只挂在这些锚上。块数与序列长度脱钩，上下文可以更长，mask 仍管得住。
 

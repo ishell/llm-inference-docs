@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2026-04-24-deepseek-v4
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# DeepSeek V4 在 vLLM 里怎么侍候
+# DeepSeek V4 在 vLLM 里怎么跑
 
 英文对照：[en/vllm/blog/architecture/deepseek-v4.md](../../../../en/vllm/blog/architecture/deepseek-v4.md)  
 原文：https://vllm.ai/blog/2026-04-24-deepseek-v4  
-2026-04-24。署名 **vLLM Team**。学习重写，不是官方译本。两兄弟：[`deepseek-ai/DeepSeek-V4-Pro`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro)（1.6T）、[`deepseek-ai/DeepSeek-V4-Flash`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash)（285B），都声称能撑到 **一百万** token。镜像 `vllm/vllm-openai:deepseekv4-cu130`。这是第一版模型支持，页上写着优化还在路上。
+2026-04-24。署名 **vLLM Team**。学习译文，不是官方译本。两兄弟：[`deepseek-ai/DeepSeek-V4-Pro`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro)（1.6T）、[`deepseek-ai/DeepSeek-V4-Flash`](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash)（285B），都声称能撑到 **一百万** token。镜像 `vllm/vllm-openai:deepseekv4-cu130`。这是第一版模型支持，页上写着优化还在路上。
 
-前一截稀疏注意力：[deepseek-v32](deepseek-v32.md)。FP8 KV / attention：[fp8-kvcache](../performance/fp8-kvcache.md)。Wide-EP 走廊：[large-scale](../serving/large-scale.md)。GB200 成绩单：[gb200-wideep](../serving/gb200-wideep.md)。插件门：[plugin-system](plugin-system.md) / [hardware-plugin](hardware-plugin.md)。
+前一截稀疏注意力：[deepseek-v32](deepseek-v32.md)。FP8 KV / attention：[fp8-kvcache](../performance/fp8-kvcache.md)。Wide-EP：[large-scale](../serving/large-scale.md)。GB200 数字：[gb200-wideep](../serving/gb200-wideep.md)。插件：[plugin-system](plugin-system.md) / [hardware-plugin](hardware-plugin.md)。
 
 **原文 TL;DR：**
 
@@ -81,7 +81,7 @@ docker run --gpus all \
 - **KV cache memory growth。** Cache 仍随上下文线性涨。[MLA](https://arxiv.org/abs/2405.04434) 已经比 MHA / MQA 省很多；一百万 token 仍挤不进 GPU 显存。
 - **Attention computation cost。** 即便有 [DSA](http://arxiv.org/abs/2512.02556)，matmul 仍是瓶颈。
 
-V4 同时压房子、压算力：
+V4 同时压显存、压算力：
 
 1. **Share key and value vectors**（约 **2×** 显存）。正确性靠注意力输出上的 **inverse RoPE**——代数在附录。
 2. **Compress the KV cache across multiple tokens**（约 **4× 到 128×**）。两条：
@@ -113,7 +113,7 @@ V4 同时压房子、压算力：
 
 点名却略过的架构改动：[Manifold-Constrained Hyper-Connections](http://arxiv.org/abs/2512.24880)，以及 MoE 模块上的几处。原文说那些比注意力好接。
 
-vLLM 两头拧：显存怎么打包，kernel 怎么不饿 GPU。
+vLLM 两头一起做：显存怎么打包，kernel 怎么不饿 GPU。
 
 ### Keeping the KV Cache Memory Packed
 

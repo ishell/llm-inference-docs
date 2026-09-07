@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2026-04-22-fp8-kvcache
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# FP8 KV cache：长上下文时把记忆砍半
+# FP8 KV cache 与注意力量化的现状
 
 英文对照：[en/vllm/blog/performance/fp8-kvcache.md](../../../../en/vllm/blog/performance/fp8-kvcache.md)  
 原文：https://vllm.ai/blog/2026-04-22-fp8-kvcache  
 2026-04-22。Jonas Kübler*（AWS）、Eldar Kurtić*（Red Hat AI）、Lucas Wilkinson、Matthew Bonanni、Michael Goin、Alexandre Marques（Red Hat AI）、Kailash Budhathoki（AWS）；* 同等贡献。学习译文，不是官方译本。
 
-长上下文 serving 越来越吃显存。满注意力 decoder 在 128k+ 时，KV 往往占满 GPU；Decode 每步还要读走一大截。`--kv-cache-dtype fp8` 把 KV **和**整段注意力计算（QK、ScoreV 两次 matmul）打成 FP8。文中全程 **e4m3**。房子砍半，同一张卡上并发或窗口才能再长一截——前提是精度还站得住。
+长上下文 serving 越来越吃显存。满注意力 decoder 在 128k+ 时，KV 往往占满 GPU；Decode 每步还要读走一大截。`--kv-cache-dtype fp8` 把 KV **和**整段注意力计算（QK、ScoreV 两次 matmul）打成 FP8。文中全程 **e4m3**。KV 体积减半，同一张卡上并发或窗口才能再长一截——前提是精度还站得住。
 
 这个旗标在 vLLM 里已经存在一段时间。Prefill 重、Decode 重两边都压过：decoder-only 与 MoE，Hopper 与 Blackwell。他们在 FA3 backend 上找到并修掉关键的精度和速度问题（Figure 1）。验证过的路径上：精度贴近基线，Decode 代价和 KV 显存都下来。主要 caveat：hybrid 里很小的 sliding-window 层，跳过那些层往往更好；`head_dim = 256` 时 Prefill 仍可能退步。`head_dim` 64 / 128 时 Prefill 和 Decode 都可以加速。memory-bound Decode 最好可以把每 token 的 KV 代价压到 BF16 的 **54%**。大 head dim（256）的 Decode 仍能降 ITL，默认 Prefill 却仍略慢于 BF16。
 
@@ -39,13 +39,13 @@ vllm serve gpt-oss-20b --kv-cache-dtype fp8 --kv-cache-dtype-skip-layers sliding
 
 **精度。** Hopper 上 FA3 的 FP8 路径，长上下文会把累加精度吃掉。128k NIAH：BF16 的 **91%** 掉到 **13%**。原因在下面的两级累加。
 
-**速度。** gpt-oss-20b 这类带 sliding-window 的 hybrid，FP8 的 ITL 斜率几乎等于 BF16（**96%**）——房子砍半，Decode 几乎不加速。盈亏点超过 **700k** token，比大多数人会开的窗口还远。Table 3 写的精确数字是 **741,565**。
+**速度。** gpt-oss-20b 这类带 sliding-window 的 hybrid，FP8 的 ITL 斜率几乎等于 BF16（**96%**）——KV 体积减半，Decode 几乎不加速。盈亏点超过 **700k** token，比大多数人会开的窗口还远。Table 3 写的精确数字是 **741,565**。
 
 下一节是他们为此发出去的修补。
 
 ## Kernel 与 vLLM 侧的修补
 
-调查过程里发出去的：量化方案更灵活、精度坑补上、速度再拧。
+调查过程里发出去的：量化方案更灵活、精度坑补上、速度再压。
 
 **两级累加。** Hopper 的 FP8 Tensor Core 文档写的是往 FP32 寄存器里累。实践里，收缩维一大，中间结果就不准——已知的硬件问题，DeepSeek-V3 训练也撞过（[技术报告](https://arxiv.org/abs/2412.19437) Figure 7(b)）。收缩维到 **100K 或更大**，数值误差会很凶。推理里那一维就是上下文长度：`Softmax(AttnScore) * V`。经验上就是 NIAH 从 91% 掉到 13%。
 
@@ -55,7 +55,7 @@ vllm serve gpt-oss-20b --kv-cache-dtype fp8 --kv-cache-dtype-skip-layers sliding
 
 **Per-head scale。** FA3 本来就能收一组 scale，每个 KV head 一个。接到 vLLM 需要推广静态量化的 group-shape（[vllm#30833](https://github.com/vllm-project/vllm/pull/30833)），以及让 `reshape_and_cache_flash` 吃数组而不是一个标量（[vllm#30141](https://github.com/vllm-project/vllm/pull/30141)）。
 
-**Query 量化外移。** 从 attention backend 搬到一段普通 torch，让 `torch.compile` 融进周围的 op（[vllm#24914](https://github.com/vllm-project/vllm/pull/24914)），去掉每 token 那点固定税。
+**Query 量化外移。** 从 attention backend 搬到一段普通 torch，让 `torch.compile` 融进周围的 op（[vllm#24914](https://github.com/vllm-project/vllm/pull/24914)），去掉每 token 那点固定开销。
 
 **FA3 FP8 的 tile。** Prefill 针对 `head_dim=64` / `128` 减两级累加带来的 register spill（#125）；Decode 另有一套 tile，专门压 ITL 斜率（[flash-attention#96](https://github.com/vllm-project/flash-attention/pull/96)、[#91](https://github.com/vllm-project/flash-attention/pull/91)）。
 
@@ -63,7 +63,7 @@ Hopper / Blackwell 上 FP8 FLOPs 是 BF16 的两倍，Prefill 按理也该快。
 
 ## 性能：单请求（concurrency 1）
 
-长上下文 serving 里，Decode 的注意力税很重。每个新 token 都要扫完整份 KV，ITL 随 input length 线性涨。KV 从 BF16 打成 FP8，每缓存一个 token 的流量砍半，ITL 斜率按理该跟着砍。Prefill 在算力上是二次的；硬件上 FP8 FLOPs 翻倍，理想情况 Prefill 也该赢。下面证明：开箱不总是这样。
+长上下文 serving 里，Decode 的注意力开销很重。每个新 token 都要扫完整份 KV，ITL 随 input length 线性涨。KV 从 BF16 打成 FP8，每缓存一个 token 的流量砍半，ITL 斜率按理该跟着砍。Prefill 在算力上是二次的；硬件上 FP8 FLOPs 翻倍，理想情况 Prefill 也该赢。下面证明：开箱不总是这样。
 
 先 concurrency 1，好把 attention 行为看干净。ITL 和 TTFT 完全分开。ITL 拟合直线：
 
@@ -93,13 +93,13 @@ Prefill 拟合二次：
 
 ![fig3 gptoss 20b](../../../../assets/vllm/blog/performance/fp8-kvcache/03-fig3_gptoss_20b.png)
 
-**图注（原文）。** Figure 3：gpt-oss-20b，单请求 H100。skip-SW 是赢家：那些层的 KV 有上限，量化只交税、不省长上下文的房子。
+**图注（原文）。** Figure 3：gpt-oss-20b，单请求 H100。skip-SW 是赢家：那些层的 KV 有上限，量化只交开销、不省长上下文的显存。
 
-gpt-oss-20b：20B，全局层 + sliding window（窗口 **128**）。sliding-window 层的 KV 有上限，长上下文时量化摊不回税。`--kv-cache-dtype-skip-layers sliding_window`：那些层留 BF16，只量化全局层。
+gpt-oss-20b：20B，全局层 + sliding window（窗口 **128**）。sliding-window 层的 KV 有上限，长上下文时量化摊不回开销。`--kv-cache-dtype-skip-layers sliding_window`：那些层留 BF16，只量化全局层。
 
 拟合：斜率从 BF16 的 `8.94e-06` 降到全层 FP8 的 `7.14e-06`、skip-SW 的 `6.34e-06` ms/token。截距挤在 `4.03`–`4.07` ms。斜率相对 BF16：全层 **80%**，skip-SW **71%**。修补之前，BF16 和 FP8 的斜率几乎一样。
 
-skip-SW 是赢家：有界的 sliding-window 层留 BF16（量化只加常数开销，长上下文不省房子），斜率最低，截距几乎不罚。他们建议 hybrid 用这一档。
+skip-SW 是赢家：有界的 sliding-window 层留 BF16（量化只加常数开销，长上下文不省显存），斜率最低，截距几乎不罚。他们建议 hybrid 用这一档。
 
 | | BF16 | FP8（全层） | FP8 skip-SW |
 |---|---|---|---|
@@ -124,7 +124,7 @@ skip-SW 是赢家：有界的 sliding-window 层留 BF16（量化只加常数开
 
 ## 有负载时的吞吐
 
-上面把每 token 的 attention 税隔离出来了。更像线上：**150 条请求、concurrency 8**，约 20k in / 2k out（±15%）。Table 4、Table 5。
+上面把每 token 的 attention 开销隔离出来了。更像线上：**150 条请求、concurrency 8**，约 20k in / 2k out（±15%）。Table 4、Table 5。
 
 Table 4：Llama-3.1-8B。FP8 输出吞吐 **+14.9%**、总时长 **−13.0%**、中位 ITL **−14.8%**。
 
@@ -141,13 +141,13 @@ Table 5：gpt-oss-20b。skip-SW 输出吞吐 **+4.8%**、时长 **−4.6%**、�
 | FP8 | 451.7 | 7.90 | 355.1 | 853.0 |
 | FP8 skip-SW | 456.4 | 7.70 | 347.4 | **871.8** |
 
-单请求的斜率改进，在负载下变成真的 serving 收益。Llama 在 c=1 时斜率砍到 54%，到 c=8 变成 +14.9% 输出吞吐——token 更快，KV 房子又小一半，调度器能多塞人。gpt-oss 的 sliding window 限制了省房子的幅度，skip-SW 把税交得最少。
+单请求的斜率改进，在负载下变成真的 serving 收益。Llama 在 c=1 时斜率砍到 54%，到 c=8 变成 +14.9% 输出吞吐——token 更快，KV 再小一半，调度器能多塞请求。gpt-oss 的 sliding window 限制了省显存的幅度，skip-SW 把开销交得最少。
 
-这组数字是 concurrency 8、约 20k 输入，中等偏重。更高并发或更长上下文，BF16 会先 OOM 或更凶地驱逐；那时 FP8 的房子优势才真正显形。
+这组数字是 concurrency 8、约 20k 输入，中等偏重。更高并发或更长上下文，BF16 会先 OOM 或更凶地驱逐；那时 FP8 的显存优势才真正显形。
 
 ## `head_dim=256`：Prefill 会退步
 
-flash-attention#104 之后两级累加是**默认开**的，免得有人默默吃下 91%→13% 的悬崖。大 `head_dim` 上，这笔默认税会让 TTFT 慢于 BF16。
+flash-attention#104 之后两级累加是**默认开**的，免得有人默默吃下 91%→13% 的悬崖。大 `head_dim` 上，这笔默认开销会让 TTFT 慢于 BF16。
 
 ![fig4 gemma](../../../../assets/vllm/blog/performance/fp8-kvcache/04-fig4_gemma.png)
 
@@ -155,7 +155,7 @@ flash-attention#104 之后两级累加是**默认开**的，免得有人默默�
 
 gemma-4-E2B：`head_dim=256`。四层里三层 sliding window **512**（gpt-oss 的 128 的四倍）。
 
-斜率从 `5.30e-05` 降到 `3.60e-05` ms/token（**68%**）。TTFT 二次项从 `6.93e-07` 升到 `1.12e-06` ms/token²（**约 1.6×**）。Decode 在测量范围内都赢。窗口 512 够摊量化税，SW 层**值得**量化——相对 skip-SW 是一段常数偏移。Prefill 在长上下文上显著更慢，因为 `head_dim=256` 上两级累加的寄存器压力。
+斜率从 `5.30e-05` 降到 `3.60e-05` ms/token（**68%**）。TTFT 二次项从 `6.93e-07` 升到 `1.12e-06` ms/token²（**约 1.6×**）。Decode 在测量范围内都赢。窗口 512 够摊量化开销，SW 层**值得**量化——相对 skip-SW 是一段常数偏移。Prefill 在长上下文上显著更慢，因为 `head_dim=256` 上两级累加的寄存器压力。
 
 | | BF16 | FP8 |
 |---|---|---|
@@ -211,7 +211,7 @@ gemma-4-E2B：`head_dim=256`。四层里三层 sliding window **512**（gpt-oss 
 
 ### 推理题
 
-短 Prefill、长 Decode（常常上万 token）。测的是：FP8 KV + FP8 attention 会不会把长生成链上的推理能力拧歪。
+短 Prefill、长 Decode（常常上万 token）。测的是：FP8 KV + FP8 attention 会不会把长生成链上的推理能力带偏。
 
 ![fig7 Qwen3 30B A3B Thinking 2507 reasoning combined plot](../../../../assets/vllm/blog/performance/fp8-kvcache/07-fig7_Qwen3-30B-A3B-Thinking-2507_reasoning_combined_plot.png)
 
@@ -257,13 +257,13 @@ Hopper 的 FA3 要两级累加才把精度拉回来。Blackwell 走默认 FlashI
 
 **图注（原文）。** Figure 13：推理题，平均大约差 **一分或更少**。
 
-B200 + FlashInfer：精度仍能打，KV 房子和 Decode 代价同样下来。贴合度不如 Hopper/FA3 最好的几条那么紧。
+B200 + FlashInfer：精度仍能打，KV 占用和 Decode 代价同样下来。贴合度不如 Hopper/FA3 最好的几条那么紧。
 
 ### 收束（原文 Final Remarks）
 
 许多 Decode 重、被 KV 显存按住的长上下文部署，FP8 KV 可以当**默认起点**。例外：`head_dim=256` 且 Prefill / TTFT 要紧；很小的 sliding-window 层应留 BF16；未校准就系统性下跌的 backend / 模型——去校准。
 
-主菜是最简单的未校准 scale。小众部署上他们还做了两件精度回收：(1) 用户数据校准，走 [`LLM-Compressor`](https://github.com/vllm-project/llm-compressor)；(2) per-attention-head scale（[vllm#30141](https://github.com/vllm-project/vllm/pull/30141)）。例子见上面的 vLLM docs 链接。
+核心数字是最简单的未校准 scale。小众部署上他们还做了两件精度回收：(1) 用户数据校准，走 [`LLM-Compressor`](https://github.com/vllm-project/llm-compressor)；(2) per-attention-head scale（[vllm#30141](https://github.com/vllm-project/vllm/pull/30141)）。例子见上面的 vLLM docs 链接。
 
 ### 何时该校准
 
@@ -277,9 +277,9 @@ B200 + FlashInfer：精度仍能打，KV 房子和 Decode 代价同样下来。�
 
 ## 何时别开
 
-- **上下文短于大约 7k：** 截距那点税可能让 BF16 的 ITL 更快。
+- **上下文短于大约 7k：** 截距那点开销可能让 BF16 的 ITL 更快。
 - **`head_dim=256` 且 TTFT / Prefill 要紧：** 两级累加把 TTFT 二次项抬到约 **1.6×**。关掉能换速度，必须自己验精度。
 - **未校准精度掉到你的 95% 以下：** Kimi-K2.5 + FlashMLA 是现成例子，用目标数据校准。
 - **很多很小的 sliding window 层：** 不要全层 FP8，用 `--kv-cache-dtype-skip-layers sliding_window`。
 
-和 TensorRT-LLM 手册第 5 章是同一类税：房子变小，质量自己签字。邻居：[TurboQuant](turboquant.md)、[torch.compile](../architecture/torch-compile.md)。
+和 TensorRT-LLM 手册第 5 章是同一类开销：显存变小，精度仍要自己验收。相关笔记：[TurboQuant](turboquant.md)、[torch.compile](../architecture/torch-compile.md)。

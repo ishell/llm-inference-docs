@@ -1,21 +1,21 @@
 ---
 source: https://vllm.ai/blog/2025-11-30-vllm-omni
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vLLM-Omni：文本之外的流水线
 
 英文对照：[en/vllm/blog/serving/vllm-omni.md](../../../../en/vllm/blog/serving/vllm-omni.md)  
 原文：https://vllm.ai/blog/2025-11-30-vllm-omni  
-2025-11-30。署名 **vLLM-Omni Team**。仓库：[vllm-project/vllm-omni](https://github.com/vllm-project/vllm-omni)。文档：[vllm-omni.readthedocs.io](https://vllm-omni.readthedocs.io/en/latest/)。首发叠在 **vLLM v0.11.0** 上（包版本 **v0.11.0rc**）。这不是把一只 LLM 当万金油——**阶段异构** 才是这栋楼。页上对 Hugging Face Transformers 的吞吐对比是当时的图，不是你的 SLA。
+2025-11-30。署名 **vLLM-Omni Team**。仓库：[vllm-project/vllm-omni](https://github.com/vllm-project/vllm-omni)。文档：[vllm-omni.readthedocs.io](https://vllm-omni.readthedocs.io/en/latest/)。首发叠在 **vLLM v0.11.0** 上（包版本 **v0.11.0rc**）。这不是把一只 LLM 当万能后端——**阶段异构** 才是这套架构。页上对 Hugging Face Transformers 的吞吐对比是当时的图，不是某一套集群上的 SLA。
 
 后续把阶段再拆细的笔记：[扩散 cache](omni-diffusion-cache.md)、[TTS](omni-tts.md)、[layerwise offload](omni-layerwise-offload.md)。同目录里还有 [AutoRound](omni-autoround.md)、[Qwen3-Omni](qwen3-omni.md)。
 
 ## 为什么要 Omni
 
-vLLM 从一开始盯的是高吞吐、省显存的 **LLM** serving。生成式 AI 的地形在变：不再只是 text-in、text-out。SOTA 要跨文本、图像、音频、视频推理，还用不同架构吐出异构输出。
+vLLM 从一开始盯的是高吞吐、省显存的 **LLM** serving。生成式 AI 的局面在变：不再只是 text-in、text-out。SOTA 要跨文本、图像、音频、视频推理，还用不同架构吐出异构输出。
 
 **vLLM-Omni** 被写成开源里较早把 omni-modality serving 撑起来的框架之一：把 vLLM 的性能伸到多模态和非自回归推理。
 
@@ -23,11 +23,11 @@ vLLM 从一开始盯的是高吞吐、省显存的 **LLM** serving。生成式 A
 
 ![omni modality model architecture](../../../../assets/vllm/blog/serving/vllm-omni/01-omni-modality-model-architecture.png)
 
-传统 serving 引擎为基于文本的自回归（AR）任务优化。模型变成会看、会听、会说的「omni」agent，基础设施得跟着变。原文点了架构上的三记转向：
+传统 serving 引擎为基于文本的自回归（AR）任务优化。模型变成会看、会听、会说的 omni agent，基础设施得跟着变。原文点了架构上的三记转向：
 
 1. **真 omni-modality。** 处理并生成文本、图像、视频、音频。
 2. **走出自回归。** 把 vLLM 的内存管理伸到 **Diffusion Transformer（DiT）** 和其他并行生成。
-3. **异构流水线。** 一次请求可以依次叫醒多只异构部件：多模态编码、AR 推理、基于扩散的多模态生成，等等。
+3. **异构流水线。** 一次请求可以依次调用多只异构部件：多模态编码、AR 推理、基于扩散的多模态生成，等等。
 
 ## 架构
 
@@ -61,7 +61,7 @@ vLLM 从一开始盯的是高吞吐、省显存的 **LLM** serving。生成式 A
 - **框架自适应：** 新的 omni 模型和执行形态进来时，框架跟着长——生产和研究共用地基。
 - **更深地并进 vLLM：** 核心 omni 能力往上游合，让多模态在整个 vLLM 生态里成为一等公民。
 - **扩散加速：** 并行（DP / TP / SP / USP…）、cache（TeaCache / DBCache…）、计算（量化 / sparse attention…）。后来的落地见 [omni-diffusion-cache](omni-diffusion-cache.md)。
-- **完全分离：** 借 OmniStage，encoder / prefill / decode / generation 全拆开，吞吐上去、时延下来。
+- **完全分离：** 借 OmniStage，encoder / Prefill / Decode / generation 全拆开，吞吐上去、时延下来。
 - **硬件：** 跟着 [hardware plugin](../architecture/hardware-plugin.md) 那套，把 backend 铺开，Omni 不绑死在一家卡上。
 
 ## 上手：安装和 serving
@@ -78,7 +78,7 @@ Serving 同样不在这篇里给一条万能 CLI，而是指向仓库的 example
 
 ![vllm omni gradio serving demo](../../../../assets/vllm/blog/serving/vllm-omni/05-vllm-omni-gradio-serving-demo.png)
 
-CLI 旗标和 Python `Omni(...)` 的旋钮以当时文档和 examples 为准；后来的 TTS / cache / offload 笔记里会出现分阶段的命令，不要倒灌进这一篇的「第一条命令」。
+CLI 旗标和 Python `Omni(...)` 的参数以当时文档和 examples 为准；后来的 TTS / cache / offload 笔记里会出现分阶段的命令，不要倒灌进这一篇的「第一条命令」。
 
 ## 社区
 

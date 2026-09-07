@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# 怎样把 vLLM 保持在「能上线」的质量
+# 把 vLLM 保持在生产质量
 
 英文对照：[en/vllm/blog/performance/production-quality.md](../../../../en/vllm/blog/performance/production-quality.md)  
 原文：https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality  
 2026-07-16。Kevin Luu（Inferact）。学习译文，不是官方译本。数字会过时：当时 **86K+** stars、每月 **5.6M** pip、**2.5M** 镜像、**1000+** 模型架构、**600+** 加速器。2026 年 6 月 main 合入 **1,918** 个 commit（日均 64，跟 PyTorch / Kubernetes 一个量级），CI **1,300 万** job-minute，峰值 **1,400** 并发 runner。
 
-支持这么多模型和加速器，是 vLLM 最大的长处，也是稳定难的原因。H100 上干净的改动，可能在 AMD 编不过、在 B200 变慢、在某一个 backend 把输出拧歪一点。让 vLLM 值得用的那块面积，就是每一颗 commit 都要守住的面积。
+支持这么多模型和加速器，是 vLLM 最大的长处，也是稳定难的原因。H100 上干净的改动，可能在 AMD 编不过、在 B200 变慢、在某一个 backend 把输出带偏一点。让 vLLM 值得用的那块面积，就是每一颗 commit 都要守住的面积。
 
 这篇讲流程，不讲 kernel：什么行、学到什么、哪里还短。从 PR 到一个版本，三层门：
 
@@ -37,7 +37,7 @@ bootstrap 读 job 定义、看 diff，只调度相关组。改文档可能几条
 
 ### 环境必须每次一样
 
-一条测试只在每次跑法相同才有意义。两种漂移：机器环境各玩各的；依赖在你眼皮底下换版本。共享容器管前者，锁死的依赖图管后者。
+一条测试只在每次跑法相同才有意义。两种漂移：机器环境各玩各的；依赖在不知情时换版本。共享容器管前者，锁死的依赖图管后者。
 
 **同一张镜像，每台机器。** 266 个 job 散在几十种机型上，最快把结果变成不可信的办法，就是让每个 job 自己搭一套略不同的环境。多数 job 拉同一张图，一次构建、到处复用。Dockerfile 分阶段：
 
@@ -49,7 +49,7 @@ bootstrap 读 job 定义、看 diff，只调度相关组。改文档可能几条
 
 ![03 container build stages](../../../../assets/vllm/blog/performance/production-quality/04-03-container-build-stages.png)
 
-**同一组版本，每次运行。** 没钉死的依赖让同一条测试周一过、周三炸。你把中间所有代码改动读完，谁都不像凶手。几小时后才明白：**FlashInfer** 周三发了新版，构建默默接上了。它从来不是一个人：**nixl**、**transformers** 和传递依赖都咬过——原因埋在下一层。
+**同一组版本，每次运行。** 没钉死的依赖让同一条测试周一过、周三炸。把中间所有代码改动读完，谁都不像罪魁。几小时后才明白：**FlashInfer** 周三发了新版，构建默默接上了。它从来不是一个人：**nixl**、**transformers** 和传递依赖都咬过——原因埋在下一层。
 
 于是用 `pip-compile` 把顶层依赖编成 lockfile，**连传递依赖一并钉死**。锁会定期更新，每次跑全套 CI。从此依赖引起的崩不再是日常头痛。
 
@@ -92,7 +92,7 @@ agent 跑命令、回流日志、回报退出码。常驻的继续等；一次�
 **能复用就别重做。** 最慢、最贵、最重复的两件事：(1) 整条流水线共用的 Docker 镜像（编 CUDA kernel、装依赖）；(2) 从 Hugging Face 拉权重。
 
 - **Docker layer** — registry 缓存，连依赖一起。
-- **builder 的 warm-cache AMI** — 夜间 job 把最新层烤进 AMI，builder 起来就贴近 main。
+- **builder 的 warm-cache AMI** — 夜间 job 把最新层写进 AMI，builder 起来就贴近 main。
 - **sccache** — C++/CUDA 产物进 **S3**。所有 builder 能**读**；只有 **main 分支**的 builder 能**写**。
 - **权重** — 每个集群下一次到共享盘，job 本地读，不必每次拉几个 GB。
 
@@ -139,7 +139,7 @@ agent 跑命令、回流日志、回报退出码。常驻的继续等；一次�
 - `gpt-oss` 在 **Blackwell** 上 **TP > 1** 挂了。
 - `DeepSeek V4` 在 **GB200** 上吞吐塌了。
 
-当时还没有 benchmarking 流水线；没有东西在那种硬件上把这些模型从头跑到尾。性能回退很少会崩——server 起来，请求成功，用户只是每秒少几个 token，或第一个字等得更久。精度回退更安静：返回合法回答，答案是错的。
+当时还没有 benchmarking 流水线；没有东西在那种硬件上把这些模型从头跑到尾。性能回退很少会崩——server 起来，请求成功，用户只是每秒少几个 token，或 TTFT 更长。精度回退更安静：返回合法回答，答案是错的。
 
 他们后来建的就是那套「本该在 v0.20.0 出门前拦住它」的系统。已经给发布提供大量信号，也抓住过几次大回退。
 

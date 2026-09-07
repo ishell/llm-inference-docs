@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-01-23-mom-on-amd-gpu
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # AMD 上的 MoM 现场：六只模型、十一条决策
 
 英文对照：[en/vllm/blog/serving/semantic-router-mom-amd.md](../../../../en/vllm/blog/serving/semantic-router-mom-amd.md)  
 原文：https://vllm.ai/blog/2026-01-23-mom-on-amd-gpu  
-2026-01-23。署名 **The AMD and vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。v0.1 就把这条现场路径发出去。合作愿景：[amd](semantic-router-amd.md)。后来换模型 / `--platform amd`：[athena](semantic-router-athena.md)。Themis 后来 **删掉 `vllm-sr init`**：[themis](semantic-router-themis.md)。MoM 当系统：[mom](semantic-router-mom.md)。不要和引擎里的 [Router](router.md) 混。信号延迟和 playground 矩阵是**他们的**演示，不是你的 SLA。
+2026-01-23。署名 **The AMD and vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。v0.1 就把这条现场路径发出去。合作愿景：[amd](semantic-router-amd.md)。后来换模型 / `--platform amd`：[athena](semantic-router-athena.md)。Themis 后来 **删掉 `vllm-sr init`**：[themis](semantic-router-themis.md)。MoM 当系统：[mom](semantic-router-mom.md)。不要和引擎里的 [Router](router.md) 混。信号延迟和 playground 矩阵是**他们的**演示，不是某一套集群上的 SLA。
 
 同目录还有：[modular](semantic-router-modular.md)、[halugate](halugate.md)、[session](semantic-router-session.md)、[themis](semantic-router-themis.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)、[vision](semantic-router-vision.md)。
 
@@ -247,7 +247,7 @@ curl -X POST http://localhost:8888/v1/chat/completions \
 | Security | `keyword: jailbreak_attempt` | n/a | 模型看见之前就拦 |
 
 - 数理自动打开 reasoning
-- 简单 QA 走小模型，不付推理税
+- 简单 QA 走小模型，不付推理开销
 - 「那是错的」可以改送到更强、带 reasoning 的模型
 - Jailbreak 在任何模型看见请求之前拦截
 

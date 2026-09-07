@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-07-22-kimi-k3-preview
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Kimi K3 开源日前的 preview：KDA prefix cache 才是硬骨头
@@ -37,7 +37,7 @@ K3 不是更大的 K2。serving 问题同时在几维上变了。
 | **Quant** | 发布配置 **MXFP4** | 高效 FP4 MoE，还要吃 K3 的 **SiTU** |
 | **Multimodality** | 原生视觉 + vision tower | 多模态预处理（当时 image-only）和稳的 vision parallelism |
 
-对推理系统，每一项都把成本挪到新地方。KDA 不必为每个过去 token 留常规 KV，但引入大块 recurrent state。AttnRes 不再只靠一条均匀累加的 residual stream，却多了跨层内存流量。极端稀疏避免每 token 激活全部 2.8T，却把 routing 和通信的赌注抬高。vLLM 的活是让这些在同一套熟悉的 serving API 后面一起转。
+对推理系统，每一项都把成本挪到新地方。KDA 不必为每个过去 token 留常规 KV，但引入大块 recurrent state。AttnRes 不再只靠一条均匀累加的 residual stream，却多了跨层内存流量。极端稀疏避免每 token 激活全部 2.8T，却把 routing 和通信的赌注抬高。vLLM 的工作是让这些在同一套熟悉的 serving API 后面一起转。
 
 ## 跨几代 Kimi 的合作
 

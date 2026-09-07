@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-02-13-gb300-deepseek
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # DeepSeek-V3.2 on GB300：验证部署，不是刷峰值
 
 英文对照：[en/vllm/blog/performance/gb300-deepseek.md](../../../../en/vllm/blog/performance/gb300-deepseek.md)  
 原文：https://vllm.ai/blog/2026-02-13-gb300-deepseek  
-2026-02-13。署名 **The DaoCloud and vLLM team**。页上的 bench，不是你的 SLA。快照：**vLLM v0.14.1**，**CUDA 13.0**。GB300 / B300 **288 GB**。Day-0 稀疏注意力：[deepseek-v32](../architecture/deepseek-v32.md)。后来的压缩栈：[deepseek-v4](../architecture/deepseek-v4.md)。P/D 亲戚：[Mooncake](../serving/mooncake.md) / [large-scale](../serving/large-scale.md)。
+2026-02-13。署名 **The DaoCloud and vLLM team**。学习译文，不是官方译本。页上的 bench，不是你的 SLA。快照：**vLLM v0.14.1**，**CUDA 13.0**。GB300 / B300 **288 GB**。Day-0 稀疏注意力：[deepseek-v32](../architecture/deepseek-v32.md)。后来的压缩栈：[deepseek-v4](../architecture/deepseek-v4.md)。P/D 相关：[Mooncake](../serving/mooncake.md) / [large-scale](../serving/large-scale.md)。
 
 适用：在 Blackwell Ultra 上选 NVFP4、TP2 / EP2、要不要 MTP、1P1D 什么时候该加 P。不适合：把 **7360 TGS** 当成承诺——原文自己写的是 **可复现基线**，不是调到顶。
 
@@ -91,7 +91,7 @@ NVFP4 用 **一半 GPU 数** 也能整体更好。可低精度单独不够，并
 
 赢家是 NVFP4 + **TP2**。Prefill-only（ISL=2k，OSL=1，batch=64）：相对 FP8 **1.8×**，最高 **7360 TGS**。混上下文（ISL=2k，OSL=1k）：输出 **2816 TGS**（**8×**）。TP4 就客气了——Prefill 只 **14%**，混上下文 **2×**——所以 TP2 才是效率选择。
 
-两件事：内存税降了，attention 算子简单了。NVFP4 松带宽（抬输出吞吐），attention 简化（压 Prefill 延迟）。
+两件事：内存开销降了，attention 算子简单了。NVFP4 松带宽（抬输出吞吐），attention 简化（压 Prefill 延迟）。
 
 **为什么是 NVFP4 + TP2：** 量化把权重和 KV 变小，batch 才能涨；TP2 让每卡活还够大，Tensor Core 吃得下 FP4 的 FLOPs 和带宽。TP4 把每卡活摊薄，增益就抓不住。
 
@@ -112,7 +112,7 @@ NVFP4 用 **一半 GPU 数** 也能整体更好。可低精度单独不够，并
 
 理由不只 FP4：B300 FLOPs 是 Hopper 的 **7.5×**（峰值约 **15 PFLOPs**）；SM 的 SFU 帮 Prefill 的 attention；**288 GB** 是 H200 的 **2×**，带宽几乎翻倍；Blackwell Ultra 的 NVFP4 FLOPs 让 MoE 比 Hopper FP8 快——Decode 那一跳也来自这里。页上点名 [Inside NVIDIA Blackwell Ultra](https://developer.nvidia.com/blog/inside-nvidia-blackwell-ultra-the-chip-powering-the-ai-factory-era/)。小规模 intra-node TP2，GB300 相对 B300 仍有一点边。
 
-## 部署怎么拧
+## 部署怎么调
 
 ### EP2 vs TP2
 
@@ -152,7 +152,7 @@ MTP 抬 Decode，但不总是。内置 draft 一次猜 **1** 个 token：
 
 上下文不太长时，开 MTP（蓝）在并发 **≤256** 里比不开（绿）更高（接受率可以 **>80%**）。高并发一开 MTP，吞吐会断崖。
 
-混上下文 ISL=2k / OSL=64：Decode 占比极低。MTP 多出来的算、内存、调度摊不掉。低并发摊不掉税；高并发再去挤 Prefill batch。两端吞吐都 **不如关掉 MTP**。
+混上下文 ISL=2k / OSL=64：Decode 占比极低。MTP 多出来的算、内存、调度摊不掉。低并发摊不掉开销；高并发再去挤 Prefill batch。两端吞吐都 **不如关掉 MTP**。
 
 ![dsr1 mtp throughput](../../../../assets/vllm/blog/performance/gb300-deepseek/08-dsr1-mtp-throughput.png)
 
@@ -182,7 +182,7 @@ MTP 抬 Decode，但不总是。内置 draft 一次猜 **1** 个 token：
 
 **为什么 Prefill 是 R1 赢。** V3.2 加了 Indexer / Sparse MLA（`Indexer` + `SparseAttnIndexer`），还有带独立 cache 的 `DeepseekV32IndexerBackend`。Prefill 多付一层量化 / 索引。Profile：一层 DSA 的 kernel 时间是 MLA 的 **2.7×**。Indexer 以外，NVFP4 MoE kernel 选法和 R1 一样——Prefill 差在 Indexer / Sparse Attention。FP8 KV 那条线：[fp8-kvcache](fp8-kvcache.md)。
 
-DSA 是给超长上下文用的。上下文不够长，税就扎眼。再往长走，Decode 侧 DSA 的 TPOT 优势大约在 **10k–20k** token 翻过来，斜率大约 **6×** 更陡。`DeepseekV32IndexerBackend` 当时还新。
+DSA 是给超长上下文用的。上下文不够长，开销就扎眼。再往长走，Decode 侧 DSA 的 TPOT 优势大约在 **10k–20k** token 翻过来，斜率大约 **6×** 更陡。`DeepseekV32IndexerBackend` 当时还新。
 
 ## 拆开 Prefill（V3.2）
 

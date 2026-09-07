@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-11-19-signal-decision
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 信号–决策：14 类不够用之后
@@ -60,7 +60,7 @@ User Prompt → MMLU Domain Classification → Model Selection
 
 **真实冲击：** 企业有 **50+** 专用用例（法律合同、金融合规、医疗诊断、代码安全审计），塞不进 14 个类。
 
-### 逻辑拧不动
+### 逻辑推不动
 
 不能组合条件，也不能实现复杂策略：
 
@@ -336,7 +336,7 @@ Signal-Decision：几百条专用路由，点名的例子：
 
 - **Radix tree for keyword matching** — 换掉 regex；目标是 **10,000+** 条 keyword 规则仍性能稳定。
 - **HNSW for embedding search** — 近似近邻；规模目标点名「数百万候选短语」。
-- **Parallel LoRA for decode-only models** — Decode 里多只 LoRA adapter，一只基座伺候多个域；少多租户切模型的税。
+- **Parallel LoRA for decode-only models** — Decode 里多只 LoRA adapter，一只基座服务多个域；少多租户切模型的开销。
 
 ### Feature enhancements
 
@@ -350,7 +350,7 @@ Signal-Decision：几百条专用路由，点名的例子：
 
 ## Conclusion
 
-从固定分类拧到灵活的信号决策：
+从固定分类转到灵活的信号决策：
 
 - **Unlimited scalability** — 14 类 → 不限自定义规则
 - **Multi-dimensional intelligence** — keyword、embedding、domain 一起

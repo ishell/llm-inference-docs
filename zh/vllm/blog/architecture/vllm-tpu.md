@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-10-16-vllm-tpu
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vLLM TPU：PyTorch 和 JAX 走同一条 XLA 路
@@ -33,7 +33,7 @@ fetched: 2026-09-04
 - **MPMD。** 当时 vLLM 跨进程通信走 [MPMD](https://en.wikipedia.org/wiki/Flynn%27s_taxonomy#Multiple_programs,_multiple_data_streams_\(MPMD\))。TPU 的编译器模型却靠 [SPMD](https://en.wikipedia.org/wiki/Single_program,_multiple_data) 去重叠多设备、多主机通信。两套世界观。
 - **PyTorch/XLA（PTXLA）。** [PTXLA](https://github.com/pytorch/xla) 能让 PyTorch 在 TPU 上原生跑，接进 vLLM 省事；一优化到栈底，坑就来了。
 
-即便如此，Llama 3.1-8B 在 **v6e-1** 上吞吐大约 **3.6×**，70B 在 **v6e-8** 上大约 **2.1×**。vLLM TPU 也上了 [Cloud Next 的台](https://www.youtube.com/live/Md4Fs-Zc3tg?si=t3V52Kac5Y5VTNN0&t=1137)。后面那两张进度图把这条曲线画完。
+即便如此，Llama 3.1-8B 在 **v6e-1** 上吞吐大约 **3.6×**，70B 在 **v6e-8** 上大约 **2.1×**。vLLM TPU 也出现在 [Cloud Next](https://www.youtube.com/live/Md4Fs-Zc3tg?si=t3V52Kac5Y5VTNN0&t=1137)。后面那两张进度图把这条曲线画完。
 
 ## 这一代：tpu-inference
 

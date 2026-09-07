@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Triton Attention：一份源码伺候三家卡
+# Triton Attention：一份源码跑三家卡
 
 英文对照：[en/vllm/blog/architecture/triton-attn.md](../../../../en/vllm/blog/architecture/triton-attn.md)  
 原文：https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive  
-2026-03-04。署名 **vLLM Team at IBM Research**。学习重写，不是官方译本。改编自 Red Hat 主持的 [vLLM Office Hours](https://www.youtube.com/watch?v=8QiM-i9ifFo&list=PLbMP1JcGBmSHxp4-lubU5WYmJ9YgAQcf3&index=1)，主讲 **Burkhard Ringlein**（IBM Research）。往期 / 报名：[playlist](https://www.youtube.com/playlist?list=PLbMP1JcGBmSHxp4-lubU5WYmJ9YgAQcf3)、[red.ht/office-hours](https://red.ht/office-hours)。这件事是 IBM Research、Red Hat、AMD 一起往上游推的。Attention backend 怎么选，见 [optimization](../../optimization/optimization.md)。ROCm 上后来的路由：[rocm-attention](rocm-attention.md)。
+2026-03-04。署名 **vLLM Team at IBM Research**。学习译文，不是官方译本。改编自 Red Hat 主持的 [vLLM Office Hours](https://www.youtube.com/watch?v=8QiM-i9ifFo&list=PLbMP1JcGBmSHxp4-lubU5WYmJ9YgAQcf3&index=1)，主讲 **Burkhard Ringlein**（IBM Research）。往期 / 报名：[playlist](https://www.youtube.com/playlist?list=PLbMP1JcGBmSHxp4-lubU5WYmJ9YgAQcf3)、[red.ht/office-hours](https://red.ht/office-hours)。这件事是 IBM Research、Red Hat、AMD 一起往上游推的。Attention backend 怎么选，见 [optimization](../../optimization/optimization.md)。ROCm 上后来的路由：[rocm-attention](rocm-attention.md)。
 
 Kernel：[`vllm/v1/attention/ops/triton_unified_attention.py`](https://github.com/vllm-project/vllm/blob/main/vllm/v1/attention/ops/triton_unified_attention.py)（大约 **800** 行）。FlashAttention 3 大约 **7 万** 行。包装：[`triton_attn.py`](https://github.com/vllm-project/vllm/blob/main/vllm/v1/attention/backends/triton_attn.py)。论文：[*The Anatomy of a Triton Attention Kernel*](https://arxiv.org/abs/2511.11581)。Figure 1 里点名的 autotune 论文：[*GPU Performance Portability needs Autotuning*](https://arxiv.org/abs/2505.03780)。
 

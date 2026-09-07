@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-05-06-mooncake-store
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vLLM × Mooncake：agent 的前缀，不该每回合重读一遍
 
 英文对照：[en/vllm/blog/serving/mooncake.md](../../../../en/vllm/blog/serving/mooncake.md)  
 原文：https://vllm.ai/blog/2026-05-06-mooncake-store  
-2026-05-06。作者 **Yifan Qiao, Trong Dao Le, Ao Shen, Zhewen Li, Bowen Wang**。Mooncake 仓库：[kvcache-ai/Mooncake](https://github.com/kvcache-ai/Mooncake)。vLLM 已用 [`MooncakeConnector`](https://docs.vllm.ai/en/stable/features/mooncake_connector_usage/) 做 Prefill/Decode 分离；这一篇把 **Mooncake Store** 做成集群级 KV 池。落地 [PR #40900](https://github.com/vllm-project/vllm/pull/40900)；bench 脚本在原文链到的 artifact 树。数字是 Codex / SWE-bench Pro 轨迹上的演示，不是你的 SLA。
+2026-05-06。作者 **Yifan Qiao, Trong Dao Le, Ao Shen, Zhewen Li, Bowen Wang**。Mooncake 仓库：[kvcache-ai/Mooncake](https://github.com/kvcache-ai/Mooncake)。vLLM 已用 MooncakeConnector（[`MooncakeConnector`](https://docs.vllm.ai/en/stable/features/mooncake_connector_usage/)）做 Prefill/Decode 分离；这一篇把 **Mooncake Store** 做成集群级 KV 池。落地 [PR #40900](https://github.com/vllm-project/vllm/pull/40900)；bench 脚本在原文链到的 artifact 树。数字是 Codex / SWE-bench Pro 轨迹上的演示，不宜直接当作生产 SLA。
 
 **TL;DR。** Agent 负载会生出巨大的共享前缀，回合之间却常被重算。把 Mooncake 的分布式 KV store 接进 vLLM：真实 agent 轨迹上吞吐约 **3.8×**，TTFT 约 **46×** 更低，端到端约 **8.6×** 更低；扩到 **60** 张 GB200 仍接近线性。
 
@@ -17,11 +17,11 @@ fetched: 2026-09-05
 
 ![hero vllm mooncake](../../../../assets/vllm/blog/serving/mooncake/01-hero_vllm_mooncake.svg)
 
-认得 KV 的路由器见 [router.md](router.md)；本机 CPU 卸 KV 见 [kv-offload.md](kv-offload.md)。这一篇是**跨实例的池子**。
+认得 KV 的路由器见 [router.md](router.md)；本机 CPU 卸 KV 见 [kv-offload.md](kv-offload.md)。这一篇是**跨实例的池**。
 
 ## Agentic workloads are reshaping LLM serving
 
-Claude Code、OpenClaw 这类 agent 起来以后，推理负载换了一种脾气。Jensen 在 GTC 2026 [keynote](https://www.nvidia.com/gtc/keynote/) 里说：LLM 正从聊天机器人走向会自己做事、活得很久的系统。落到 serving 上，结构才是关键。
+Claude Code、OpenClaw 这类 agent 起来以后，推理负载换了一种结构。Jensen 在 GTC 2026 [keynote](https://www.nvidia.com/gtc/keynote/) 里说：LLM 正从聊天机器人走向会自己做事、活得很久的系统。落到 serving 上，结构才是关键。
 
 典型循环是长地平线上的多回合：*reasoning* 一步（读上下文、吐中间想法），再 *action* 一步（发工具调用、接外部输出）。不是一问一答的短会话。
 
@@ -47,14 +47,14 @@ Figure 1 是这份语料的解剖，以及一条代表性会话。
 
 vLLM 早就能把 KV 卸到本机 DRAM 或盘上。对 agent 有两道墙：
 
-- **Limited capacity and eviction。** 100K token 的上下文可以占掉数 GB（文中例子：Kimi-2.5 的 FP8 KV 大约 **3.8 GB**）。一台正忙着伺候许多长会话的实例，这些大前缀很快把本地池子撑满，然后被赶走。
+- **Limited capacity and eviction。** 100K token 的上下文可以占掉数 GB（文中例子：Kimi-2.5 的 FP8 KV 大约 **3.8 GB**）。一台正忙着跑许多长会话的实例，这些大前缀很快把本地池撑满，然后被赶走。
 - **Cross-instance misses。** 路由器为了摊负载，下一回合未必还落在同一台 vLLM 上。新实例从没见过这段前缀，只好从头算。
 
 **Takeaway：** 不能再把推理服务当成一排互不相识的 replica。Agent 需要一块**集群级的 KV 池**：容量是大家的，命中也可以跨实例。
 
 ## Distributed KV cache pool with Mooncake Store
 
-[Mooncake](https://github.com/kvcache-ai/Mooncake) 是开源的高性能 KV 传输与分布式存储库。vLLM 已经用它的 transfer engine、经 [`MooncakeConnector`](https://docs.vllm.ai/en/stable/features/mooncake_connector_usage/) 做 Prefill/Decode 分离。这一步把 **Mooncake Store** 做成分布式 KV 池。
+[Mooncake](https://github.com/kvcache-ai/Mooncake) 是开源的高性能 KV 传输与分布式存储库。vLLM 已经用它的 transfer engine、经 MooncakeConnector（[`MooncakeConnector`](https://docs.vllm.ai/en/stable/features/mooncake_connector_usage/)）做 Prefill/Decode 分离。这一步把 **Mooncake Store** 做成分布式 KV 池。
 
 ![overall design option C](../../../../assets/vllm/blog/serving/mooncake/03-overall_design_option_C.svg)
 
@@ -64,7 +64,7 @@ vLLM 早就能把 KV 卸到本机 DRAM 或盘上。对 agent 有两道墙：
 
 Client 跑在 GPU 节点上，管本地 CPU / DRAM / SSD。Client 之间用 RDMA 传 KV。合在一起，就是分布式 KV 池。
 
-接入走现成的 [`KVConnector`](https://github.com/vllm-project/vllm/blob/db9a84e0cd0e17ab693467ff4a71103abd4b77bf/vllm/distributed/kv_transfer/kv_connector/v1/base.py)——和 P/D 分离是同一扇门。Connector 有两个角色：
+接入走现成的 KVConnector（[`KVConnector`](https://github.com/vllm-project/vllm/blob/db9a84e0cd0e17ab693467ff4a71103abd4b77bf/vllm/distributed/kv_transfer/kv_connector/v1/base.py)）——和 P/D 分离是同一条接口。Connector 有两个角色：
 
 **Scheduler 侧。** 新请求来了，vLLM 把 prompt 的 token block 做哈希，去问 Mooncake master 有没有匹配的 KV block，用结果帮调度做决定。
 
@@ -88,11 +88,11 @@ RDMA 操作本身是异步的，可准备 descriptor、发出读写仍要吃 CPU
 
 ### Enabling PD + distributed KV cache pool with MultiConnector
 
-同一套接入也自然叠到 P/D 分离，走 [`MultiConnector`](https://github.com/vllm-project/vllm/blob/main/vllm/distributed/kv_transfer/kv_connector/v1/multi_connector.py)。Figure 3：`MultiConnector` 是把若干子 connector 串起来的包装。每个 connector 独立工作，彼此不依赖。
+同一套接入也自然叠到 P/D 分离，走 MultiConnector（[`MultiConnector`](https://github.com/vllm-project/vllm/blob/main/vllm/distributed/kv_transfer/kv_connector/v1/multi_connector.py)）。Figure 3：MultiConnector 是把若干子 connector 串起来的包装。每个 connector 独立工作，彼此不依赖。
 
 ![animation](../../../../assets/vllm/blog/serving/mooncake/04-animation.gif)
 
-**图注（原文 Figure 3）。** 经 `MultiConnector`，P/D 分离和分布式 KV 池叠在一起。
+**图注（原文 Figure 3）。** 经 MultiConnector，P/D 分离和分布式 KV 池叠在一起。
 
 **Prefill。** Prefill 实例既给 P/D connector 准备 KV block，也经 store connector 写入分布式池。命中时 vLLM 向所有 connector 询问，可以从 Mooncake Store connector 把匹配前缀捞回来。
 
@@ -102,7 +102,7 @@ RDMA 操作本身是异步的，可准备 descriptor、发出读写仍要吃 CPU
 
 ## Performance
 
-当时实现：[PR #40900](https://github.com/vllm-project/vllm/pull/40900)。Bench 脚本在 artifact 仓库：[ivanium/vllm `scripts/mooncake/artifacts`](https://github.com/ivanium/vllm/tree/feat/mooncake-store-int/scripts/mooncake/artifacts)。文中亮两张成绩。
+当时实现：[PR #40900](https://github.com/vllm-project/vllm/pull/40900)。Bench 脚本在 artifact 仓库：[ivanium/vllm `scripts/mooncake/artifacts`](https://github.com/ivanium/vllm/tree/feat/mooncake-store-int/scripts/mooncake/artifacts)。文中亮两张结果。
 
 Kimi-2.5 **NVFP4**，GB200，P/D 分离：Prefill 用 **TP4**，Decode 用 **DP8 + EP**。他们认为这是当时延迟–吞吐最好的折中。
 

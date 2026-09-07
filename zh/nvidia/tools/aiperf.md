@@ -1,8 +1,8 @@
 ---
 source: https://github.com/ai-dynamo/aiperf
 lang: zh
-voice: literary-study
-fetched: 2026-09-01
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # NVIDIA AIPerf
@@ -31,9 +31,9 @@ pip install aiperf
 
 Linux **aarch64** 上依赖 `crick` 只有 sdist，装之前要有 C 编译器（Debian/Ubuntu：`build-essential`）。x86_64 / macOS / Windows 走预编译 wheel。
 
-可选 extras：`aiperf[mlflow]`、`aiperf[otel]`、`aiperf[wandb]`，或一次装齐 `aiperf[mlflow,otel,wandb]`。它们把成绩流到追踪系统；不改秒表本身。
+可选 extras：`aiperf[mlflow]`、`aiperf[otel]`、`aiperf[wandb]`，或一次装齐 `aiperf[mlflow,otel,wandb]`。它们把成绩流到追踪系统；不改测量本身。
 
-NIM 手册喜欢用 Triton SDK 容器再 `pip install aiperf`。本地玩具可以用 Ollama：
+NIM 手册喜欢用 Triton SDK 容器再 `pip install aiperf`。本地小实验可以用 Ollama：
 
 ```bash
 docker run -d --name ollama -p 11434:11434 \
@@ -53,9 +53,9 @@ aiperf profile \
   --request-count 10
 ```
 
-对着 vLLM / NIM 时，把 `--url` 换成 `localhost:8000`，`--model` 换成服务认的名字，`--tokenizer` 换成同一套分词器。**Tokenizer 必须对。** 错的分词器会把 ISL/OSL 量歪，后面所有除法都跟着撒谎。
+对着 vLLM / NIM 时，把 `--url` 换成 `localhost:8000`，`--model` 换成服务认的名字，`--tokenizer` 换成同一套分词器。**Tokenizer 必须对。** 错的分词器会把 ISL/OSL 量歪，后面所有除法都跟着错。
 
-`--streaming` 几乎总要开。TTFT、ITL、TTST 都要求流式、且至少有一包非空内容。关流式，你测到的主要是整段 e2e。
+`--streaming` 几乎总要开。TTFT、ITL、TTST 都要求流式、且至少有一包非空内容。关流式，我们测到的主要是整段 e2e。
 
 官方 README 里那张 CPU-only Ollama 表**不是**官方成绩。数字只说明表格长什么样：TTFT / TTST / TTFO、Request Latency、ITL、单用户 TPS、ISL/OSL、系统 TPS、RPS、Request Count。
 
@@ -71,7 +71,7 @@ aiperf profile \
 
 ## 它怎么拆成三层
 
-文档站 Architecture 把 AIPerf 切成三架飞机，中间用 ZMQ 说话：
+文档站 Architecture 把 AIPerf 切成三层，中间用 ZMQ 通信：
 
 | 平面 | 谁 | 干什么 |
 |---|---|---|
@@ -87,7 +87,7 @@ Worker 之间不共享状态。多轮对话的上下文只活在那个 worker �
 
 当前只支持**单机多进程**。文档里出现的 Kubernetes 字样是前景；这一版没有注册分布式 K8s 执行，不要把它当已交付。
 
-Telemetry（OTel / MLflow）是 Analytic 旁边的边车：独立子进程、有界队列。队列满了丢最老的事件，不堵热路径。测到的是推理，不是你的 collector 有多慢。
+Telemetry（OTel / MLflow）是 Analytic 旁边的边车：独立子进程、有界队列。队列满了丢最老的事件，不堵热路径。测到的是推理，不是 collector 有多慢。
 
 ## 支持的 API
 
@@ -103,9 +103,9 @@ OpenAI：chat、completions、embeddings、audio、images。NIM embeddings / ran
 
 ## 已知陷阱
 
-- `--output-tokens-mean` **不能保证**真的吐那么长，除非你用 `--extra-inputs` 把 `ignore_eos` / `min_tokens` 传给支持它们的服务。NIM 手册就是这么干的。
-- 并发极端高（官方说通常 >15000）可能把客户端端口打光。那是客户端的门厅塌了，不是模型变慢。
+- `--output-tokens-mean` **不能保证**真的吐那么长，除非我们用 `--extra-inputs` 把 `ignore_eos` / `min_tokens` 传给支持它们的服务。NIM 手册就是这么干的。
+- 并发极端高（官方说通常 >15000）可能把客户端端口打光。那是客户端端口耗尽，不是模型变慢。
 - 配置非法时，进程可能挂住。杀掉，查配置。
-- 热身和正式成绩分开。演员还在对词，不要记进票房。
+- 热身和正式成绩分开。warmup 不计入成绩。
 
 从 GenAI-Perf 迁过来：命令几乎同构（`profile`、`--streaming`、concurrency / request-rate）。新项目用 AIPerf。概念（空首包不算 TTFT、ITL 不含 TTFT）还在，公式以 `aiperf-metrics.md` 为准。

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-08-06-qwen35-25k-tps
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Qwen3.5 25K TPS/GPU：GDN + 异构 cache 搬完才到 Pareto 左端
@@ -11,7 +11,7 @@ fetched: 2026-09-04
 原文：https://vllm.ai/blog/2026-08-06-qwen35-25k-tps  
 2026-08-06。署名 **vLLM Team**。GB200 NVL72。模型：[Qwen3.5-397B-A17B-NVFP4](https://huggingface.co/nvidia/Qwen3.5-397B-A17B-NVFP4)。ISL/OSL = **8192/1024**。更早的 hybrid：[qwen3-next.md](qwen3-next.md)。异构 cache 搬运：[hybrid-ssm.md](hybrid-ssm.md)。后来的 3.8：[qwen38.md](qwen38.md)。Decode 侧长上下文：[dcp.md](../performance/dcp.md)。**系统 TPS/GPU ≠ 单用户 TPS。** 扫的是 Pareto **左端**（总吞吐），并发 **64–5120**，没测 1–32。
 
-Qwen3.5 的 hybrid attention（满 attention + Gated Delta Network）让分离 serving 更难，也更有东西可拧。社区把 P/D 路径养熟了。这篇：主要贡献、GB200 NVL72 数字、配方——让 **你** 也能摸到 **25K total TPS/GPU**。
+Qwen3.5 的 hybrid attention（满 attention + Gated Delta Network）让分离 serving 更难，也更有东西可调。社区把 P/D 路径做熟了。这篇：主要贡献、GB200 NVL72 数字、配方——让我们也能复现 **25K total TPS/GPU**。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -73,7 +73,7 @@ benchmark:
   type: "gsm8k"
 ```
 
-### 2. 配方旋钮怎么选
+### 2. 配方配置怎么选
 
 固定 ISL/OSL，随机集，`random_range_ratio=0.8`。真正要紧的设置见下一节。
 
@@ -83,7 +83,7 @@ benchmark:
 
 **Figure 2。** 合在一起的 Pareto 前沿。
 
-每 GPU 总 TPS 摸到 **25,000** tok/s。并发 **64 → 5120**。**没测** 1–32：目标是左端 Pareto——把总 TPS/GPU 拧满。停在 5120，因为 Decode KV 容量在单台 8×GB200 endpoint 上见底了。并发还能往上，但要给 Decode 加 GPU。
+每 GPU 总 TPS 达到 **25,000** tok/s。并发 **64 → 5120**。**没测** 1–32：目标是左端 Pareto——把总 TPS/GPU 推满。停在 5120，因为 Decode KV 容量在单台 8×GB200 endpoint 上见底了。并发还能往上，但要给 Decode 加 GPU。
 
 ## 配方和做法
 
@@ -102,7 +102,7 @@ srtctl run --file <recipe>.yaml
 - `--mamba-ssm-cache-dtype bfloat16` — 抬 Decode 侧有效 KV 容量。
 - `--language-model-only` — Qwen3.5 是多模态；纯文本负载关掉多模态，**同时** 打通 fused QK-norm + RoPE + gate。
 - Prefill `--max-num-batched-tokens 16384` = **2× ISL**。Prefill endpoint 少时（{4, 5, 6}×DEP2）Prefill 饿着 Decode；每步 Prefill 塞两条完整 prompt，高并发大约 **+8%** 总 TPS/GPU。
-- Decode `--max-cudagraph-capture-size` — 两个最高点用 `cc/8 + 128`（cc=4096 时 640，cc=5120 时 768）；8 = Decode 上的 DP rank。默认 capture 上限 512，cc=3072 够用。他们不敢肯定这对报出的 Pareto 是必须的；当预防针。
+- Decode `--max-cudagraph-capture-size` — 两个最高点用 `cc/8 + 128`（cc=4096 时 640，cc=5120 时 768）；8 = Decode 上的 DP rank。默认 capture 上限 512，cc=3072 够用。他们不敢肯定这对报出的 Pareto 是必须的；当预防措施。
 - 前缀缓存 **关**：随机集上买不到东西。
 - `--stream-interval 100` — 高并发砍前端。流式输出按 100 token 一块缓冲，**会** 动到测到的逐 token 延迟。优化 ITL/TPOT 而不是总吞吐时，别开。
 
@@ -114,7 +114,7 @@ srtctl run --file <recipe>.yaml
 
 ## 下一步
 
-到现在：左端 Pareto，总 TPS/GPU。下一步：把 **每用户 Gen TPS** 拧满的 PD 配置。那一区要从 DEP 挪向 **TEP** 或纯 **TP**，一般更照顾单用户。加 GPU 是另一根杠杆。
+到现在：左端 Pareto，总 TPS/GPU。下一步：把 **每用户 Gen TPS** 推满的 PD 配置。那一区要从 DEP 挪向 **TEP** 或纯 **TP**，一般更照顾单用户。加 GPU 是另一根杠杆。
 
 ## 致谢
 

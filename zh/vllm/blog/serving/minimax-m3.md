@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-06-12-minimax-m3-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # MiniMax M3：1M MSA、MXFP8、EAGLE3，day-0 能 serve 才算数
 
 英文对照：[en/vllm/blog/serving/minimax-m3.md](../../../../en/vllm/blog/serving/minimax-m3.md)  
 原文：https://vllm.ai/blog/2026-06-12-minimax-m3-vllm  
-2026-06-12。vLLM Team。权重 [`MiniMaxAI/MiniMax-M3`](https://huggingface.co/MiniMaxAI/MiniMax-M3)、[`MiniMaxAI/MiniMax-M3-MXFP8`](https://huggingface.co/MiniMaxAI/MiniMax-M3-MXFP8)。EAGLE3 draft [`Inferact/MiniMax-M3-EAGLE3`](https://huggingface.co/Inferact/MiniMax-M3-EAGLE3)。菜谱 [recipes.vllm.ai/MiniMaxAI/MiniMax-M3](https://recipes.vllm.ai/MiniMaxAI/MiniMax-M3)。NVIDIA 校验：H200、GB200、B300。AMD：MI350 / MI300。MSA 源 [MiniMax-AI/MSA](https://github.com/MiniMax-AI/MSA)。vLLM PR [#45381](https://github.com/vllm-project/vllm/pull/45381)。NeMo RL [minimax-m3.md](https://github.com/NVIDIA-NeMo/RL/blob/minimax-m3/docs/guides/minimax-m3.md)。H3 生产 serving：[minimax-h3.md](minimax-h3.md)。亲戚：[anatomy.md](../core/anatomy.md)、[spec-decode.md](../features/spec-decode.md)、[kv-offload.md](../features/kv-offload.md)。本地图版权仍归原站。
+2026-06-12。vLLM Team。权重 [`MiniMaxAI/MiniMax-M3`](https://huggingface.co/MiniMaxAI/MiniMax-M3)、[`MiniMaxAI/MiniMax-M3-MXFP8`](https://huggingface.co/MiniMaxAI/MiniMax-M3-MXFP8)。EAGLE3 draft [`Inferact/MiniMax-M3-EAGLE3`](https://huggingface.co/Inferact/MiniMax-M3-EAGLE3)。recipe [recipes.vllm.ai/MiniMaxAI/MiniMax-M3](https://recipes.vllm.ai/MiniMaxAI/MiniMax-M3)。NVIDIA 校验：H200、GB200、B300。AMD：MI350 / MI300。MSA 源 [MiniMax-AI/MSA](https://github.com/MiniMax-AI/MSA)。vLLM PR [#45381](https://github.com/vllm-project/vllm/pull/45381)。NeMo RL [minimax-m3.md](https://github.com/NVIDIA-NeMo/RL/blob/minimax-m3/docs/guides/minimax-m3.md)。H3 生产 serving：[minimax-h3.md](minimax-h3.md)。亲戚：[anatomy.md](../core/anatomy.md)、[spec-decode.md](../features/spec-decode.md)、[kv-offload.md](../features/kv-offload.md)。本地图版权仍归原站。
 
 硬的不是把模型 load 进去。是把 MiniMax Sparse Attention、多模态预处理、MXFP8 MoE、EAGLE3、prefix caching、deployment recipes 放进用户真能跑的 serving 引擎。这篇走模型特性、vLLM 实现、kernel 和 cache，以及 day-0 之后还在落地的优化。
 
@@ -70,7 +70,7 @@ vllm serve MiniMaxAI/MiniMax-M3 \
   --mm-encoder-tp-mode data
 ```
 
-具体 recipe 看加速器、dtype、上下文、流量形状，以及吞吐、延迟、最大上下文谁优先。校验做过 NVIDIA H200、GB200、B300。完整 NVIDIA / AMD launch recipes、策略、旋钮： [vLLM recipe for MiniMax M3](https://recipes.vllm.ai/MiniMaxAI/MiniMax-M3)。
+具体 recipe 看加速器、dtype、上下文、流量形状，以及吞吐、延迟、最大上下文谁优先。校验做过 NVIDIA H200、GB200、B300。完整 NVIDIA / AMD launch recipes、策略、旗标： [vLLM recipe for MiniMax M3](https://recipes.vllm.ai/MiniMaxAI/MiniMax-M3)。
 
 ### AMD ROCm
 
@@ -110,7 +110,7 @@ vllm serve MiniMaxAI/MiniMax-M3 \
 
 ### Deployment Knobs That Matter
 
-M3 有几颗旋钮比平时更要紧。`--block-size 128` 让 vLLM cache block 对齐 MSA 的 sparse 粒度。`--max-model-len` 管对外宣称的上下文和 KV 容量规划。`--tensor-parallel-size` 和 `--enable-expert-parallel` 决定 attention、projections、MoE experts 怎么切。Agent 负载打开 `minimax_m3` tool / reasoning parsers。长上下文 recipe 要写清：prefix caching、chunked prefill、EAGLE3、多模态预处理，这一份目标开没开。
+M3 有几项配置比平时更要紧。`--block-size 128` 让 vLLM cache block 对齐 MSA 的 sparse 粒度。`--max-model-len` 管对外宣称的上下文和 KV 容量规划。`--tensor-parallel-size` 和 `--enable-expert-parallel` 决定 attention、projections、MoE experts 怎么切。Agent 负载打开 `minimax_m3` tool / reasoning parsers。长上下文 recipe 要写清：prefix caching、chunked prefill、EAGLE3、多模态预处理，这一份目标开没开。
 
 ### EAGLE3 Speculative Decoding
 
@@ -295,7 +295,7 @@ Day-0 更新了 MSA decode indexer、top-k、sparse GQA decode，支持统一的
 - **Quantization-path cleanup：** 改善 `silu_mul_quant_fp8` 和相关 MXFP8/MoE 输入路径。
 - **Router 和 MoE kernels：** 减 sparse expert 路径开销，为更深的 TRTLLM-Gen 集成做准备。
 
-Release 路径有意保守：正确性和稳定 cache 行为，压过 day-0 打开每一个 graph / fusion 旋钮。更激进的融合可以等公开 recipes 成熟再落。
+Release 路径有意保守：正确性和稳定 cache 行为，压过 day-0 打开每一个 graph / fusion 选项。更激进的融合可以等公开 recipes 成熟再落。
 
 ### Quantization and KV Cache Dtype
 
@@ -335,7 +335,7 @@ B300 上的代表快照：
 
 Day-0 不只是推理 serving。RL 框架把 vLLM 当训练环里出 rollouts 的 generation 引擎，所以撑起 serving 的同一份 M3 工作（[vLLM PR #45381](https://github.com/vllm-project/vllm/pull/45381)）也让 M3 的 post-training 在 day 0 成为可能。
 
-[NVIDIA NeMo RL](https://github.com/NVIDIA-NeMo/RL) 现在用 vLLM 做 **non-colocated** generation backend 跑 MiniMax M3。短 GRPO（Group Relative Policy Optimization）post-training 已在 BF16 checkpoint 上校验：NeMo AutoModel + expert parallelism + BF16 vLLM generation。长跑收敛和 **超出 expert parallel** 的并行策略仍在校验。早期结果说明一份扎实 serving 路径值什么：serve M3 的引擎，也驱动 RL 训练的 rollout 阶段。参考菜谱：[NeMo RL MiniMax M3 guide](https://github.com/NVIDIA-NeMo/RL/blob/minimax-m3/docs/guides/minimax-m3.md)。
+[NVIDIA NeMo RL](https://github.com/NVIDIA-NeMo/RL) 现在用 vLLM 做 **non-colocated** generation backend 跑 MiniMax M3。短 GRPO（Group Relative Policy Optimization）post-training 已在 BF16 checkpoint 上校验：NeMo AutoModel + expert parallelism + BF16 vLLM generation。长跑收敛和 **超出 expert parallel** 的并行策略仍在校验。早期结果说明一份扎实 serving 路径值什么：serve M3 的引擎，也驱动 RL 训练的 rollout 阶段。参考 recipe：[NeMo RL MiniMax M3 guide](https://github.com/NVIDIA-NeMo/RL/blob/minimax-m3/docs/guides/minimax-m3.md)。
 
 ## Roadmap
 

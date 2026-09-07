@@ -1,19 +1,19 @@
 ---
 source: https://vllm.ai/blog/2026-07-21-vllm-sr-new-chapter-mom
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Mixture-of-Models：从选模型到造系统
 
 英文对照：[en/vllm/blog/serving/semantic-router-mom.md](../../../../en/vllm/blog/serving/semantic-router-mom.md)  
 原文：https://vllm.ai/blog/2026-07-21-vllm-sr-new-chapter-mom  
-2026-07-21。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。v0.2：[athena](semantic-router-athena.md)。v0.3：[themis](semantic-router-themis.md)。SAAR：[session](semantic-router-session.md)。协作配方：[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)。AMD 现场池：[mom-amd](semantic-router-mom-amd.md)。不要和引擎里的 [Router](router.md) 混。发布页社区数字（5k stars / 150+ 贡献者 / HF 累计 30 万下载）和 1,734 commit 快照是**他们的**。
+2026-07-21。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。v0.2：[athena](semantic-router-athena.md)。v0.3：[themis](semantic-router-themis.md)。SAAR：[session](semantic-router-session.md)。协作配方：[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)。AMD 现场池：[mom-amd](semantic-router-mom-amd.md)。不要和引擎里的 [Router](router.md) 混。发布页社区数字（5k stars / 150+ 贡献者 / HF 累计 30 万下载）和 1,734 commit 快照是**他们的**。
 
 同目录还有：[modular](semantic-router-modular.md)、[amd](semantic-router-amd.md)、[vision](semantic-router-vision.md)。
 
-多数 AI 应用钉在一只模型端点上。模型、设备、部署约束散开；没有一只 checkpoint 能伺候所有请求和环境。系统题是：专门模型怎么被协调、评测、从同一个界面伺候出去。他们把这套做法叫 **Mixture-of-Models**。
+多数 AI 应用钉在一只模型端点上。模型、设备、部署约束散开；没有一只 checkpoint 能服务所有请求和环境。系统题是：专门模型怎么被协调、评测、从同一个界面对外服务。他们把这套做法叫 **Mixture-of-Models**。
 
 公开立项不到一年，Semantic Router 自称 **5,000** stars、**150+** 贡献者、Hugging Face 累计下载 **超过 30 万**。穿过 **Iris、Athena、Themis**，边界从选一只模型，走到治理多模型推理，再走到跨 session 保住状态。这些发版是他们说从第 0 天就想要的 MoM 架构地基。
 

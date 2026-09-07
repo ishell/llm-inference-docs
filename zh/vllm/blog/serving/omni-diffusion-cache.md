@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2025-12-19-vllm-omni-diffusion-cache-acceleration
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 扩散 cache：相邻 timestep 不必重算
 
 英文对照：[en/vllm/blog/serving/omni-diffusion-cache.md](../../../../en/vllm/blog/serving/omni-diffusion-cache.md)  
 原文：https://vllm.ai/blog/2025-12-19-vllm-omni-diffusion-cache-acceleration  
-2025-12-19。vLLM-Omni 团队。接在 [vLLM-Omni](vllm-omni.md) 立项之后。Cache-DiT 库：[vipshop/cache-dit](https://github.com/vipshop/cache-dit)。Omni 文档：[Cache-DiT](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/cache_dit_acceleration/)、[TeaCache](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/teacache/)。数字是发布时的演示，不是你机器上的 SLA。
+2025-12-19。vLLM-Omni 团队。接在 [vLLM-Omni](vllm-omni.md) 立项之后。Cache-DiT 库：[vipshop/cache-dit](https://github.com/vipshop/cache-dit)。Omni 文档：[Cache-DiT](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/cache_dit_acceleration/)、[TeaCache](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/teacache/)。数字是发布时的演示，不是某一台机器上的 SLA。
 
-## 给扩散推理加油
+## 给扩散推理加速
 
 vLLM-Omni 给扩散推理接上了 cache 加速：**Cache-DiT** 和 **TeaCache**。相邻 timestep 的中间结果可以留下来，后面几步就不必把 Transformer 再走一遍。
 
@@ -23,15 +23,15 @@ vLLM-Omni 给扩散推理接上了 cache 加速：**Cache-DiT** 和 **TeaCache**
 
 ## 两套后端
 
-### Cache-DiT：旋钮多，峰值快
+### Cache-DiT：配置多，峰值快
 
-这是一只**外部库**，不是 Omni 自己长出来的。文中点了三件兵器：
+这是一只**外部库**，不是 Omni 自己长出来的。文中点了三件能力：
 
 - **DBCache（Dual Block Cache）：** 按残差差，缓存 Transformer **block** 的输出。
 - **TaylorSeer：** 用泰勒展开去预报特征，算得更少。
 - **SCM（Step Computation Masking）：** 自适应掩码，整步都可以跳。
 
-### TeaCache：简单、会看脸色
+### TeaCache：简单、自适应
 
 **写在 vLLM-Omni 里面。** Hook。盯输入之间的差别，每一步自己决定：要不要复用上一个 timestep 的 Transformer 计算。
 
@@ -53,7 +53,7 @@ vLLM-Omni 给扩散推理接上了 cache 加速：**Cache-DiT** 和 **TeaCache**
 
 ## Edit 模型
 
-**Qwen-Image-Edit** 上，Cache-DiT 更亮：**51.5s → 21.6s**，**2.38×**。TeaCache 是 **35.0s**，**1.47×**。
+**Qwen-Image-Edit** 上，Cache-DiT 更明显：**51.5s → 21.6s**，**2.38×**。TeaCache 是 **35.0s**，**1.47×**。
 
 | 模型 | 后端 | 配置 | 耗时 | 加速 |
 |---|---|---|---|---|
@@ -125,4 +125,4 @@ outputs = omni.generate(
 
 ## 再往下读
 
-旋钮细节在文档：[Cache-DiT 加速](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/cache_dit_acceleration/)、[TeaCache](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/teacache/)。文末还点了并行、kernel 融合、量化——后来的 Omni 笔记把这些接走（[omni-autoround](omni-autoround.md)、[omni-layerwise-offload](omni-layerwise-offload.md)）。
+配置细节在文档：[Cache-DiT 加速](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/cache_dit_acceleration/)、[TeaCache](https://docs.vllm.ai/projects/vllm-omni/en/latest/user_guide/acceleration/teacache/)。文末还点了并行、kernel 融合、量化——后来的 Omni 笔记把这些接走（[omni-autoround](omni-autoround.md)、[omni-layerwise-offload](omni-layerwise-offload.md)）。

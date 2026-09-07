@@ -1,19 +1,19 @@
 ---
 source: https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/tuning-max-batch-size-and-max-num-tokens.html
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-07
 ---
 
 # 第 3 章：调 Max Batch Size 和 Max Num Tokens
 
-TensorRT-LLM 真正值钱的部分，往往不是某一颗更亮的 kernel，而是那个 **inflight batching** 调度器：context（prefill）和 generation 可以挤在同一次 iteration 里。谁能挤进来，由两个编译期上限决定——`max_batch_size` 和 `max_num_tokens`。拧它们，吞吐会变一张脸。
+TensorRT-LLM 真正值钱的部分，往往不是某一颗更亮的 kernel，而是那个 **inflight batching** 调度器：context（prefill）和 generation 可以挤在同一次 iteration 里。谁能挤进来，由两个编译期上限决定——`max_batch_size` 和 `max_num_tokens`。调它们，吞吐会明显改。
 
 数字仍是演示。环境、SKU、互联、负载会改写结局。调度示意图与 IFB 功能页同一套学习图。
 
-![三个尺寸旋钮](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/01-three-knobs.png)
+![三个尺寸上限](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/01-three-knobs.png)
 
-![调度还没开张](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/02-ifb-waiting.png)
+![调度等待中](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/02-ifb-waiting.png)
 
 ![IFB 同一拍](../../../assets/nvidia/performance-tuning/trtllm-paged-attention-ifb/zh/03-ifb-inflight.png)
 
@@ -21,9 +21,9 @@ TensorRT-LLM 真正值钱的部分，往往不是某一颗更亮的 kernel，而
 
 ## 调度器在干什么
 
-官方用一组玩具数字把调度器画出来：`max_batch_size = 4`，`max_num_tokens = 12`。每个方块是一个 token，颜色是请求。；这里用文字把同一出戏走一遍。不同请求画在不同行上，只是为了好看，**不是真实显存布局**。
+官方用一组演示数字把调度器画出来：`max_batch_size = 4`，`max_num_tokens = 12`。每个方块是一个 token，颜色是请求。这里用文字把同一过程走一遍。不同请求画在不同行上，只是为了好看，**不是真实显存布局**。
 
-引擎刚醒，门外排着几条还没被调度的请求。
+引擎刚启动，队列里排着几条还没被调度的请求。
 
 调度器先收下 Request 1 和 Request 2，去做它们的 context phase。两条 prompt 各 5 个 token，合计 10。token 预算还剩 2。剩下的请求 prompt 都长过 2，谁也挤不进来——除非开了 **context chunking**（见本章末尾，以及 paged context attention）。这些 prompt token 在图上标着 **C**。
 
@@ -33,9 +33,9 @@ TensorRT-LLM 真正值钱的部分，往往不是某一颗更亮的 kernel，而
 
 再一次 iteration。Request 1 的 G2 恰好是 stop token。调度器在下一轮执行前把它踢掉，准备交还给用户。batch 空出一个位子，Request 5 才能进。与此同时 Request 2 的 G1 已经写进它的 KV——KV 会随着生成一起长。
 
-两件事同时发生：旧请求在 decode 里慢慢长大，新请求在抢剩下的 token 预算。上限设歪了，不是「慢一点」，而是一整类请求永远排不上，或者 prefill 把 KV 的房子挤塌。
+两件事同时发生：旧请求在 decode 里慢慢长大，新请求在抢剩下的 token 预算。上限设歪了，不是「慢一点」，而是一整类请求永远排不上，或者 prefill 把 KV 显存挤满。
 
-调度器还会看空闲 KV 显存，以及下一章的运行时策略。这只是为了让你看见 `max_batch_size` 和 `max_num_tokens` 怎么卡脖子。
+调度器还会看空闲 KV 显存，以及下一章的运行时策略。这只是为了让我们看见 `max_batch_size` 和 `max_num_tokens` 怎么卡脖子。
 
 ## 调 Max Batch Size
 
@@ -56,7 +56,7 @@ CLI：`trtllm-build --max_batch_size <N>`
 | Average TTFT (ms) | 145.7607 | 147.7876 | 146.6628 |
 | Average ITL (ms) | 14.6475 | 14.6554 | 14.4493 |
 
-64 明显堵。**512 是甜区**：相对默认 2048，吞吐大约 **+20%**，延迟几乎不动。默认值不是神谕，只是一个够大的屋顶。
+64 明显堵。**512 是甜区**：相对默认 2048，吞吐大约 **+20%**，延迟几乎不动。默认值不是神谕，只是一个够大的上限。
 
 ## 调 Max Num Tokens
 
@@ -77,16 +77,16 @@ batch 钉在 512 时：
 | Average TTFT (ms) | 147.5742 | 147.7876 | 147.9623 |
 | Average ITL (ms) | 14.6852 | 14.6554 | 14.6769 |
 
-这个负载上 2048 略好，差距不大。有的负载差距会很大。不要默认「8192 就行」——去看你的秒表。
+这个负载上 2048 略好，差距不大。有的负载差距会很大。不要默认「8192 就行」——去看我们的基准。
 
 ## 为什么总建议开 paged context attention
 
-现在调度器的形状已经清楚了。Paged context attention 打开的是 **context chunking**：一条请求的 prefill 可以拆到好几次 iteration。玩具例子里 Request 3 因为超了 token 预算进不去；有了 chunking，它的**第一块**就可以先进来。
+现在调度器的形状已经清楚了。Paged context attention 打开的是 **context chunking**：一条请求的 prefill 可以拆到好几次 iteration。演示例子里 Request 3 因为超了 token 预算进不去；有了 chunking，它的**第一块**就可以先进来。
 
 两件好事：
 
 1. 长 prompt 不会被已经在飞的请求永远挡住。生产里最差 TTFT 会好看很多。
-2. `max_num_tokens` **不必 ≥ 最长 prompt**。长上下文场景尤其重要：把 `max_num_tokens` 设成天文数字，等于从 KV 手里抢房子。
+2. `max_num_tokens` **不必 ≥ 最长 prompt**。长上下文场景尤其重要：把 `max_num_tokens` 设成天文数字，等于从 KV 手里抢显存。
 
 最差情况，chunked context 对性能几乎无伤；很多场景它是增益。NVIDIA 的原话接近：**永远开。**
 
@@ -112,4 +112,4 @@ batch 钉在 512 时：
 | Average TTFT (ms) | 147.6976 | 147.5742 | 0.08 |
 | Average ITL (ms) | 31.3276 | 14.6852 | 53.12 |
 
-吞吐大约 **+58%**，ITL 大约 **−53%**，TTFT 几乎没动。房子还是那栋房子，门厅被重新安排过了。
+吞吐大约 **+58%**，ITL 大约 **−53%**，TTFT 几乎没动。硬件还是那套硬件，调度上限被重新安排过了。

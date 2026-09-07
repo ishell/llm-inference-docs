@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-05-28-laguna-xs2-dflash-llm-compressor
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Laguna XS.2：Day-0 serve + DFlash draft + LLM Compressor 量化盘
+# Laguna XS.2：Day-0 serve、DFlash draft 与 LLM Compressor 量化盘
 
 英文对照：[en/vllm/blog/performance/laguna-xs2.md](../../../../en/vllm/blog/performance/laguna-xs2.md)  
 原文：https://vllm.ai/blog/2026-05-28-laguna-xs2-dflash-llm-compressor  
-2026-05-28。署名 **Megan Flynn, Dipika Sikka, Alexandre Marques**。学习笔记。Poolside 33B-A3B MoE，agentic coding / 长程软件。并行草稿算法：[parallel-drafting.md](parallel-drafting.md)。Speculators：[speculators-v050.md](speculators-v050.md)。验收数学：[spec-decode.md](spec-decode.md)。菜谱不抄全 CLI：[recipes.vllm.ai/poolside/Laguna-XS.2](https://recipes.vllm.ai/poolside/Laguna-XS.2)。Hub：[poolside/laguna-xs2](https://huggingface.co/collections/poolside/laguna-xs2)。页上的 bench，不是你的 SLA。
+2026-05-28。署名 **Megan Flynn, Dipika Sikka, Alexandre Marques**。学习译文，不是官方译本。Poolside 33B-A3B MoE，agentic coding / 长程软件。并行草稿算法：[parallel-drafting.md](parallel-drafting.md)。Speculators：[speculators-v050.md](speculators-v050.md)。验收数学：[spec-decode.md](spec-decode.md)。菜谱不抄全 CLI：[recipes.vllm.ai/poolside/Laguna-XS.2](https://recipes.vllm.ai/poolside/Laguna-XS.2)。Hub：[poolside/laguna-xs2](https://huggingface.co/collections/poolside/laguna-xs2)。页上的 bench，不是你的 SLA。
 
 Red Hat AI × Poolside 在发布当天：vLLM 一等公民、一只 DFlash speculator、LLM Compressor 量化盘。
 
@@ -35,4 +35,4 @@ Poolside 还出了 compressed-tensors 变体：[FP8](https://huggingface.co/pool
 
 ## 下一步（页上）
 
-上面的 Hub collection。自己的模型用 LLM Compressor 和 Speculators 拧。
+上面的 Hub collection。自己的模型可以用 LLM Compressor 和 Speculators 来量化、训练草稿。

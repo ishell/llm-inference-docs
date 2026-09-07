@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-06-03-deeplearning-ai-vllm-course
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # DeepLearning.AI 课：压缩 → serve → GuideLLM 压测，不是新 kernel

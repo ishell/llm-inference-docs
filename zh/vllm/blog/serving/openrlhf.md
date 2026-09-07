@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-04-23-openrlhf-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # OpenRLHF：生成占 RLHF 墙钟的九成
@@ -17,7 +17,7 @@ fetched: 2026-09-04
 
 ## 为什么生成会吃掉训练
 
-要训会推理的模型，RLHF（尤其 PPO）算力税很重。OpenAI-o1、DeepSeek-R1 这类长 chain-of-thought 更明显：逐步推理可以拉到几千 token，**生成就能占到总训练时间的约 90%**——推理比参数更新还慢。vLLM 当时已经提供一套给 RLHF 用的接口：采样，以及把新权重灌回引擎。
+要训会推理的模型，RLHF（尤其 PPO）算力很重。OpenAI-o1、DeepSeek-R1 这类长 chain-of-thought 更明显：逐步推理可以拉到几千 token，**生成就能占到总训练时间的约 90%**——推理比参数更新还慢。vLLM 当时已经提供一套给 RLHF 用的接口：采样，以及把新权重灌回引擎。
 
 ## OpenRLHF 的设计
 
@@ -101,7 +101,7 @@ for bundle_indices in [[0, 1], [2, 3]]:
 
 读法：4 张卡、一个 placement group；两只推理引擎各 TP2（bundle `[0,1]` 和 `[2,3]`）；每只 worker 只申报 **0.4** GPU，剩下的给同卡上的训练 actor。`num_gpus=0` 是故意的——真正的卡从 bundle 来，不要让 Ray 再分配一层。演示模型是 `facebook/opt-125m`。权重相干靠 CUDA IPC 或 NCCL。
 
-文档里的完整例子还会：按指定 GPU 数初始化 Ray、建 placement group、同时定义 **training actors**（初始化 + 推权重）和 **inference engines**（vLLM 侍候）。
+文档里的完整例子还会：按指定 GPU 数初始化 Ray、建 placement group、同时定义 **training actors**（初始化 + 推权重）和 **inference engines**（vLLM 做推理）。
 
 ## 致谢
 

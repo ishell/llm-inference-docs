@@ -1,12 +1,13 @@
 ---
 source: https://docs.vllm.ai/en/stable/cli/serve/
 lang: zh
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # `vllm serve` — 和推理性能相关的旗标
 
-完整 CLI 是引擎参数的生成页，非常长。这里只留调优文档里会碰到的旋钮。原文：https://docs.vllm.ai/en/stable/cli/serve/
+完整 CLI 是引擎参数的生成页，非常长。这里只留调优文档里会碰到的旗标。原文：https://docs.vllm.ai/en/stable/cli/serve/
 
 嵌套 JSON：`--json-arg '{"k": {"x": 1}}'` ≡ `--json-arg.k.x 1`。列表用 `+`。YAML：`--config`。
 
@@ -37,7 +38,7 @@ fetched: 2026-08-31
 
 | 旗标 | 作用 |
 |---|---|
-| `--max-num-batched-tokens` | 每步最多处理多少 token。V1 **最重要的吞吐旋钮**，常试 >8192。 |
+| `--max-num-batched-tokens` | 每步最多处理多少 token。V1 **最重要的吞吐参数**，常试 >8192。 |
 | `--max-num-seqs` | 每步最多多少条序列 |
 | `--enable-chunked-prefill` | V1 能开则默认开 |
 | `--scheduling-policy` | `fcfs`（默认）或 `priority` |
@@ -49,7 +50,7 @@ fetched: 2026-08-31
 | 旗标 | 作用 |
 |---|---|
 | `--optimization-level` | `-O0` 启动最快 … `-O3` 性能最好。**默认 2。** |
-| `--performance-mode` | `balanced` / `interactivity`（小 batch 延迟）/ `throughput`（更大 graph、更狠 batching） |
+| `--performance-mode` | `balanced` / `interactivity`（小 batch 延迟）/ `throughput`（更大 graph、更激进的 batching） |
 | `-cc` | torch.compile + cudagraph |
 | `--speculative-config` / `--spec-method` | ngram、EAGLE、MTP… |
 

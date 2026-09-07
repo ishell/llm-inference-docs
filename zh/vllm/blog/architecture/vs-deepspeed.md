@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 笔记：vLLM 对 DeepSpeed-FastGen
 
 英文对照：[en/vllm/blog/architecture/vs-deepspeed.md](../../../../en/vllm/blog/architecture/vs-deepspeed.md)  
 原文：https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed  
-2023-11-14。这是对 DeepSpeed 那篇「我们比 vLLM 快 2×」的公开回应，不是产品手册，更不是 2026 年的对打。
+2023-11-14。这是对 DeepSpeed 那篇「我们比 vLLM 快 2×」的公开回应，不是产品手册，更不是 2026 年的横向对比。
 
 DeepSpeed 团队发了 [FastGen 博文](https://github.com/microsoft/DeepSpeed/tree/master/blogs/deepspeed-fastgen)，说靠 **Dynamic SplitFuse** 吞吐能到 vLLM 的两倍。vLLM 这篇写得很克制：社区出新招，他们高兴；但 SplitFuse 真正赢的场合很窄，多数负载上 vLLM 更快，或者打平。
 
@@ -28,8 +28,8 @@ DeepSpeed 团队发了 [FastGen 博文](https://github.com/microsoft/DeepSpeed/t
 
 ## 他们看见的两处差别
 
-1. **FastGen 的 KV 分配更保守 / 次优。** 输出一长，浪费就露出来：预留给一条序列的房间，PagedAttention 本可以还回给整桌。
-2. **Dynamic SplitFuse 的加速，几乎只在 prompt 远长于输出时成立**（ISL ≫ OSL）。把 Prefill 切开，融进 Decode 的流里，免得一条长 prompt 把整桌卡住——这就是后来 `max_num_batched_tokens` / chunked prefill 要办的事。
+1. **FastGen 的 KV 分配更保守 / 次优。** 输出一长，浪费就露出来：预留给一条序列的空间，PagedAttention 本可以还回给整个 batch。
+2. **Dynamic SplitFuse 的加速，几乎只在 prompt 远长于输出时成立**（ISL ≫ OSL）。把 Prefill 切开，融进 Decode 的流里，免得一条长 prompt 把整个 batch 卡住——这就是后来 `max_num_batched_tokens` / chunked prefill 要办的事。
 
 所以：负载永远是长问短答，FastGen 好看；其余时候，vLLM 自称最多大约 **1.8×** 更快。
 
@@ -37,7 +37,7 @@ DeepSpeed 团队发了 [FastGen 博文](https://github.com/microsoft/DeepSpeed/t
 
 ### 场景 1：长 prompt、短输出
 
-SplitFuse 理应在这里发光。他们测到的优势，没有宣传里的 2× 那么戏剧。
+SplitFuse 理应在这里最有利。他们测到的优势，没有宣传里的 2× 那么大。
 
 从图里读（`prompt_len=2600`）：
 
@@ -47,7 +47,7 @@ SplitFuse 理应在这里发光。他们测到的优势，没有宣传里的 2×
 | 128 | 2.68 | 2.76 |
 | 200 | 2.13 | 2.13 |
 
-最短输出时 FastGen 略快；到 `output_len=200`，两条柱一样高。两边都随生成变长而变慢——那是 Decode 和 KV 在要房间，不是 SplitFuse 的魔术失灵。
+最短输出时 FastGen 略快；到 `output_len=200`，两条柱一样高。两边都随生成变长而变慢——那是 Decode 和 KV 在要空间，不是 SplitFuse 失效。
 
 ### 场景 2：其余情形
 
@@ -90,4 +90,4 @@ SplitFuse 他们说会认真集成。读完 [立项文](paged-attention.md) 再�
 | 采样 | Random, parallel, beam search | Random |
 | 停止条件 | Stop strings, stop tokens, EOS | EOS |
 
-两边 attention 当时都已经写着 PagedAttention & FlashAttention。剩下的分歧是调度（continuous batching 对 SplitFuse），以及 KV 房间分得有多狠。不要把这张表当成 2026 年任何一方的功能清单。
+两边 attention 当时都已经写着 PagedAttention & FlashAttention。剩下的分歧是调度（continuous batching 对 SplitFuse），以及 KV 空间分得有多狠。不要把这张表当成 2026 年任何一方的功能清单。

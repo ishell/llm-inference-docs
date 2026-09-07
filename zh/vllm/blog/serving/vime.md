@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2026-06-09-announcing-vime
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vime：slime 训练 + vLLM rollout，CLI 用 `--vllm-` 前缀
 
 英文对照：[en/vllm/blog/serving/vime.md](../../../../en/vllm/blog/serving/vime.md)  
 原文：https://vllm.ai/blog/2026-06-09-announcing-vime  
-2026-06-09。署名 **vime Contributors and the vLLM Team**。仓库：[vllm-project/vime](https://github.com/vllm-project/vime)。slime 的训练栈 + vLLM 的 rollout，同一套架构。vLLM 自己的 Native RL API 见 [native-rl.md](native-rl.md)。ROCm 续篇：[vime-rocm.md](vime-rocm.md)。GB200 / H200 / A100 数字是他们的合同，不是你的 SLA。
+2026-06-09。署名 **vime Contributors and the vLLM Team**。仓库：[vllm-project/vime](https://github.com/vllm-project/vime)。slime 的训练栈 + vLLM 的 rollout，同一套架构。vLLM 自己的 Native RL API 见 [native-rl.md](native-rl.md)。ROCm 续篇：[vime-rocm.md](vime-rocm.md)。GB200 / H200 / A100 数字是他们的合同，不是某一套集群上的 SLA。
 
-推理侧旋钮用 `--vllm-` 钉在同一条 CLI；默认 rollout 入口 `vime.rollout.vllm_rollout`。Qwen3-30B-A3B、8 卡 colocate、dapo-math-17k、GRPO：GB200 步时约 **147 s**，H200 约 **252 s** → 约 **1.72×**。Qwen3-4B A100：`train_rollout_logprob_abs_diff` 约 **0.011**，基线漂到约 **0.77**。MoE R3：约 **0.019 → 0.013**。GLM-4.5-Air GB200：`raw_reward` 均值约 **0.56**（100 步）；logprob 差 **0.02–0.03**，均值约 **0.028**。训练卡和采样卡若各用各的引擎，权重同步和 logprob 对齐都会裂——vime 的主张是同一条 vLLM 路径。
+推理侧旗标用 `--vllm-` 钉在同一条 CLI；默认 rollout 入口 `vime.rollout.vllm_rollout`。Qwen3-30B-A3B、8 卡 colocate、dapo-math-17k、GRPO：GB200 步时约 **147 s**，H200 约 **252 s** → 约 **1.72×**。Qwen3-4B A100：`train_rollout_logprob_abs_diff` 约 **0.011**，基线漂到约 **0.77**。MoE R3：约 **0.019 → 0.013**。GLM-4.5-Air GB200：`raw_reward` 均值约 **0.56**（100 步）；logprob 差 **0.02–0.03**，均值约 **0.028**。训练卡和采样卡若各用各的引擎，权重同步和 logprob 对齐都会裂——vime 的主张是同一条 vLLM 路径。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -45,7 +45,7 @@ fetched: 2026-09-04
 
 ## 位置
 
-vLLM 已经坐在好几家后训练框架下面（字母序）：[NeMo RL](https://github.com/NVIDIA-NeMo/RL)、[OpenRLHF](https://github.com/openrlhf/openrlhf)、[verl](https://github.com/verl-project/verl) 以及其他。vime 是 slime 形状的桥，对齐两边的发版钟。社区仍继续养那些别的集成。
+vLLM 已经坐在好几家后训练框架下面（字母序）：[NeMo RL](https://github.com/NVIDIA-NeMo/RL)、[OpenRLHF](https://github.com/openrlhf/openrlhf)、[verl](https://github.com/verl-project/verl) 以及其他。vime 是 slime 形状的桥，对齐两边的发版钟。社区仍继续维护那些别的集成。
 
 ## 架构
 
@@ -57,7 +57,7 @@ slime 的三阶段、训推解耦；rollout 后端换成 vLLM：
 
 ## 能力
 
-- **好用。** slime / Megatron 的参数习惯；vLLM 旋钮走 `--vllm-`。默认 rollout：`vime.rollout.vllm_rollout`。
+- **好用。** slime / Megatron 的参数习惯；vLLM 旗标走 `--vllm-`。默认 rollout：`vime.rollout.vllm_rollout`。
 - **训推对齐。** Dense 和 MoE：长跑里 `train_rollout_logprob_abs_diff` 落在可控区间。MoE 的 **R3**（routing replay）再削错位。
 - **算法和模型。** GRPO、PPO；Qwen3 Dense/MoE、GLM-4.5——端到端例子，CI 验过的路径。
 - **多硬件。** 训练资源、rollout 资源、集群拓扑抽象掉，RL 管线可以跟着 vLLM 的硬件插件走。

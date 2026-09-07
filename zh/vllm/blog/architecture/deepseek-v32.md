@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-09-29-deepseek-v3-2
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # DeepSeek-V3.2-Exp：细粒度稀疏注意力进了 continuous batch
@@ -13,7 +13,7 @@ fetched: 2026-09-04
 
 适用：V3.2-Exp 用 tensor parallelism 在 **16×H100 / 8×H200 / 8×B200** 上 serve，`block_size` 64，indexer K cache 和 MLA KV 分开，因果窗口用 `ks` / `ke` 标。不适合：把这页当后来的 V4 hybrid-KV 栈；也不要假定 day-0 的 EP 是干净的。
 
-菜谱：[DeepSeek-V3_2-Exp](https://docs.vllm.ai/projects/recipes/en/latest/DeepSeek/DeepSeek-V3_2-Exp.html)。初始支持 PR：[#25869](https://github.com/vllm-project/vllm/pull/25869)。已知问题：[#25877](https://github.com/vllm-project/vllm/issues/25877)。
+Recipe：[DeepSeek-V3_2-Exp](https://docs.vllm.ai/projects/recipes/en/latest/DeepSeek/DeepSeek-V3_2-Exp.html)。初始支持 PR：[#25869](https://github.com/vllm-project/vllm/pull/25869)。已知问题：[#25877](https://github.com/vllm-project/vllm/issues/25877)。
 
 DSA：lightning indexer 挑 **top-2048**，再稀疏注意力。Prefill / decode 布局不同，continuous batch 要把因果窗口标出来。Kernel：DeepGEMM 的 lightning indexer CUDA，FlashMLA 的稀疏注意力。跟 NVIDIA 一起把 Blackwell 做上：**B200** 和 **GB200** 能直接跑。
 
@@ -74,7 +74,7 @@ logits = deep_gemm.fp8_mqa_logits(q_fp8, kv_fp8, weights, ks, ke)
 
 **多请求：** `b` 条，query 数 `q1…qb`，context 数 `n1…nb`。Query 拼成 `(q1+…+qb, h, d)`，context 拼成 `(n1+…+nb, d)`，logits `(q1+…+qb, n1+…+nb, h)`，下标 `(q1+…+qb, 2048)`。`ks` 和 `ke` 长度都是 `q1+…+qb`。
 
-页上印的：`ks` 是 `[0] * q1 + [q1] * q2 + … + [q1 + q2 + … + qb] * qb`（`*` 表示列表重复）。`ke` 是 `list(range(n1 - q1, n1, 1)) + … + list(range(nb - qb, nb, 1))`，**再加上 `ks` 的偏移**。
+页上写的：`ks` 是 `[0] * q1 + [q1] * q2 + … + [q1 + q2 + … + qb] * qb`（`*` 表示列表重复）。`ke` 是 `list(range(n1 - q1, n1, 1)) + … + list(range(nb - qb, nb, 1))`，**再加上 `ks` 的偏移**。
 
 Logits 之后做 `topk`。他们点名的坑：**高 batch × 长上下文** 会先把整张 logits **物化**，再做 row-wise `topk`——性能洞。
 

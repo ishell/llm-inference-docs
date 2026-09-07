@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-11-13-shm-ipc-cache
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Shared Memory IPC Cache：大图不要在进程之间复印
 
 英文对照：[en/vllm/blog/serving/shm-ipc.md](../../../../en/vllm/blog/serving/shm-ipc.md)  
 原文：https://vllm.ai/blog/2025-11-13-shm-ipc-cache  
-2025-11-13。署名 **Donglu Wang (Cohere)**。先发在 [Cohere 博客](https://cohere.com/blog/making-data-transfer-in-llm-systems-faster-leaner-and-more-scalable)。进树：[PR #20452](https://github.com/vllm-project/vllm/pull/20452)。打开：`mm_processor_cache_type = "shm"`。文档：[User Guide 的 IPC caching](https://docs.vllm.ai/en/latest/configuration/optimization/#ipc-caching) / 本地 [optimization.md](../../optimization/optimization.md)。把 ViT 拆到另一栋楼的亲戚：[epd](epd.md)。
+2025-11-13。署名 **Donglu Wang (Cohere)**。先发在 [Cohere 博客](https://cohere.com/blog/making-data-transfer-in-llm-systems-faster-leaner-and-more-scalable)。进树：[PR #20452](https://github.com/vllm-project/vllm/pull/20452)。打开：`mm_processor_cache_type = "shm"`。文档：[User Guide 的 IPC caching](https://docs.vllm.ai/en/latest/configuration/optimization/#ipc-caching) / 本地 [optimization.md](../../optimization/optimization.md)。把 ViT 拆到另一条路径的亲戚：[epd](epd.md)。
 
 页上的头条数字（Command-A Vision、4×A100、VisionArena-Chat）：首次请求 Prefill **+11.5%**，TTFT **−10.5%**；KV 和图像都命中时 Prefill **+69.9%**，TTFT **−40.5%**。输入越大、TP 越宽，越值得开。
 
@@ -27,13 +27,13 @@ fetched: 2026-09-04
 
 **Figure 1。** 四卡例子：前端把输入交给 coordinator，coordinator 再分给四个 worker，一卡一个。
 
-每一段通常独占一个进程，才好伸缩、才好异步。数据就只能走 IPC。小输入时这点税可以当没有；输入一变大，IPC 时间会变成瓶颈。
+每一段通常独占一个进程，才好伸缩、才好异步。数据就只能走 IPC。小输入时这点开销可以当没有；输入一变大，IPC 时间会变成瓶颈。
 
 ## 问题：同一份大家伙反复传
 
 多模态输入——图、音频、长上下文——可以很大。[`CohereLabs/command-a-vision-07-2025`](https://huggingface.co/CohereLabs/command-a-vision-07-2025) 里，一张最大 **1024×3072** 的图，存成 **int8** 大约 **9 MB**。模型还接受 **多图**，一个请求轻易到 **几十 MB**。
 
-这么大的 IPC 不是免费的。多轮对话或 batch 里，**同一份** 输入可能再传一遍，税会叠。
+这么大的 IPC 不是免费的。多轮对话或 batch 里，**同一份** 输入可能再传一遍，开销会叠。
 
 ## 旧方案：mirrored caching
 
@@ -63,7 +63,7 @@ vLLM 已经用 **mirrored caching** 少传重复 IPC。发送方和接收方各�
 
 发一个 key–object（页上省了序列化 / 反序列化）：
 
-1. `is_cached(key)` —— 店里有没有？
+1. `is_cached(key)` —— cache 里有没有？
 2. 命中：`get_cached(key)` → buffer 地址。
 3. 未命中：`put(key, object)` 写入共享内存 → 地址。
 4. 用默认 IPC 广播这个 **地址**（很小）。
@@ -102,7 +102,7 @@ writer_counter × n_readers == reader_counter
 | Prefill 吞吐 | 581.34 tok/s | 648.22 tok/s | **+11.5%** |
 | Mean TTFT | 3898.98 ms | 3491.15 ms | **−10.5%** |
 
-快在「前端写一次、工人并发读」——少传重复数据，也少排队等 IPC。
+快在「前端写一次、worker 并发读」——少传重复数据，也少排队等 IPC。
 
 **已缓存的请求**（KV 和图像都复用）
 
@@ -111,7 +111,7 @@ writer_counter × n_readers == reader_counter
 | Prefill 吞吐 | 2894.03 tok/s | 4917.57 tok/s | **+69.9%** |
 | Mean TTFT | 790.18 ms | 470.60 ms | **−40.5%** |
 
-这条路径上 IPC 税特别显眼。输入越大、TP 越宽，IPC 上搬的字节越多，这份 cache 越值钱。
+这条路径上 IPC 开销特别显眼。输入越大、TP 越宽，IPC 上搬的字节越多，这份 cache 越值钱。
 
 ## 当时怎么开
 

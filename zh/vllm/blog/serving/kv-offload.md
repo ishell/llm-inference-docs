@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-01-08-kv-offloading-connector
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # KV Offloading Connector：抢占时把记忆寄存在 CPU
@@ -40,12 +40,12 @@ fetched: 2026-09-05
 
 ## Motivation
 
-侍候 LLM 计算很重，核心是算出一坨叫 KV 的数据。用户 prompt 进来，第一步是按这段 prompt 算 KV——请求生命周期里的 Prefill。Prefill 贵，要加速器（GPU）才快得起来。
+跑 LLM 计算很重，核心是算出一份叫 KV 的数据。用户 prompt 进来，第一步是按这段 prompt 算 KV——请求生命周期里的 Prefill。Prefill 贵，要加速器（GPU）才快得起来。
 
 一份 prompt 算出来的 KV，可以被共享同一前缀的其他 prompt 复用，不必重算。缓存并复用 KV，常常换来两件事：
 
 - **压低请求延迟**（读 cache 若快过重算 KV）
-- **抬高单机吞吐**（GPU 核空出来，才能同时伺候更多请求）
+- **抬高单机吞吐**（GPU 核空出来，才能同时服务更多请求）
 
 即便请求之间**没有**共享前缀，KV offload 仍然有用。并发一高，GPU 装不下正在跑的那批 KV，引擎会**抢占**一条正在跑的请求，把它的 KV 从 GPU 丢掉。回头再调度这条请求，KV 就要重算。抢占前先把 KV 卸到更大的一层（例如 CPU DRAM），重算那笔可以不付。
 
@@ -55,7 +55,7 @@ fetched: 2026-09-05
 
 - CPU RAM 几乎处处都有。
 - 容量通常大于 GPU 显存，KV cache 才能更大。
-- CPU RAM 和 GPU 之间延迟低、吞吐高。叠上容量，CPU offload **最适合伺候抢占**。
+- CPU RAM 和 GPU 之间延迟低、吞吐高。叠上容量，CPU offload **最适合扛抢占**。
 - CPU RAM 也是再往外置存储卸的**方便中转**。存储延迟高时尤其如此。
 
 ## The New Offloading Connector
@@ -66,7 +66,7 @@ vLLM 早就有一套读、写 KV 的 API，嵌在请求生命周期里，叫 Con
 
 早年 Connector API 是**同步**的：对外搬 KV 的时候，引擎卡住，下一批请求进不来。vLLM **0.9.0** 把这条 API 扩成 **异步** 读写。Offloading connector 走的就是这条异步路。
 
-他们引入 **offloading connector**：异步卸、异步装 KV。对外再开一层可插拔 backend API，任何介质都能当卸货处。加新 backend 时，你主要是写一个在介质之间拷 KV 的 transfer function。
+他们引入 **offloading connector**：异步卸、异步装 KV。对外再开一层可插拔 backend API，任何介质都能当卸货处。加新 backend 时，我们主要是写一个在介质之间拷 KV 的 transfer function。
 
 自带 CPU backend，vLLM 里就能原生把 KV 卸到 CPU。后文只谈 CPU offload。
 

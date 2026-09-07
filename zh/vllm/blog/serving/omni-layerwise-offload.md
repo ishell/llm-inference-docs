@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Distributed Layerwise Offload：把 124 GB 的 DiT 挤进 64 GB HBM，再估一条 200B+ 的路
 
 英文对照：[en/vllm/blog/serving/omni-layerwise-offload.md](../../../../en/vllm/blog/serving/omni-layerwise-offload.md)  
 原文：https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload  
-2026-08-17。署名 **vLLM-Omni Diffusion Team**。DLO 把 DiT 权重切碎、流进来，测过的 **124 GB** Cosmos3-Super 能在 **64 GB** HBM 上跑；往 200B+ 走的是按内存模型外推，**没有**真跑过那档模型。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[minimax-h3.md](minimax-h3.md)、[omni-diffusion-cache.md](omni-diffusion-cache.md)。页上的测量是他们的实验合同，不是你的 SLA。
+2026-08-17。署名 **vLLM-Omni Diffusion Team**。DLO 把 DiT 权重切碎、流进来，测过的 **124 GB** Cosmos3-Super 能在 **64 GB** HBM 上跑；往 200B+ 走的是按内存模型外推，**没有**真跑过那档模型。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[minimax-h3.md](minimax-h3.md)、[omni-diffusion-cache.md](omni-diffusion-cache.md)。页上的测量是他们的实验合同，不是某一套集群上的 SLA。
 
 ## TL;DR
 

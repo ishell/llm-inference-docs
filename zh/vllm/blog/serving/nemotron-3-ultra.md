@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-06-04-nemotron-3-ultra-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Nemotron 3 Ultra：550B/55B hybrid MoE，训练 rollout 也走 vLLM
@@ -31,7 +31,7 @@ fetched: 2026-09-04
 
 **Advanced Agentic Reasoning。** 架构规划、多步调试、源评估、合规审阅、设计核验。为 reasoning、tool use、instruction following 做过 post-train。
 
-vLLM 在训练环里：高吞吐多机推理，伺候 rollout 和评估。在 [NeMo RL](https://github.com/nvidia-nemo/rl) 里当 generation backend——采样、可扩展推理、接 [NeMo Gym](https://github.com/NVIDIA-NeMo/gym)。Nemotron 团队还用 vLLM 盯每一段训练有没有把模型往对的方向推。
+vLLM 在训练环里：高吞吐多机推理，服务 rollout 和评估。在 [NeMo RL](https://github.com/nvidia-nemo/rl) 里当 generation backend——采样、可扩展推理、接 [NeMo Gym](https://github.com/NVIDIA-NeMo/gym)。Nemotron 团队还用 vLLM 盯每一段训练有没有把模型往对的方向推。
 
 ## TL;DR: About Nemotron 3 Ultra
 

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-09-11-qwen3-next
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Qwen3-Next：Gated DeltaNet + 满 attention 交错，hybrid KV 按物理页对齐
@@ -36,7 +36,7 @@ vllm serve Qwen/Qwen3-Next-80B-A3B-Instruct -tp 4
 
 菜谱：[Qwen3-Next](https://docs.vllm.ai/projects/recipes/en/latest/Qwen/Qwen3-Next.html)。
 
-## Hybrid Attention：把长上下文的账算清
+## Hybrid Attention：把长上下文的成本算清
 
 标准 attention 换成：
 
@@ -67,7 +67,7 @@ MTP：预训练效率和推理速度。vLLM 原生——一步多个 token，应
 
 当时的 roadmap（这篇，不是 3.5 那篇）：
 
-- 继续拧 GatedDeltaNet kernel
+- 继续优化 GatedDeltaNet kernel
 - 更好的内存管理；hybrid 上的 automatic prefix caching 和 P/D 分离
 - 吞吐和 CPU 开销
 

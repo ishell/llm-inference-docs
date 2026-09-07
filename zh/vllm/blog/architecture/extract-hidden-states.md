@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-03-30-extract-hidden-states
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 取出 hidden states：不必再补丁 vLLM
 
 英文对照：[en/vllm/blog/architecture/extract-hidden-states.md](../../../../en/vllm/blog/architecture/extract-hidden-states.md)  
 原文：https://vllm.ai/blog/2026-03-30-extract-hidden-states  
-2026-03-30。署名 **Fynn Schmitt-Ulms**。PR [#33736](https://github.com/vllm-project/vllm/pull/33736)，进 `vllm>=0.18.0`。学习笔记，不是官方译文。路子是：一只 dummy draft 接 verifier 的 hidden，再走现成 [KV Connector API](https://docs.vllm.ai/en/stable/api/vllm/distributed/kv_transfer/kv_connector/v1/) 导出去，[Speculators](https://github.com/vllm-project/speculators/) 就不必再补丁引擎内部。
+2026-03-30。署名 **Fynn Schmitt-Ulms**。PR [#33736](https://github.com/vllm-project/vllm/pull/33736)，进 `vllm>=0.18.0`。学习译文，不是官方译本。路子是：一只 dummy draft 接 verifier 的 hidden，再走现成 [KV Connector API](https://docs.vllm.ai/en/stable/api/vllm/distributed/kv_transfer/kv_connector/v1/) 导出去，[Speculators](https://github.com/vllm-project/speculators/) 就不必再补丁引擎内部。
 
 后来吃这些中间层的草稿：[P-EAGLE](../performance/p-eagle.md)、[并行草稿](../performance/parallel-drafting.md)（P-EAGLE / DFlash / DSpark）。库侧接到这条路上是 [Speculators v0.5.0](../performance/speculators-v050.md)（库 PR [#353](https://github.com/vllm-project/speculators/pull/353)）。导出那扇门和 [KV offload](../serving/kv-offload.md) / [Mooncake](../serving/mooncake.md) 同一族 `KVConnector`。引擎侧投机解码主线：[spec-decode](../performance/spec-decode.md)。
 

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-08-20-torch-compile
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # torch.compile：把优化从模型作者手里拿走
@@ -51,7 +51,7 @@ Figure 1 的例子：`fn` 里所有 pointwise 收成一个 fused kernel。捕获
 
 一条路是给每个模型写自定义 CPU / CUDA op，做和模型里一样的事，只是更快。每一种模型写一遍，慢，而且要懂性能和硬件。torch.compile 的承诺是：几乎不写 kernel，也能走到峰值附近的一条体面基线。他们引用 PyTorch 开源 [TorchBench](https://hud.pytorch.org/benchmark/compilers)：**80+** 个模型上 **1.8–2×** geomean。那是「先有一条不丢人的基线」，不是替你写完 FlashAttention。
 
-**图注（原文）。** Figure 2：torch.compile 给你一条快的基线，省掉自己拧模型性能的开发时间。
+**图注（原文）。** Figure 2：torch.compile 给你一条快的基线，省掉自己手调模型性能的开发时间。
 
 ## 两段管道
 
@@ -84,13 +84,13 @@ V1 在线 / 离线**默认开**。关掉：`-O0` 或 `--enforce-eager`。多数�
 
 冷启动把产物（FX 图、Triton kernel）写进默认目录 `~/.cache/vllm/torch_compile_cache`；热启动再读。`VLLM_DISABLE_COMPILE_CACHE=1` 可关，删目录也行。
 
-同一环境的机器之间可以复用这份 cache。Autoscaling：先烤一次，再分给新实例。
+同一环境的机器之间可以复用这份 cache。Autoscaling：先编译一次，再分给新实例。
 
 **图注（原文）。** Figure 4：冷启动之后缓存编译产物；环境一致时跨机器复用，启动才又快又稳。
 
 ### 动态 batch 与特化
 
-默认一张 **dynamic batch** 的图伺候所有 batch size。一份产物覆盖可变输入。可如果你知道自己只会跑 1 / 2 / 4，特化会更快：
+默认一张 **dynamic batch** 的图覆盖所有 batch size。一份产物覆盖可变输入。可如果我们知道自己只会跑 1 / 2 / 4，特化会更快：
 
 ```text
 compile_sizes: [1, 2, 4]
@@ -187,7 +187,7 @@ Pass 可以从 `PostGradPassManager`、CLI `--compilation-config`、或离线 co
 - 更好的 [FlexAttention](https://github.com/vllm-project/vllm/issues/19765)。一种 API，不同 attention 变体不必各写一个 kernel；底下用 torch.compile 吐 Triton 模板。
 - Flash Attention v2 与 FlashInfer 的 [Full CUDA Graphs](https://github.com/vllm-project/vllm/pull/20059)。比 piecewise 更少开销，给高开销场景。
 
-## 收束
+## 结语
 
 torch.compile 让 PyTorch 模型加速变得可及。在 vLLM 里它是推理管线的核心，不是插件。配上 cache、dynamic shape、CUDA Graphs、自定义 pass，才在各种环境里把 LLM serving 跑稳、跑开。
 

@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-05-28-vllm-sr-vision-encoder-hardening
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 视觉信号：不是换更大的 encoder，是 Candle 对不齐
 
 英文对照：[en/vllm/blog/serving/semantic-router-vision.md](../../../../en/vllm/blog/serving/semantic-router-vision.md)  
 原文：https://vllm.ai/blog/2026-05-28-vllm-sr-vision-encoder-hardening  
-2026-05-28。署名 **David Shrader, Huamin Chen, Xunzhuo Liu, Bowei He, and the vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。接 Athena 的 [`multi-modal-embed-small`](semantic-router-athena.md)。Candle 核一家：[modular](semantic-router-modular.md)。后来：[themis](semantic-router-themis.md)、[session](semantic-router-session.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)。不要和引擎里的 [Router](router.md) 混。余弦和倒置率是**他们的**探针 / PR 分支数字。没合入前当 PR 验证，不当线上保证。
+2026-05-28。署名 **David Shrader, Huamin Chen, Xunzhuo Liu, Bowei He, and the vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。接 Athena 的 [`multi-modal-embed-small`](semantic-router-athena.md)。Candle 核一家：[modular](semantic-router-modular.md)。后来：[themis](semantic-router-themis.md)、[session](semantic-router-session.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)。不要和引擎里的 [Router](router.md) 混。余弦和倒置率是**他们的**探针 / PR 分支数字。没合入前当 PR 验证，不当线上保证。
 
 同目录还有：[amd](semantic-router-amd.md)、[mom-amd](semantic-router-mom-amd.md)、[mom](semantic-router-mom.md)、[halugate](halugate.md)。
 

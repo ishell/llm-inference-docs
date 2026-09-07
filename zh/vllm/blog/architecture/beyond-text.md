@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-09-05-beyond-text-generation
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 文本之外：pooling 模型把图吐回来

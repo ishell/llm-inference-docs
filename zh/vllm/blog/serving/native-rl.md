@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-05-28-native-rl-apis
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Native RL APIs：权重同步别再每家写一套 worker 补丁
@@ -11,7 +11,7 @@ fetched: 2026-09-04
 原文：https://vllm.ai/blog/2026-05-28-native-rl-apis  
 2026-05-28。Aaron Hao、Sumanth Hegde、Kyle Sayers、Kourosh Hakhamaneshi，以及 vLLM 团队。文档：[Weight transfer](https://docs.vllm.ai/en/latest/training/weight_transfer/)、[Async RL](https://docs.vllm.ai/en/latest/training/async_rl/)。例子在 vLLM [`examples/rl`](https://github.com/vllm-project/vllm/tree/main/examples/rl)。HTTP 上的权重传送和 pause 端点要 `VLLM_SERVER_DEV_MODE=1`。
 
-后训练一旦铺开，两件疼会反复来敲门：
+后训练一旦铺开，两件痛点会反复出现：
 
 1. 训练和推理之间的权重同步，每家框架自己补一套，重复劳动。
 2. 异步 RL 在规模上发脆，尤其是 P/D 和 DPEP。
@@ -33,7 +33,7 @@ Sleep Mode（[sleep-mode.md](../../architecture/sleep-mode.md)）让进程活着
 
 Figure 1：RL 系统总览。
 
-以前权重加载住在各家 RL 框架里，常见做法是给 vLLM worker 加一套自己的接收/加载。能跑，也疼：
+以前权重加载住在各家 RL 框架里，常见做法是给 vLLM worker 加一套自己的接收/加载。能跑，但痛：
 
 - **复杂度：** 作者要维护 worker 扩展；常用传输本该是原生的。
 - **重复劳动：** packed tensor 传送、RPC 端点，几乎每家写一遍。

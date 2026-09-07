@@ -1,17 +1,17 @@
 ---
 source: https://nvidia.github.io/TensorRT-LLM/performance/perf-benchmarking.html
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# trtllm-bench：手册里的秒表
+# trtllm-bench：手册里的基准工具
 
-英文全文抓取：[en/nvidia/performance-tuning/trtllm-bench.md](../../../en/nvidia/performance-tuning/trtllm-bench.md)（官方页很长，含 LoRA、多模态、Medusa 低延迟引擎）。这一页是中文导读：怎么用这把尺子去配合调优手册。手册第 1 章已经用它打过 70B 基线。博客实操见 `blog-03-tensorrt-llm.md`。
+英文全文抓取：[en/nvidia/performance-tuning/trtllm-bench.md](../../../en/nvidia/performance-tuning/trtllm-bench.md)（官方页很长，含 LoRA、多模态、Medusa 低延迟引擎）。这一页是中文导读：怎么用这套工具去配合调优手册。手册第 1 章已经用它打过 70B 基线。博客实操见 `blog-03-tensorrt-llm.md`。
 
-官方声明：这套 CLI **仍在演进，API 可能破**。它想让你更容易复现他们 Performance Overview 上的数字。全部基准都走 **in-flight batching**。
+官方声明：这套 CLI **仍在演进，API 可能破**。它想让我们更容易复现他们 Performance Overview 上的数字。全部基准都走 **in-flight batching**。
 
-可从 Hugging Face 自动拉模型：把 token 放到 `HF_TOKEN`。量化方面，bench 目前只帮你配一个子集：**None / FP8 / NVFP4**。引擎本身支持的量化更多，只是这把 CLI 还没全包。
+可从 Hugging Face 自动拉模型：把 token 放到 `HF_TOKEN`。量化方面，bench 目前只帮我们配一个子集：**None / FP8 / NVFP4**。引擎本身支持的量化更多，只是这套 CLI 还没全包。
 
 ## 严谨测试前的 GPU
 
@@ -78,11 +78,11 @@ trtllm-bench --model meta-llama/Llama-3.1-8B build \
 
 ## `throughput`
 
-把整个数据集尽快丢进 Executor（offline，打满）。等全部返回，再算统计。这是**上限吞吐**，不是线上到达率。手册第 1 章那条 1000×2048/2048 也是这种倒法；可用 `throughput -h` 改到达率和请求上限。
+把整个数据集尽快丢进 Executor（offline，打满）。等全部返回，再算统计。这是**上限吞吐**，不是线上到达率。手册第 1 章那条 1000×2048/2048 也是这种打法；可用 `throughput -h` 改到达率和请求上限。
 
 ## PyTorch flow
 
-不必 `build`。`throughput` 会按 `--dataset`（或你手写的 max batch/tokens）初始化 `tensorrt_llm._torch`。CUDA graph 默认开。额外配置：`--extra_llm_api_options path/to.yaml`。本地权重用 `--model_path`；`--model` 仍要填，给报表和启发式查表。
+不必 `build`。`throughput` 会按 `--dataset`（或我们手写的 max batch/tokens）初始化 `tensorrt_llm._torch`。CUDA graph 默认开。额外配置：`--extra_llm_api_options path/to.yaml`。本地权重用 `--model_path`；`--model` 仍要填，给报表和启发式查表。
 
 ## `latency`
 
@@ -101,4 +101,4 @@ trtllm-bench --model meta-llama/Llama-3.1-8B build \
 | 非 Medusa 延迟 | 打 | `trtllm-bench --model $HF_MODEL latency --dataset $DATASET_PATH --engine_dir $ENGINE_DIR` |
 | Medusa 延迟 | 打 | 同上，加 `--medusa_choices $MEDUSA_CHOICES` |
 
-LoRA、多模态、PyTorch 量化细项在英文抓取里。调优手册要的是：同一把尺子，先打基线，再每拧一章旋钮打一次。
+LoRA、多模态、PyTorch 量化细项在英文抓取里。调优手册要的是：同一套尺子，先打基线，再每一章改完打一次。

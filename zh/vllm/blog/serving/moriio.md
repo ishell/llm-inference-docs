@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-04-07-moriio-kv-connector
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 单机也要 P/D：MI300X 上的 MORI-IO
@@ -40,13 +40,13 @@ fetched: 2026-09-05
 
 上一篇 MoE 优化 [[1]](#ref-1) 讲的是：把一只很大的模型铺进一台 8 卡 AMD Instinct MI300X，用 Tensor / Pipeline / Data / Expert Parallelism。这篇要对付的是另一件会在并发上升时把人卡住的事：Prefill–Decode 互抢。AMD 的 MORI-IO 让这件事可以在**单机**上做完——goodput 更高，延迟更好预报，不必先凑一个多机集群。
 
-HBM 已经装满，算力也配平了，vLLM 跑得很顺——直到你把并发拧上去。然后 ITL 开始乱跳。根因很朴素：Prefill 和 Decode 是两种活，却在抢同一批 GPU。
+HBM 已经装满，算力也配平了，vLLM 跑得很顺——直到我们把并发抬上去。然后 ITL 开始乱跳。根因很朴素：Prefill 和 Decode 是两种计算，却在抢同一批 GPU。
 
 **Prefill 是 compute-bound：** 整段 prompt 一次并行吃进去，大 GEMM，费用跟输入长度走。
 
 **Decode 是 memory-bandwidth-bound：** 一次一个 token，反复从 HBM 搬权重，每字节上的计算并不多。
 
-两段戏挤在同一套实例里，就会互相挡。一条胖 Prefill 能让几十路正在说话的 Decode 口吃；Decode 反过来挡新的 Prefill 进调度。结果是：两段都跑不满，也都不稳。
+两段挤在同一套实例里，就会互相挡。一条胖 Prefill 能让几十路正在 Decode 的请求卡住；Decode 反过来挡新的 Prefill 进调度。结果是：两段都跑不满，也都不稳。
 
 ## Key Highlights
 
@@ -60,15 +60,15 @@ HBM 已经装满，算力也配平了，vLLM 跑得很顺——直到你把并�
 
 工程师听见「Prefill–Decode (PD) Disaggregation」，脑子里往往先跳出机房：专职 Prefill 节点、专职 Decode 节点、中间一根 RDMA 布。接着就会说：「我只有一台 8 卡，这事跟我无关。」
 
-这句话会把单机上的 goodput 留在桌子上。PD 拆分可以整段落在一台 8 卡里。若你在意严格的延迟 SLO，它常常才是对的路。
+这句话会把单机上的 goodput 留在桌子上。PD 拆分可以整段落在一台 8 卡里。若在意严格的延迟 SLO，它常常才是对的路。
 
-想法直接：两段戏交给两套实例。例如四张卡跑 Prefill，另四张跑 Decode。各自定尺寸、定并行、定调度，单实例那种 head-of-line blocking 就卸掉了。
+想法直接：两段交给两套实例。例如四张卡跑 Prefill，另四张跑 Decode。各自定尺寸、定并行、定调度，单实例那种 head-of-line blocking 就卸掉了。
 
 难的是交接。Prefill 算出来的 KV 必须送到 Decode——可以是数 GB。交得慢，拆开的好处会被交接自己吃掉。
 
 AMD 的答案是 **MORI-IO**：一条基于 RDMA 的 KV connector，已经贡献进 vLLM [[4]](#ref-4)，底下是开源框架 MORI（Modular RDMA Interface）[[5]](#ref-5)。
 
-> **范围：** 这篇只谈单机 PD：一台盒子、8 张卡，把你现有硬件上的 goodput 拧出来。
+> **范围：** 这篇只谈单机 PD：一台机器、8 张卡，把现有硬件上的 goodput 做出来。
 
 ## The Architecture: Serving with PD Disaggregation
 
@@ -415,7 +415,7 @@ READ 里，proxy 等 Prefill 完成，从响应抽出 `remote_block_ids`，交�
 ### What's Next
 
 - **多机部署：** 生产里 Prefill / Decode 可以跨节点——MORI-IO 已经走网上的 RDMA，同一条 connector 跨主机声称不用改代码。
-- **按阶段拧旋钮：** 实例专职之后，Prefill 可以追计算吞吐（更大 token budget、chunked Prefill），Decode 追低延迟（更小 batch、更严的调度）。混跑做不到这种独立拧法。
+- **按阶段调参数：** 实例专职之后，Prefill 可以追计算吞吐（更大 token budget、chunked Prefill），Decode 追低延迟（更小 batch、更严的调度）。混跑做不到这种独立调法。
 
 ## Appendix: Reproducible Configurations
 
@@ -547,4 +547,4 @@ Ubuntu 22.04 LTS，Linux kernel 5.15.0-153-generic，ROCm Driver 6.10.5（AMDGPU
 
 服务器厂商配置可能不同，成绩会跟着变。表现还取决于配置、软件、vLLM 版本、以及是否用上最新驱动和优化。
 
-[Router](router.md) 是跨 pod 的 P/D 网关；这篇证明**同一台盒子里**也值得拆。KV 交接的门，和 Mooncake / NIXL / Offloading 是同一类插头，换的是传输实现。
+[Router](router.md) 是跨 pod 的 P/D 网关；这篇证明**同一台机器里**也值得拆。KV 交接的门，和 Mooncake / NIXL / Offloading 是同一类插头，换的是传输实现。

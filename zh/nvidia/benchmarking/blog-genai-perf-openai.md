@@ -1,15 +1,15 @@
 ---
 source: https://developer.nvidia.com/blog/measuring-generative-ai-model-performance-using-nvidia-genai-perf-and-an-openai-compatible-api/
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 用 GenAI-Perf 打 OpenAI 兼容 API
 
 英文对照：[en/nvidia/benchmarking/blog-genai-perf-openai.md](../../../en/nvidia/benchmarking/blog-genai-perf-openai.md)
 
-**GenAI-Perf 已停更，新项目用 AIPerf。** 这篇是它的出生证明：为什么 LLM 不能只用普通 Web 压测交差，以及怎样用同一把客户端尺子去打 NIM、Triton、TensorRT-LLM、vLLM。
+**GenAI-Perf 已停更，新项目用 AIPerf。** 这篇是它的出生证明：为什么 LLM 不能只用普通 Web 压测交差，以及怎样用同一套客户端去打 NIM、Triton、TensorRT-LLM、vLLM。
 
 NVIDIA 本来就有 Perf Analyzer 和 Model Analyzer，帮人在延迟和吞吐之间找平衡。Snap 一类公司用 Model Analyzer 找过更省的配置。生成式模型来了以后，尺子必须改刻度：延迟和吞吐要拆到 **token**。
 
@@ -19,7 +19,7 @@ NVIDIA 本来就有 Perf Analyzer 和 Model Analyzer，帮人在延迟和吞吐�
 - **Output token throughput**：基准期间总输出 token / 基准时长。
 - **ITL / TPOT**：同一请求里相邻中间响应的间隔，按后者生成的 token 数归一。
 
-许多应用把 TTFT 放第一，然后才是输出吞吐和 ITL。吞吐和 ITL 天生打架：同时服务更多人，GPU 更忙，每个人字与字之间的缝可能变宽。没有专用工具，TCO 的「最优」只是一种感觉。
+许多应用把 TTFT 放第一，然后才是输出吞吐和 ITL。吞吐和 ITL 天生打架：同时服务更多请求，GPU 更忙，每个请求字与字之间的间隔可能变宽。没有专用工具，TCO 的「最优」只是一种感觉。
 
 
 本地图（原文版权仍归原站；学习对照用）：
@@ -83,7 +83,7 @@ genai-perf \
   --generate-plots
 ```
 
-样例：request latency 平均约 75 ms；OSL 很短（平均 16）；输出 token 吞吐 218.55/s；请求吞吐 13.76/s。短答让 RPS 看起来很大——别用短答的 RPS 去羞辱长答。图 2 是 TTFT 对 ISL。
+样例：request latency 平均约 75 ms；OSL 很短（平均 16）；输出 token 吞吐 218.55/s；请求吞吐 13.76/s。短答让 RPS 看起来很大——不要用短答的 RPS 去跟长答比。图 2 是 TTFT 对 ISL。
 
 ### Embeddings
 
@@ -103,8 +103,8 @@ genai-perf \
   --input-file embeddings.jsonl
 ```
 
-样例 request latency 平均约 42 ms，请求吞吐 23.78/s。Embedding 没有 ITL 这种「字与字之间」的故事，它更像一次把句子折进向量的短跑。
+样例 request latency 平均约 42 ms，请求吞吐 23.78/s。Embedding 没有 ITL 这种 token 间隔，它更像一次把句子折进向量的短请求。
 
 ## 小结
 
-扫 `--request-rate` 看 ITL、request latency、吞吐怎么动。仓库在 GitHub；继任者是 AIPerf。同一把客户端，才能比较不同的厨房。
+扫 `--request-rate` 看 ITL、request latency、吞吐怎么动。仓库在 GitHub；继任者是 AIPerf。同一套客户端，才能比较不同的引擎。

@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2026-07-14-vllm-tilert-pd
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# TileRT：换一只 Decode，不必养 vLLM fork
+# TileRT：换一只 Decode，不必维护 vLLM fork
 
 英文对照：[en/vllm/blog/serving/tilert.md](../../../../en/vllm/blog/serving/tilert.md)  
 原文：https://vllm.ai/blog/2026-07-14-vllm-tilert-pd  
 2026-07-14。署名 **TileRT team**。TileRT **0.1.5**：[PyPI](https://pypi.org/project/tilert/)（`pip install tilert`；Python 3.12，CUDA 13 wheels）、仓库 [tile-ai/TileRT](https://github.com/tile-ai/TileRT)。接头是 vLLM V1 的公开 connector：`KVConnectorBase_V1`，落在 `MultiConnector` 下，用 `kv_connector_module_path` 加载。**零改 vLLM**：不 fork、不打补丁、不包一层内部 worker。当时演示：**GLM-5 / 5.1**、**DeepSeek-V3.2**。Prefill 侧要开 MTP；一台 TileRT decode 节点一次只有 **一只** in-flight 请求。
 
-和别的 connector P/D 是同一扇门，不是再写一套协议：[Mooncake](mooncake.md) / NIXL 搬字节；[Router](router.md) 是库存 vLLM 的 P/D 网关（这篇的入口是 TileRT 自己的 `pd_router`）；集群级拆分见 [large-scale.md](large-scale.md)；另一只「只加 connector、不动引擎」的拆法是 [moriio.md](moriio.md)。页上的柱子不是你的 SLA。
+和别的 connector P/D 是同一条接口，不是再写一套协议：[Mooncake](mooncake.md) / NIXL 搬字节；[Router](router.md) 是库存 vLLM 的 P/D 网关（这篇的入口是 TileRT 自己的 `pd_router`）；集群级拆分见 [large-scale.md](large-scale.md)；另一只「只加 connector、不动引擎」的拆法是 [moriio.md](moriio.md)。页上的柱子不是某一套集群上的 SLA。
 
 适用：延迟绑死、per-user 速度比集群吞吐更要紧，模型又在 TileRT 名单里。不适合：把这篇当成通用 Decode 的替代默认；也不适合指望一台 TileRT 节点高并发 batched Decode。
 
@@ -25,7 +25,7 @@ vLLM 自带的 Decode 仍是正确的 **默认**：高吞吐、batched serving�
 
 TileRT 是一只新的推理运行时，目标只有一件：把 per-user decode 速度往硬件极限推。他们另文写过 [速度正在变成一种 scaling 维度](https://www.tilert.ai/blog/speed-as-the-next-scaling-law.html)。这篇不是引擎说明书。更实际的问题：能不能换一只专门的 decode 引擎，**又不丢掉** 你已经依赖的生态——OpenAI 兼容 API、调度、prefix caching、tool calling、vLLM 的运维成熟度？
 
-集成想把这道税压小：
+集成想把这道成本压小：
 
 - **Prefill 仍是 vLLM。** 调度、chunked prefill、prefix caching——不动。
 - **对外表面仍是 vLLM。** 同一套 API、同一请求格式、同一套工具。
@@ -49,7 +49,7 @@ TileRT 是一只新的推理运行时，目标只有一件：把 per-user decode
 
 ## 交接怎么发生
 
-跨引擎 P/D 要能落地，三件事得同时真：传输要快，不能拖慢 Prefill，Decode 必须从 Prefill 停下的地方接着说。
+跨引擎 P/D 要能落地，三件事得同时真：传输要快，不能拖慢 Prefill，Decode 必须从 Prefill 停下的地方接着生成。
 
 **数据面。** Prefill 之后，请求的 attention 状态——压缩 KV、sparse-attention 的 index cache、一小撮 metadata——以 **RDMA 单边写** 进预先登记好的 GPU buffer，落到 decode 节点。搬运引擎是 **Mooncake 或 NIXL**。没有中间序列化，不在主机内存垫一层。交接 **协议** 不依赖底下是谁在搬字节。
 
@@ -73,7 +73,7 @@ per-user token 速度是硬约束时，把流量派到 **TileRT Decode**——�
 
 两边都是 OpenAI 兼容表面。搬负载是 **改路由**，不是改客户端。
 
-**这一版的限制：** 一台 TileRT decode 节点同一时刻只伺候 **一只** in-flight 请求；router 做 gated dispatch 和反压。当时模型覆盖：**GLM-5/5.1**、**DeepSeek-V3.2**，后面还会加。
+**这一版的限制：** 一台 TileRT decode 节点同一时刻只服务 **一只** in-flight 请求；router 做 gated dispatch 和反压。当时模型覆盖：**GLM-5/5.1**、**DeepSeek-V3.2**，后面还会加。
 
 ## 上手
 

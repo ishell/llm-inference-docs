@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-08-20-verl-omni-v0-2-0
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # verl-Omni v0.2：请求级 batch 把 gen 从 226s 压到 108s
 
 英文对照：[en/vllm/blog/serving/verl-omni-v020.md](../../../../en/vllm/blog/serving/verl-omni-v020.md)  
 原文：https://vllm.ai/blog/2026-08-20-verl-omni-v0-2-0  
-2026-08-20。署名 **VeRL-Omni Team**。接五月那篇 [verl-omni.md](verl-omni.md)。仓库：[verl-project/verl-omni](https://github.com/verl-project/verl-omni)。两句标题：扩散 RL 更快（Qwen-Image FlowGRPO 走 vLLM-Omni + verl V1 trainer）；omni 训练更稳（omni V1 trainer、可复用 adapter、FSDP2、vLLM-Omni rollout）。wandb 菜谱数字是他们的合同，不是你的 SLA。
+2026-08-20。署名 **VeRL-Omni Team**。接五月那篇 [verl-omni.md](verl-omni.md)。仓库：[verl-project/verl-omni](https://github.com/verl-project/verl-omni)。两句标题：扩散 RL 更快（Qwen-Image FlowGRPO 走 vLLM-Omni + verl V1 trainer）；omni 训练更稳（omni V1 trainer、可复用 adapter、FSDP2、vLLM-Omni rollout）。wandb 菜谱数字是他们的合同，不是某一套集群上的 SLA。
 
 v0.1 的 rollout 几乎是串行 `B≈1` 的 DiT forward（10 步去噪，True-CFG 每步再翻一倍）；GPU 占用约 **80%**。v0.2 请求级 packing：占用约 **100%**，孤立生成 **226 s → 108 s**（**52%**）。MMK12（Qwen3-Omni Thinker × GSPO，4× H800 80GB）：val reward **0.833**，actor-rollout Pearson **0.998**，约 **59 GB**。步时仍引用 v0.1 LoRA 表：4× H800 约 **420 s**；5 卡 async reward 约 **360 s**。
 
@@ -35,7 +35,7 @@ v0.1 的 rollout 几乎是串行 `B≈1` 的 DiT forward（10 步去噪，True-C
 
 ### 要点
 
-- **请求级 batching** 对支持的扩散 adapter 成了默认 vLLM-Omni rollout。兼容请求打进更大的 transformer forward；并发旋钮写明。指南：[rollout batching](https://verl-omni.readthedocs.io/en/latest/start/rollout_batching.html)。runtime：[diffusion continuous batching](https://docs.vllm.ai/projects/vllm-omni/en/latest/design/feature/diffusion_continuous_batching)。
+- **请求级 batching** 对支持的扩散 adapter 成了默认 vLLM-Omni rollout。兼容请求打进更大的 transformer forward；并发配置写明。指南：[rollout batching](https://verl-omni.readthedocs.io/en/latest/start/rollout_batching.html)。runtime：[diffusion continuous batching](https://docs.vllm.ai/projects/vllm-omni/en/latest/design/feature/diffusion_continuous_batching)。
 - 扩散也有 **V1 trainer**——靠近别处那套现代 trainer；给 rollout 和训练解开做铺垫。
 
 点名的正确性修复：请求级 batch 的扩散 logprob、async rollout 语义、rank-local LoRA 权重更新、可选 rollout-correction 的 hook。rollout 再快，轨迹和 logprob 也得还在描述**同一份** policy。

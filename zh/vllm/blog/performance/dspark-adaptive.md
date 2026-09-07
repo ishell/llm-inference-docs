@@ -1,19 +1,19 @@
 ---
 source: https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# DSpark 自适应验收：按信心和负载改预算
+# vLLM 的自适应验收：DSpark 按信心调度 verification
 
 英文对照：[en/vllm/blog/performance/dspark-adaptive.md](../../../../en/vllm/blog/performance/dspark-adaptive.md)  
 原文：https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification  
-2026-08-14。署名 **vLLM Team**。学习笔记。进树是 [PR #47808](https://github.com/vllm-project/vllm/pull/47808)，开关 `enable_adaptive_verification`。页上的演示：DeepSeek-V4-Pro-0813，**TP=8**，**8×B300**（SM100）。并行草稿家族：[parallel-drafting](parallel-drafting.md)。验收数学：[spec-decode](spec-decode.md)。DSpark 论文：[arXiv 2607.05147](https://arxiv.org/abs/2607.05147)。
+2026-08-14。署名 **vLLM Team**。学习译文，不是官方译本。进树是 [PR #47808](https://github.com/vllm-project/vllm/pull/47808)，开关 `enable_adaptive_verification`。页上的演示：DeepSeek-V4-Pro-0813，**TP=8**，**8×B300**（SM100）。并行草稿家族：[parallel-drafting](parallel-drafting.md)。验收数学：[spec-decode](spec-decode.md)。DSpark 论文：[arXiv 2607.05147](https://arxiv.org/abs/2607.05147)。
 
 投机解码用更多计算换更少 Decode 步。Batch size **1** 时这笔买卖很香：GPU 还 memory-bound，算力有空，多出来的 draft token 几乎免费。到 batch size **256** 就细了。Draft token 和真 token 抢同一份算力；每个被拒的都是浪费；拒得够多，吞吐会掉。
 
-**原文 TL;DR。** [DSpark](https://arxiv.org/abs/2607.05147) 的 confidence head 给每个 draft token 打「活过验收」的分。不必为一次部署选定长投机长度，vLLM 可以 **每一步** 决定这一轮验多少。打开自适应验收（`num_speculative_tokens: 7`），投机解码一直到 **concurrency 256** 仍有好处，低并发时又能保住长草稿的那截。这样就少拧 `num_speculative_tokens`。原文把 DSpark 说成更容易「默认打开」的那种赢。
+**原文 TL;DR。** [DSpark](https://arxiv.org/abs/2607.05147) 的 confidence head 给每个 draft token 打「活过验收」的分。不必为一次部署选定长投机长度，vLLM 可以 **每一步** 决定这一轮验多少。打开自适应验收（`num_speculative_tokens: 7`），投机解码一直到 **concurrency 256** 仍有好处，低并发时又能保住长草稿的那截。这样就少调 `num_speculative_tokens`。原文把 DSpark 说成更容易「默认打开」的那种赢。
 
 改的是 **每步验多少**，不是草稿结构。
 
@@ -51,7 +51,7 @@ $$
 
 变长验收需要 **varlen decode CUDA graphs**。这要求 attention kernel 支持：sparse MLA 天然 varlen（每个 query token 自己的 top-k）。DeepSeek 在 [DeepGEMM](https://github.com/deepseek-ai/DeepGEMM) 开源了 varlen indexer kernel，作为 [PR #47808](https://github.com/vllm-project/vllm/pull/47808) 的一部分接进来。
 
-Decode graph 按 `num_reqs = min(num_tokens, max_num_seqs)` 捕获，并承诺 `max_query_len = num_speculative_tokens + 1`。一张图就能伺候每条请求 **1** 到 `num_speculative_tokens + 1` 个 token 的任意搭配。
+Decode graph 按 `num_reqs = min(num_tokens, max_num_seqs)` 捕获，并承诺 `max_query_len = num_speculative_tokens + 1`。一张图就能覆盖每条请求 **1** 到 `num_speculative_tokens + 1` 个 token 的任意搭配。
 
 ## The cost model
 

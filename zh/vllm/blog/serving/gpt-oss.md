@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-08-05-gpt-oss
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # gpt-oss Day-0：MXFP4 MoE + 满/滑窗 1:1 attention + hybrid KV
@@ -68,7 +68,7 @@ Kernel：FlashInfer（Blackwell）、FlashAttention 3（Hopper）、AMD 上增�
 
 ## Looking ahead
 
-当时 roadmap：把 Responses API 拧硬；attention DP 和 MoE EP；砍 CPU 开销换吞吐。
+当时 roadmap：把 Responses API 做稳；attention DP 和 MoE EP；砍 CPU 开销换吞吐。
 
 ## Acknowledgement
 

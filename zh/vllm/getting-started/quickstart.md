@@ -1,14 +1,14 @@
 ---
 source: https://docs.vllm.ai/en/stable/getting_started/quickstart/
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Quickstart — vLLM
 
 英文对照：[en/vllm/getting-started/quickstart.md](../../../en/vllm/getting-started/quickstart.md)  
-旋钮顺序：`../optimization/optimization.md`。`vllm serve` 的性能相关旗标：`serve.md`（整页 CLI 不搬）。
+调优顺序：`../optimization/optimization.md`。`vllm serve` 的性能相关旗标：`serve.md`（整页 CLI 不搬）。
 
 Linux；Python **3.10–3.13**。NVIDIA GPU 官方推荐 `uv`：
 
@@ -24,7 +24,7 @@ uv pip install vllm --torch-backend=auto
 uv run --with vllm vllm --help
 ```
 
-其它栈（装错等于后面所有秒表都在测安装事故）：
+其它栈（装错的话，后面测到的数字都会掺进安装事故）：
 
 - **AMD ROCm：** `uv pip install vllm --extra-index-url https://wheels.vllm.ai/rocm/`。页上口径：Python 3.12、ROCm 7.0、`glibc >= 2.35`。旧的 `rocm/vllm-dev` 镜像在弃用；夜间镜像 `vllm/vllm-openai-rocm:nightly`。
 - **Intel GPU (XPU)：** 预编译轮子「即将有」。官方 Docker 从 **v0.26.0** 起；夜间 `vllm/vllm-openai-xpu:nightly`。细节走 GPU 安装页的 Intel XPU 标签。
@@ -32,11 +32,11 @@ uv run --with vllm vllm --help
 - **昇腾 NPU：** 社区插件 [vLLM Ascend](https://github.com/vllm-project/vllm-ascend)。硬件和 CANN 版本见 [Ascend 文档](https://docs.vllm.ai/projects/ascend/en/latest/)。
 - **Apple Silicon：** [vLLM-Metal](https://github.com/vllm-project/vllm-metal) 走 Metal；计算后端是 **MLX** 不是 PyTorch，模型从 [mlx-community](https://huggingface.co/mlx-community) 取。
 
-也可以 conda 建环境再 `pip install --upgrade uv`，然后同一条 `uv pip install vllm --torch-backend=auto`。非 CUDA 平台总入口：[installation guide](https://docs.vllm.ai/en/stable/getting_started/installation/)。macOS 上 Metal 那条也在 GPU 安装页的 Apple Silicon 标签。`--torch-backend=auto` 会看本机 CUDA 驱动；要钉死例如 `cu126` 就写 `--torch-backend=cu126`（或 `UV_TORCH_BACKEND`）。
+也可以 conda 建环境再 `pip install --upgrade uv`，然后同一条 `uv pip install vllm --torch-backend=auto`。非 CUDA 平台总入口：[installation guide](https://docs.vllm.ai/en/stable/getting_started/installation/)。macOS 上 Metal 那条也在 GPU 安装页的 Apple Silicon 标签。`--torch-backend=auto` 会看本机 CUDA 驱动；要固定例如 `cu126` 就写 `--torch-backend=cu126`（或 `UV_TORCH_BACKEND`）。
 
 ## 离线批推理
 
-服务还没起来。进程里直接 `generate`：
+这一节还没有 HTTP 服务。我们在进程里直接调用 `generate`：
 
 ```python
 from vllm import LLM, SamplingParams
@@ -52,9 +52,9 @@ for output in outputs:
     print(output.prompt, output.outputs[0].text)
 ```
 
-`opt-125m` 只是为了让例子在笔记本上活下来，不是生产模型。支持模型表在官方 Models 页。默认从 Hugging Face 拉权重；改 ModelScope：初始化引擎前 `export VLLM_USE_MODELSCOPE=True`。
+`opt-125m` 只是为了让例子能在笔记本上跑起来，不是生产模型。支持模型表在官方 Models 页。默认从 Hugging Face 拉权重；改 ModelScope：初始化引擎前 `export VLLM_USE_MODELSCOPE=True`。
 
-默认采样会去读 Hugging Face 上的 `generation_config.json`。多数时候那是模型作者推荐的最好默认——**没**写 `SamplingParams` 时尤其如此。仓库里写了 temperature=0 时，你在代码里设 0.8 也可能被盖掉。要 vLLM 自己的默认：`LLM(..., generation_config="vllm")`。
+默认采样会去读 Hugging Face 上的 `generation_config.json`。多数时候那是模型作者推荐的最好默认——**没**写 SamplingParams 时尤其如此。仓库里写了 temperature=0 时，我们在代码里设 0.8 也可能被盖掉。要 vLLM 自己的默认：`LLM(..., generation_config="vllm")`。
 
 Instruct / Chat 模型必须走 chat template，或 `llm.chat(...)`。`llm.generate` **不会**自动套模板。把对话当 raw completion 喂进去，测到的是另一种模型。页上给了两条路：`AutoTokenizer.apply_chat_template(..., add_generation_prompt=True)` 再 `generate`，或把同一份 OpenAI 格式 `messages` 交给 `llm.chat`。脚本对照：`examples/basic/offline_inference/basic.py`。
 
@@ -70,9 +70,9 @@ vllm serve Qwen/Qwen2.5-1.5B-Instruct
 curl http://localhost:8000/v1/models
 ```
 
-鉴权：`--api-key` 或环境变量 `VLLM_API_KEY`。`--api-key` 可跟多个 key，任何一个过——给轮换用的。没设 key 时，实验室里方便，门厅里危险。
+鉴权：`--api-key` 或环境变量 `VLLM_API_KEY`。`--api-key` 可跟多个 key，任何一个过——给轮换用的。没设 key 时，实验室里方便，对外暴露时危险。
 
-服务端默认也吃仓库里的 `generation_config.json`。关掉：`--generation-config vllm`。默认 chat template 在 tokenizer 里；覆盖方式见 online serving 文档。
+服务端默认也读仓库里的 `generation_config.json`。关掉：`--generation-config vllm`。默认 chat template 在 tokenizer 里；覆盖方式见 online serving 文档。
 
 ### Completions
 
@@ -105,7 +105,7 @@ curl http://localhost:8000/v1/chat/completions \
 
 同一套 `openai` 客户端走 `chat.completions.create`。
 
-Attention backend 一般自动选。要钉死：
+Attention backend 一般自动选。要指定：
 
 ```bash
 vllm serve Qwen/Qwen2.5-1.5B-Instruct --attention-backend FLASH_ATTN

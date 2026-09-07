@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-12-17-large-scale-serving
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 大规模 serving：DeepSeek @ 2.2k tok/s/H200
@@ -93,7 +93,7 @@ vLLM 把 DeepSeek 的 [microbatching](https://github.com/deepseek-ai/profile-dat
 
 同一负载、**打开** DBO。第一个微批 worker 发起并完成 MoE dispatch，立刻把控制权让给第二个；第二个做完自己的 dispatch，再让回第一个；第一个做完 combine，再让给第二个做 combine。
 
-EP 度高、通信胖的部署，这刀最有用。Elastic EP 当时**还不支持 DBO**——弹性缩容和微批重叠还没焊在一起。
+EP 度高、通信胖的部署，这一步最有用。Elastic EP 当时**还不支持 DBO**——弹性缩容和微批重叠还没焊在一起。
 
 ![dbo after](../../../../assets/vllm/blog/serving/large-scale/07-dbo_after.png)
 
@@ -143,7 +143,7 @@ Dynamo 面向高吞吐、低延迟的生产 LLM。KV-aware 路由、KV Block Man
 
 ### Ray Serve LLM
 
-建在 Ray Serve 原语上。一等公民的 serving 形态：[Prefill/Decode 分离](https://docs.ray.io/en/latest/serve/llm/architecture/serving-patterns/prefill-decode.html)、[data parallel attention](https://docs.ray.io/en/latest/serve/llm/architecture/serving-patterns/data-parallel.html)、[prefix cache-affinity 路由](https://docs.ray.io/en/latest/serve/llm/architecture/routing-policies.html)。卖点是模块化、在 Ray 集群（含 Kubernetes 上的 KubeRay）上好部署。和更广的 Ray 生态接在一起——数据处理、强化学习（RL）——是它和别的走廊不一样的地方。
+建在 Ray Serve 原语上。一等公民的 serving 形态：[Prefill/Decode 分离](https://docs.ray.io/en/latest/serve/llm/architecture/serving-patterns/prefill-decode.html)、[data parallel attention](https://docs.ray.io/en/latest/serve/llm/architecture/serving-patterns/data-parallel.html)、[prefix cache-affinity 路由](https://docs.ray.io/en/latest/serve/llm/architecture/routing-policies.html)。卖点是模块化、在 Ray 集群（含 Kubernetes 上的 KubeRay）上好部署。和更广的 Ray 生态接在一起——数据处理、强化学习（RL）——是它和其他部署路径不一样的地方。
 
 KV 传输接 NIXL 与 LMCache connector。各阶段可以按各自的负载曲线独立 autoscaling。整层是可编程的：不难扩展、组合出别的 serving 形态。Elastic EP 的 scale 操作也依赖 Ray DP backend。
 
@@ -168,6 +168,6 @@ KV 传输接 NIXL 与 LMCache connector。各阶段可以按各自的负载曲�
 
 - vLLM 已完整迁到 V1；DeepSeek 风格 MoE 上，wide-EP 做到 **2.2k tok/s/H200**。
 - Wide-EP 给 MLA 把 KV 效率做大；DBO 与 EPLB 分别对付通信瓶颈和专家负载不均。
-- Prefill/Decode 分离再把 MoE 的阅读和说话拆开。部署走廊：llm-d、Dynamo、Ray Serve LLM。
+- Prefill/Decode 分离再把 MoE 的阅读和说话拆开。部署路径：llm-d、Dynamo、Ray Serve LLM。
 
-必读 serving 线在这里收成一张地图：先会切卡（[distributed-inference](distributed-inference.md)），再有集群盘子（[production-stack](production-stack.md) / [AIBrix](aibrix.md)），再有认得 KV 和 P/D 的路由器，多模态再拆编码器，Wide-EP 把 DeepSeek 那样的稀疏 MoE 铺到多机——然后 Mooncake 让跨实例的前缀不必重读，Elastic EP 让铺开的宽度不必为了加减卡而重启。
+必读 serving 线在这里收成一张地图：先会切卡（[distributed-inference](distributed-inference.md)），再有集群控制面（[production-stack](production-stack.md) / [AIBrix](aibrix.md)），再有认得 KV 和 P/D 的路由器，多模态再拆编码器，Wide-EP 把 DeepSeek 那样的稀疏 MoE 铺到多机——然后 Mooncake 让跨实例的前缀不必重读，Elastic EP 让铺开的宽度不必为了加减卡而重启。

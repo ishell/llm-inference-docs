@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-12-15-run-nvidia-nemotron-3-nano
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Nemotron 3 Nano：30B/3B hybrid MoE，Thinking Budget，NVFP4 后补
 
 英文对照：[en/vllm/blog/serving/nemotron-3-nano.md](../../../../en/vllm/blog/serving/nemotron-3-nano.md)  
 原文：https://vllm.ai/blog/2025-12-15-run-nvidia-nemotron-3-nano  
-2025-12-15。署名 **NVIDIA Nemotron Team**。这篇是 day-0 上手，不是 kernel 深挖。上下文 **1M**。当时安装：`git+https://github.com/vllm-project/vllm.git@main`，加 `VLLM_USE_PRECOMPILED=1`。更大号：[Super](nemotron-3-super.md) / [Ultra](nemotron-3-ultra.md)。后来蒸馏的：[Lightning](nemotron-35-lightning.md)。前身 9B：[Nano 2](nemotron-nano2.md)。多模态亲戚：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。Spark：[dgx-spark.md](dgx-spark.md)。Mamba 拆分：[hybrid-ssm.md](hybrid-ssm.md)。**4×** 画在图上，不是你的 SLA。
+2025-12-15。署名 **NVIDIA Nemotron Team**。这篇是 day-0 上手，不是 kernel 深挖。上下文 **1M**。当时安装：`git+https://github.com/vllm-project/vllm.git@main`，加 `VLLM_USE_PRECOMPILED=1`。更大号：[Super](nemotron-3-super.md) / [Ultra](nemotron-3-ultra.md)。后来蒸馏的：[Lightning](nemotron-35-lightning.md)。前身 9B：[Nano 2](nemotron-nano2.md)。多模态亲戚：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。Spark：[dgx-spark.md](dgx-spark.md)。Mamba 拆分：[hybrid-ssm.md](hybrid-ssm.md)。**4×** 画在图上，不是某一套集群上的 SLA。
 
 **1 月 28 日补丁。** NVFP4 checkpoint，开箱就能跑。Quantization-Aware Distillation (QAD) 保 NVFP4 精度；B200 相对 FP8-H100 声称 **4×** 吞吐。权重：[NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-NVFP4)。Brev：[launchable](https://brev.nvidia.com/launchable/deploy?launchableID=env-386KFyCvmg3y22JIf0q8BUh6jia)。
 

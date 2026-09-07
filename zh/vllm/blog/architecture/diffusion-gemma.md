@@ -1,21 +1,21 @@
 ---
 source: https://vllm.ai/blog/2026-06-10-diffusion-gemma
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# DiffusionGemma：把画布当成一次全拒的草稿
+# DiffusionGemma：第一只原生进 vLLM 的 dLLM
 
 英文对照：[en/vllm/blog/architecture/diffusion-gemma.md](../../../../en/vllm/blog/architecture/diffusion-gemma.md)  
 原文：https://vllm.ai/blog/2026-06-10-diffusion-gemma  
-2026-06-10。署名 **The vLLM Team and Google DeepMind Team**。学习译文，不是官方译本。第一只进 vLLM 的 dLLM。数字是单卡 **batch=1**、`vllm bench serve` 在 H100 / H200 上的演示，不是 SLA。执行核见 [mrv2](mrv2.md)；草稿账本见 [spec-decode](../performance/spec-decode.md)；Gemma4 骨干家族见 [gemma4](../serving/gemma4.md)；多模态流水线见 [vllm-omni](../serving/vllm-omni.md)。他们印的菜谱：[recipes.vllm.ai/Google/diffusiongemma-26B-A4B-it](https://recipes.vllm.ai/Google/diffusiongemma-26B-A4B-it)。本地图在 `assets/vllm/blog/architecture/diffusion-gemma/`。
+2026-06-10。署名 **The vLLM Team and Google DeepMind Team**。学习译文，不是官方译本。第一只进 vLLM 的 dLLM。数字是单卡 **batch=1**、`vllm bench serve` 在 H100 / H200 上的演示，不是 SLA。执行核见 [mrv2](mrv2.md)；草稿账本见 [spec-decode](../performance/spec-decode.md)；Gemma4 骨干家族见 [gemma4](../serving/gemma4.md)；多模态流水线见 [vllm-omni](../serving/vllm-omni.md)。他们给的 recipe：[recipes.vllm.ai/Google/diffusiongemma-26B-A4B-it](https://recipes.vllm.ai/Google/diffusiongemma-26B-A4B-it)。本地图在 `assets/vllm/blog/architecture/diffusion-gemma/`。
 
-适用：把 DiffusionGemma（26B，Gemma4 骨干）当块扩散 dLLM serve——双向去噪、256 token 画布、ModelState 钩子、同一 batch 里混 prefill / denoise / commit。不适合：还当从左往右吐字；也不要把 **1288 tok/s** 当多 batch 承诺——页上是 H100/H200 **batch=1**。
+适用：把 DiffusionGemma（26B，Gemma4 骨干）当块扩散 dLLM serve——双向去噪、256 token canvas、ModelState 钩子、同一 batch 里混 prefill / denoise / commit。不适合：还当从左往右自回归生成；也不要把 **1288 tok/s** 当多 batch 承诺——页上是 H100/H200 **batch=1**。
 
 > 要部署 DiffusionGemma，先看 [vLLM recipe](https://recipes.vllm.ai/Google/diffusiongemma-26B-A4B-it)。
 
-Google 的 DiffusionGemma 是 **26B** 离散扩散语言模型，Gemma4 骨干——vLLM 原生伺候的第一只 dLLM。接进去要支持一种根本不同的解码：dLLM 塞不进平常的自回归 serving 路径。它们要双向注意力、迭代修、按块生成、每一步去噪都有自己的采样。
+Google 的 DiffusionGemma 是 **26B** 离散扩散语言模型，Gemma4 骨干——vLLM 原生支持的第一只 dLLM。接进去要支持一种根本不同的解码：dLLM 塞不进平常的自回归 serving 路径。它们要双向注意力、迭代修、按块生成、每一步去噪都有自己的采样。
 
 接到 [model runner v2](https://vllm.ai/blog/2026-03-24-mrv2)（本库：[mrv2.md](mrv2.md)）新的 **ModelState**：模型自己定义输入准备，并给每条请求的模型相关状态留钩子。宣称跟 Hugging Face 参考实现精度对齐，同时能高效 batch。
 

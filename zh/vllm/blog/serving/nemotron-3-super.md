@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-03-11-nemotron-3-super
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Nemotron 3 Super：120B/12B，1M 上下文，Thinking Budget
 
 英文对照：[en/vllm/blog/serving/nemotron-3-super.md](../../../../en/vllm/blog/serving/nemotron-3-super.md)  
 原文：https://vllm.ai/blog/2026-03-11-nemotron-3-super  
-2026-03-11。署名 **NVIDIA Nemotron Team**。镜像 `vllm==0.17.1`。**4 × H100** BF16 示例。cookbook 才是完整菜谱；这篇是 day-0 骨架。同一套 hybrid 家族：[Nano](nemotron-3-nano.md) / [Ultra](nemotron-3-ultra.md)。蒸馏下来的亲戚：[Lightning](nemotron-35-lightning.md)。更早的 9B：[Nano 2](nemotron-nano2.md)。多模态亲戚：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。桌上 Spark 的坑：[dgx-spark.md](dgx-spark.md)。Mamba 拆分 serving：[hybrid-ssm.md](hybrid-ssm.md)。Artificial Analysis / **4×** / **5×** 画在图上，不是你的 SLA。
+2026-03-11。署名 **NVIDIA Nemotron Team**。镜像 `vllm==0.17.1`。**4 × H100** BF16 示例。cookbook 才是完整菜谱；这篇是 day-0 骨架。同一套 hybrid 家族：[Nano](nemotron-3-nano.md) / [Ultra](nemotron-3-ultra.md)。蒸馏下来的亲戚：[Lightning](nemotron-35-lightning.md)。更早的 9B：[Nano 2](nemotron-nano2.md)。多模态亲戚：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。桌上 Spark 的坑：[dgx-spark.md](dgx-spark.md)。Mamba 拆分 serving：[hybrid-ssm.md](hybrid-ssm.md)。Artificial Analysis / **4×** / **5×** 画在图上，不是某一套集群上的 SLA。
 
 **原文 TL;DR：**
 
@@ -25,7 +25,7 @@ Nemotron 3 Super 被写成 Nemotron 3 家的中号开源模，给复杂 multi-ag
 
 两条硬需求：
 
-- **The "Context Explosion" Problem。** 多代理把历史、工具输出、推理步骤一遍遍重发，窗口很快炸。Super 的答：最高 **1 million** token 上下文——长记忆，少 goal drift。
+- **The "Context Explosion" Problem。** 多代理把历史、工具输出、推理步骤一遍遍重发，窗口很快撑满。Super 的答：最高 **1 million** token 上下文——长记忆，少 goal drift。
 - **The "Thinking Tax"。** 推理型代理用常规巨模又贵又慢。Hybrid MoE 声称最高 **4×** 吞吐，子任务不必每次付满模延迟和钱。
 
 vLLM 是 serving 层：OpenAI-compatible API，高效率、高精度的 multi-agent 推理。

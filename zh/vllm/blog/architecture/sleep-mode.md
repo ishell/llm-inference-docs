@@ -1,18 +1,18 @@
 ---
 source: https://vllm.ai/blog/2025-10-26-sleep-mode
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Sleep Mode：换模型不必把房子拆了重建
+# Sleep Mode：换模型不必整份 reload
 
 英文对照：[en/vllm/blog/architecture/sleep-mode.md](../../../../en/vllm/blog/architecture/sleep-mode.md)  
 原文：https://vllm.ai/blog/2025-10-26-sleep-mode
 
 2025-10-26。Embedded LLM。学习译文，不是官方译本。数字是 **vLLM 0.11.0**、`cudagraph_mode: FULL_AND_PIECEWISE`，A100 与 A4000。原文大量 Plotly 交互图，笔记不收脚本，把能从原文表格和图表数据里抽出的秒数写成表。
 
-两套都能单独装进一张卡、却装不进同一张卡：要么占 **2×** 显存，要么每次切换 **30–100+ 秒** 冷加载。Sleep Mode 是第三条路——进程还活着，模型去冬眠。几秒睡下，醒来也快：既有按需加载的省，也有常驻 serving 的速度。
+两套都能单独装进一张卡、却装不进同一张卡：要么占 **2×** 显存，要么每次切换 **30–100+ 秒** 冷加载。Sleep Mode 是第三条路——进程还活着，模型进入 hibernate。几秒睡下，醒来也快：既有按需加载的省，也有常驻 serving 的速度。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -27,7 +27,7 @@ fetched: 2026-09-05
 1. **两套都常驻** → 要 2× GPU 显存（贵，常常根本装不下）
 2. **用到再加载** → 每次切换 30–100+ 秒（慢，浪费）
 
-Sleep Mode 让模型在几秒内冬眠、醒来也快。
+Sleep Mode 让模型在几秒内 hibernate、醒来也快。
 
 ### Two Sleep Levels for Different Needs
 
@@ -165,14 +165,14 @@ curl -X POST 'localhost:8002/wake_up'
 
 **关键差别：**
 
-- **不睡：** 卸载就把进程杀死 → **预热没有地方住**。必须重启 Python 与 CUDA context、重做 allocator、重捕获 CUDA graphs、重 JIT（DeepGEMM、FlashInfer、TorchInductor）。**结果：** 第一次推理 **4–7×** 更慢（见上：0.92 s wake vs 3.72 s 冷启动）。
+- **不睡：** 卸载就把进程杀死 → **预热状态无法保留**。必须重启 Python 与 CUDA context、重做 allocator、重捕获 CUDA graphs、重 JIT（DeepGEMM、FlashInfer、TorchInductor）。**结果：** 第一次推理 **4–7×** 更慢（见上：0.92 s wake vs 3.72 s 冷启动）。
 - **睡着：** 进程留下 → **预热能摊销**。Allocator、graphs、进程状态、JIT kernel 在初次 warmup 之后都还在。**结果：** 第一次推理仍大约 1 s，躲开 3–4 s 的冷惩罚。
 
 > **NOTE。** 时间随模型大小、GPU 代数、配置差很多。见 [Impact of Warm-Up](#impact-of-warm-up-on-sleep-mode)：不预热会 **5–7×** 慢。
 
 ## Model Switching Performance
 
-最戏剧的一笔是切换时间。叫醒一只睡着的模型，比拉起一套全新 vLLM 快 **18–20×**。
+切换时间差得最大。把已经 sleep 的模型 wake 起来，比拉起一套全新 vLLM 快 **18–20×**。
 
 同一套 A100 / Level 1 / `FULL_AND_PIECEWISE`。图表数据（三次）：
 
@@ -424,7 +424,7 @@ FP8 会不会改 Sleep Mode 的表现？同一套活，A100 上 BF16 vs FP8。
 
 - 只有一个模型（不必切）
 - 一天 / 一周才切一次
-- 两套已经能同时住进 GPU 显存
+- 两套已经能同时放进 GPU 显存
 
 ## Conclusion
 

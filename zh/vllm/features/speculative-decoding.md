@@ -1,17 +1,17 @@
 ---
 source: https://docs.vllm.ai/en/stable/features/speculative_decoding/
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Speculative decoding（功能页）
 
 英文对照：[en/vllm/features/speculative-decoding.md](../../../en/vllm/features/speculative-decoding.md)  
 原文：https://docs.vllm.ai/en/stable/features/speculative_decoding/  
-原理与 2024 年那组数字：[博客 spec-decode](../blog/performance/spec-decode.md)。后来 CATALOG 里还有 P-EAGLE、DSpark、EAGLE 3.1、AMD 投机解码。训练 draft：[vllm-project/speculators](https://github.com/vllm-project/speculators)。JSON / 工具参数是另一间房：[structured decoding](../blog/performance/struct-decode.md)。
+原理与 2024 年那组数字：[博客 spec-decode](../blog/performance/spec-decode.md)。后来 CATALOG 里还有 P-EAGLE、DSpark、EAGLE 3.1、AMD 投机解码。训练 draft：[vllm-project/speculators](https://github.com/vllm-project/speculators)。JSON / 工具参数是另一页：[structured decoding](../blog/performance/struct-decode.md)。
 
-这一页要砍的是中低 **QPS**、memory-bound 负载下的 **ITL**。带模型的方法（EAGLE、MTP、draft model、PARD、MLP）延迟降得最狠；n-gram / suffix 加速温和，高峰时也不额外加重。
+这一页要降的是中低 **QPS**、memory-bound 负载下的 **ITL**。带模型的方法（EAGLE、MTP、draft model、PARD、MLP）延迟降得最多；n-gram / suffix 加速温和，高峰时也不额外加重。
 
 ## 怎么选（定性）
 
@@ -34,9 +34,9 @@ fetched: 2026-09-04
 
 ## Custom proposer（实验）
 
-`method = "custom_class"`，`model = "your_module.YourCustomProposerClass"`。构造时吃 `VllmConfig`，实现 `propose`。
+`method = "custom_class"`，`model = "your_module.YourCustomProposerClass"`。构造时接收 VllmConfig，实现 `propose`。
 
-## `--speculative-config` 合同
+## `--speculative-config` 字段
 
 CLI 上是一份 JSON；Python 是 `LLM(..., speculative_config={...})`。不是穷尽 schema——生成页的 engine args 和 `vllm.config.SpeculativeConfig` 才是。YAML 配置用嵌套映射，不要逃逸后的 JSON 字符串。这里 **不能** 写 `tensor_parallel_size`，用 `draft_tensor_parallel_size`。`temperature` / `top_p` 是采样参数，不是这个对象。`target_model_config` / `draft_*_config` 由 vLLM 自己填。
 
@@ -95,7 +95,7 @@ vllm serve <target-model> \
 
 ## lossless 口径
 
-- **理论：** 采样在硬件数值精度内 lossless（投机采样那篇论文一族）。浮点误差仍可能轻轻拧分布。
+- **理论：** 采样在硬件数值精度内 lossless（投机采样那篇论文一族）。浮点误差仍可能轻微改变分布。
 - **算法：** rejection sampler 收敛测试；带 SD 的 greedy 等于不带 SD 的 greedy（`tests/spec_decode/e2e`）。
 - **vLLM 的 logprobs 跨 run 不稳定** —— FAQ「Can the output of a prompt vary across runs in vLLM?」。
 - batch size / 数值稳定性也会动 logprobs。缓解办法在那条 FAQ，不在这一页再加旗标。

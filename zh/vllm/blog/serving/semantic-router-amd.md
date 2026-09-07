@@ -1,21 +1,21 @@
 ---
 source: https://vllm.ai/blog/2025-12-16-vllm-sr-amd
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # AMD × Semantic Router：GPU 上的控制面
 
 英文对照：[en/vllm/blog/serving/semantic-router-amd.md](../../../../en/vllm/blog/serving/semantic-router-amd.md)  
 原文：https://vllm.ai/blog/2025-12-16-vllm-sr-amd  
-2025-12-16。署名 **The AMD and vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[signal-decision](semantic-router-signal.md)。分类核 LoRA：[modular](semantic-router-modular.md)。随后的现场 MoM：[mom-amd](semantic-router-mom-amd.md)。v0.1：[iris](semantic-router-iris.md)。后来 ROCm 变成一等 serve 路径：[athena](semantic-router-athena.md)。不要和引擎里的 [Router](router.md) 混。合作愿景文，kernel 数字少。Slack `#semantic-router`。
+2025-12-16。署名 **The AMD and vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[signal-decision](semantic-router-signal.md)。分类核 LoRA：[modular](semantic-router-modular.md)。随后的现场 MoM：[mom-amd](semantic-router-mom-amd.md)。v0.1：[iris](semantic-router-iris.md)。后来 ROCm 变成一等 serve 路径：[athena](semantic-router-athena.md)。不要和引擎里的 [Router](router.md) 混。合作愿景文，kernel 数字少。Slack `#semantic-router`。
 
 同目录还有：[halugate](halugate.md)、[themis](semantic-router-themis.md)、[session](semantic-router-session.md)、[mom](semantic-router-mom.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)、[vision](semantic-router-vision.md)。
 
 ## 引言
 
-过去几个月，AMD 和 vLLM SR 团队把 **vLLM Semantic Router (VSR)** 往 AMD GPU 上推——页上写成：不只拧性能，是在改 AI 系统架构怎么想。
+过去几个月，AMD 和 vLLM SR 团队把 **vLLM Semantic Router (VSR)** 往 AMD GPU 上推——页上写成：不只调性能，是在改 AI 系统架构怎么想。
 
 AMD 是 vLLM 的长期伙伴：引擎走 AMD GPU 和 ROCm™。这篇是下一层：**Mixture-of-Models (MoM) 的智能路由和治理**。栈从一只模型走到许多只，问题不再只是模型有多大，而是许多模型怎么聪明、安全地编排。VSR 被写成这一代的 **智能控制面**：按语义理解做路由、执法安全策略、系统往他们写的 AGI 级能力涨时仍维持信任。
 
@@ -112,7 +112,7 @@ VSR 坐在上面当决策布——语义相似、业务 metadata、延迟约束�
 
 ### 从模型导演到智力裁判
 
-和 AMD 一起，他们把演化改写成 **治理**：交通导演 → **Intelligence Control Plane**。不只在 AMD 硬件上拧吞吐和延迟。一层用职责而不是功能定义的 **宪制层**。
+和 AMD 一起，他们把演化改写成 **治理**：流量调度 → **Intelligence Control Plane**。不只在 AMD 硬件上调吞吐和延迟。一层用职责而不是功能定义的控制面。
 
 ### 三道必须守住的控制生命线
 
@@ -201,7 +201,7 @@ GPU 当 **路由基础设施自己的核验引擎**，不只给模型 serving。
 - **AMD：** Andy Luo、Haichen Zhang、AMD AIG 团队。
 - **vLLM SR：** Xunzhuo Liu、Huamin Chen、Chen Wang、Yue Zhu 和 OSS 团队。
 
-页上说后面几周、几个月还要继续拧优化。
+页上说后面几周、几个月还要继续做优化。
 
 ## 加入
 

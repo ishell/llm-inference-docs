@@ -1,8 +1,8 @@
 ---
 source: https://docs.vllm.ai/en/stable/
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vLLM 文档入口
@@ -10,20 +10,20 @@ fetched: 2026-09-05
 稳定版：https://docs.vllm.ai/en/stable/  ·  滚动：https://docs.vllm.ai/en/latest/  
 英文对照：[en/vllm/getting-started/index.md](../../../en/vllm/getting-started/index.md)
 
-文档首页。原页 logo 不收。不是官方译本。口号：**Easy, fast, and cheap LLM serving for everyone.**
+文档首页。原页上的 logo 不收录。不是官方译本。口号：**Easy, fast, and cheap LLM serving for everyone.**
 
-从 Berkeley Sky Computing Lab 长出来，页上写许多机构与公司、**2000+** 贡献者。按身份进门：
+项目从 Berkeley Sky Computing Lab 发展而来，页上写着许多机构与公司、**2000+** 贡献者。从这里开始：
 
 - 跑开源模型 → [Quickstart](quickstart.md)
 - 写应用 → 官方 User Guide（本库不镜像）
 - 改 vLLM → 官方 Developer Guide（本库不镜像）
 
-另点名：[roadmap.vllm.ai](https://roadmap.vllm.ai)、[GitHub releases](https://github.com/vllm-project/vllm/releases)。
+另外点名：[roadmap.vllm.ai](https://roadmap.vllm.ai)、[GitHub releases](https://github.com/vllm-project/vllm/releases)。
 
-## 快在哪里
+## 速度快在
 
 - 当时宣称的 serving 吞吐
-- **PagedAttention** 管 KV（[立项文](../blog/architecture/paged-attention.md)）
+- **PagedAttention** 管理 KV（[立项文](../blog/architecture/paged-attention.md)）
 - Continuous batching、chunked prefill、prefix caching
 - Piecewise 与 full CUDA/HIP graph
 - 量化：FP8、MXFP8/MXFP4、NVFP4、INT8、INT4、GPTQ/AWQ、GGUF、compressed-tensors、ModelOpt、TorchAO 等
@@ -33,7 +33,7 @@ fetched: 2026-09-05
 - `torch.compile` 生成 kernel 和改图
 - Prefill / Decode / Encode 可拆开
 
-## 活在哪里
+## 灵活之处
 
 - Hugging Face 模型
 - Parallel sampling、beam search 等解码
@@ -54,6 +54,6 @@ fetched: 2026-09-05
 - 安装 / 离线 / `vllm serve`：[quickstart.md](quickstart.md)
 - 服务端性能旗标（不是整页 CLI）：[serve.md](serve.md)
 - 调优顺序：[optimization.md](../optimization/optimization.md)
-- 客户端尺子：[cli.md](../benchmarking/cli.md) · 网格搜 batch：[auto-tune.md](../benchmarking/auto-tune.md)
-- 屋里的钟：[/metrics](../metrics/production-metrics.md) · 怎么算：[design-metrics.md](../metrics/design-metrics.md)
-- 功能：[APC](../features/prefix-caching.md) · [记账](../features/prefix-caching-design.md) · [投机解码](../features/speculative-decoding.md) · [V1](../features/v1-guide.md)
+- 客户端基准：[cli.md](../benchmarking/cli.md) · 网格搜 batch：[auto-tune.md](../benchmarking/auto-tune.md)
+- 服务端指标：[/metrics](../metrics/production-metrics.md) · 怎么算：[design-metrics.md](../metrics/design-metrics.md)
+- 功能：[APC](../features/prefix-caching.md) · [前缀缓存设计](../features/prefix-caching-design.md) · [投机解码](../features/speculative-decoding.md) · [V1](../features/v1-guide.md)

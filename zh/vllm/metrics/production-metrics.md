@@ -1,14 +1,14 @@
 ---
 source: https://docs.vllm.ai/en/stable/usage/metrics/
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 生产指标 — vLLM
 
 英文对照：[en/vllm/metrics/production-metrics.md](../../../en/vllm/metrics/production-metrics.md)  
-这些名字是**怎么算出来的**：`design-metrics.md`。客户端秒表（AIPerf / `vllm bench serve`）在门外；`/metrics` 在屋里。两套时钟可以对不齐，要对公式，不要对「都叫 TTFT」三个字母。
+这些名字是**怎么算出来的**：`design-metrics.md`。客户端测到的延迟（AIPerf / `vllm bench serve`）在服务进程之外；`/metrics` 是服务端自己报的。两套数字可以对不齐，要对公式，不要只看都叫 TTFT。
 
 OpenAI 兼容 API server 在 `/metrics` 暴露 Prometheus。
 
@@ -19,7 +19,7 @@ curl http://0.0.0.0:8000/metrics
 
 前缀一律 `vllm:`，带 `model_name` label。Histogram 的 bucket 还会改——仪表盘写死旧 bucket 时，过几个版本会看起来像指标坏了。
 
-## 和 SLO 最亲的
+## 最接近 SLO 的
 
 | 指标 | 类型 | 含义 |
 |---|---|---|
@@ -33,28 +33,28 @@ curl http://0.0.0.0:8000/metrics
 | `vllm:num_requests_running` | Gauge | 正在执行 |
 | `vllm:num_requests_waiting` | Gauge | 在等 |
 | `vllm:prefix_cache_hits` / `queries` | Counter | 前缀缓存命中 / 查询的 **token 数**（不是请求数） |
-| `vllm:num_preemptions` | Counter | 累计抢占。它往上爬，e2e 和 ITL 通常一起发抖 |
+| `vllm:num_preemptions` | Counter | 累计抢占。它往上爬时，e2e 和 ITL 通常一起变差 |
 | `vllm:generation_tokens` / `prompt_tokens` | Counter | 已处理的 decode / prefill token |
 
 仓库里有 Grafana 示例仪表盘。它画的那一子集就是官方眼里的「重要」：e2e、TTFT、ITL、KV%、running/waiting、token 直方图、排队 / prefill / decode 时间。先把这一子集接上，再去收藏完整表。
 
-完整表（投机解码计数、LoRA、并行、tokenizer 等）在原页，会随版本增减。复制一整张生成表进仓库，过三个月就是谎言。
+完整表（投机解码计数、LoRA、并行、tokenizer 等）在原页，会随版本增减。复制一整张生成表进仓库，过三个月就会对不上。
 
 ## Deprecation Policy
 
 `X.Y` 废弃的指标，在 `X.Y+1` **隐藏**，可用 `--show-hidden-metrics-for-version=X.Y` 再看见，到 `X.Y+2` **删除**。为什么要这么慢，见 [design-metrics.md](design-metrics.md)（`vllm:avg_prompt_throughput_toks_per_s` 删完才有人发现）。
 
-## 旁边几族
+## 相关几组
 
 - **投机解码**：接受长度、draft 率一类 counter。`vllm bench serve` 的 ITL/TPOT 分叉，在这里能看到引擎侧的对应物。
 - **NIXL KV 传输**：P/D 分离或跨实例 KV 时的直方图。Mooncake / connector 那几篇博客的运维面。
 - **MFU**：`--enable-mfu-metrics` 才开。默认关，因为算它要付成本。
-- **HTTP 层**：`prometheus_fastapi_instrumentator` 的 `http_requests_total` 等。那是门的次数，不是 token 的缝。
+- **HTTP 层**：`prometheus_fastapi_instrumentator` 的 `http_requests_total` 等。那是 HTTP 请求次数，不是 token 间隔。
 
-`--api-server-count > 1` 走 Prometheus multiprocess。进程级 `python_gc_*` / `process_*` 会消失。不是坏了，是记账换了房间。
+`--api-server-count > 1` 走 Prometheus multiprocess。进程级 `python_gc_*` / `process_*` 会消失。不是坏了，是改成多进程采集。
 
 ## 日志里那五行
 
-不必刮 Prometheus 也能看见天气。大约每 5 秒：running/waiting、GPU cache %、prompt/gen token/s、最近 1k block 的 prefix-cache hit rate。`vllm:cache_config_info` 把启动配置（block size、前缀缓存开关、`gpu_memory_utilization`…）当成 label 钉在那里，换配置等于换时间线。
+不必刮 Prometheus 也能看见当前状态。大约每 5 秒：running/waiting、GPU cache %、prompt/gen token/s、最近 1k block 的 prefix-cache hit rate。`vllm:cache_config_info` 把启动配置（block size、前缀缓存开关、`gpu_memory_utilization`…）当成 label 钉在那里，换配置等于换时间线。
 
-可选 `--kv-cache-metrics-sample`：block 寿命、驱逐前空闲、reuse 间隔。要问「KV 是不是在白住」，开这个，不要只盯占用百分比。
+可选 `--kv-cache-metrics-sample`：block 寿命、驱逐前空闲、reuse 间隔。若要看 KV 是否闲置，开这个，不要只盯占用百分比。

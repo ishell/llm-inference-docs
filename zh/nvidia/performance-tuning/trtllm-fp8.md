@@ -1,15 +1,15 @@
 ---
 source: https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/fp8-quantization.html
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-07
 ---
 
 # 第 5 章：FP8 量化
 
-把模型从 FP16/BF16 降到 FP8（或 int8），通常吞吐会涨、延迟会掉。税是质量。许多线上系统靠量化活着，但「可以接受」必须你自己验收，没有人能替你签字。背景仍是 `mastering-llm-techniques.md`。
+把模型从 FP16/BF16 降到 FP8（或 int8），通常吞吐会涨、延迟会掉。税是质量。许多线上系统靠量化活着，但「可以接受」必须我们自己验收，没有人能替我们签字。背景仍是 「mastering-llm-techniques.md」。
 
-FP8 需要算力 **> 8.9**：Ada、Hopper、Blackwell 以及更后面的卡。再往前的架构，这扇门是锁的。
+FP8 需要算力 **> 8.9**：Ada、Hopper、Blackwell 以及更后面的卡。再往前的架构，这项功能不可用。
 
 数字仍是演示。同一条 70B、四张 H100、2048/2048 的故事继续。
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
 ## FP8「基线」
 
-下面这组已经带了 multiple profiles、paged context，并且调过 max batch / max tokens——只是还没开那些专为量化准备的加料。官方把它叫做 FP8 baseline，方便对比后面每一勺调料。
+下面这组已经带了 multiple profiles、paged context，并且调过 max batch / max tokens——只是还没开那些专为量化准备的选项。官方把它叫做 FP8 baseline，方便对比后面每一项。
 
 | 指标 | Value |
 |---|---|
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 | Average TTFT (ms) | 96.1597 |
 | Average ITL (ms) | 12.4248 |
 
-对照上一章调完的 FP16（2474 tok/s、TTFT 148 ms）：光是换 FP8，吞吐已经换了一个档。第一个字也从将近 150 ms 掉到大约 96 ms。
+对照上一章调完的 FP16（2474 tok/s、TTFT 148 ms）：光是换 FP8，吞吐已经换了一个档。TTFT 也从将近 150 ms 掉到大约 96 ms。
 
 ## 量化 KV cache
 
@@ -88,7 +88,7 @@ CLI：`quantize.py --kv_cache_dtype fp8`
 | Average TTFT (ms) | 96.1597 | 97.1287 |
 | Average ITL (ms) | 12.4248 | 12.5496 |
 
-吞吐从 3389 到 5300。TTFT / ITL 几乎不动。房子变小了，同面积能住更多请求。
+吞吐从 3389 到 5300。TTFT / ITL 几乎不动。KV 变小了，同显存能装更多请求。
 
 ## Reduce-norm fusion + user buffers
 
@@ -137,7 +137,7 @@ build_config.plugin_config.low_latency_gemm_swiglu_plugin = "fp8"
 | Average TTFT (ms) | 82.2679 | 81.8841 |
 | Average ITL (ms) | 12.6975 | 11.7031 |
 
-单独开，这个案例几乎持平（吞吐落在方差里，ITL 略好）。但下一节的 low-latency GEMM **必须**配它，才能摸到峰值——单独开 low-latency GEMM 反而更差。旗标会打架。这就是为什么官方反复说：网格搜，不要只拧一只旋钮。
+单独开，这个案例几乎持平（吞吐落在方差里，ITL 略好）。但下一节的 low-latency GEMM **必须**配它，才能摸到峰值——单独开 low-latency GEMM 反而更差。旗标会打架。这就是为什么官方反复说：网格搜，不要只改一项。
 
 ## Low-latency GEMM plugin
 
@@ -158,7 +158,7 @@ CLI：`--low_latency_gemm_plugin=fp8`。若你还在传 `--gemm_plugin=fp8`，�
 | Average TTFT (ms) | 81.8841 | 88.0162 |
 | Average ITL (ms) | 11.7031 | 10.8225 |
 
-吞吐略涨，ITL 更好，TTFT 变差——decode 高兴，第一个字多等了一点。官方的解读：没有 SwiGLU fusion 时，这颗 plugin 可能给 SwiGLU 前那次 GEMM 选了更差的 kernel；fusion 把那次 GEMM 接走之后，剩下的 kernel 才比基线好。负载一变，故事会改。性能敏感的服务，值得把组合扫一遍。
+吞吐略涨，ITL 更好，TTFT 变差——decode 更好，TTFT 多等了一点。官方的解读：没有 SwiGLU fusion 时，这颗 plugin 可能给 SwiGLU 前那次 GEMM 选了更差的 kernel；fusion 把那次 GEMM 接走之后，剩下的 kernel 才比基线好。负载一变，结论会改。性能敏感的服务，值得把组合扫一遍。
 
 ## 和调过的 FP16 比
 
@@ -178,7 +178,7 @@ CLI：`--low_latency_gemm_plugin=fp8`。若你还在传 `--gemm_plugin=fp8`，�
 | Average TTFT (ms) | 96.1597 | 88.0162 | 8.47 |
 | Average ITL (ms) | 12.4248 | 10.8225 | 12.90 |
 
-token/s 相对调过的 FP16 大约 **+144%**，TTFT **−40%**，ITL **−26%**。税还是那句：质量必须你自己测。许多真实部署付得起这点税；付不起的那些，会在第一轮评测里被抓出来。
+token/s 相对调过的 FP16 大约 **+144%**，TTFT **−40%**，ITL **−26%**。税还是那句：质量必须我们自己测。许多真实部署付得起这点税；付不起的那些，会在第一轮评测里被抓出来。
 
 ### 建议
 

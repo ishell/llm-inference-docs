@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-09-05-anatomy-of-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 走进 vLLM：一套高吞吐推理系统的解剖
@@ -12,23 +12,23 @@ fetched: 2026-09-05
 
 副题原文：From paged attention, continuous batching, prefix caching, specdec, etc. to multi-GPU, multi-node dynamic serving at scale.
 
-这篇会把一套现代高吞吐 LLM 推理系统的核心零件和进阶功能，一层一层请上台。具体拆的是 vLLM [[1]](#ref-1) 怎么干活。它是系列的第一篇：倒金字塔——先给整栋房子的心智模型，再往细节里走，免得一上来淹死在签名里。后面的博文会把子系统再拉近。
+这篇会把一套现代高吞吐 LLM 推理系统的核心零件和进阶功能，一层一层讲清楚。具体拆的是 vLLM [[1]](#ref-1) 怎么工作。它是系列的第一篇：倒金字塔——先建立整套系统的高层理解，再进入细节，免得一开始就陷进实现细节。后面的博文会把子系统再拉近。
 
 五部：
 
 1. [LLM engine / Engine Core](#llm-engine-与-engine-core)：调度、paged attention、continuous batching
-2. [进阶](#进阶在核心上长出来的房间)：chunked prefill、prefix cache、guided decoding、投机解码、分离的 P/D
+2. [进阶](#进阶在核心上长出来的部分)：chunked prefill、prefix cache、guided decoding、投机解码、分离的 P/D
 3. [从 UniProc 到 MultiProc](#从-uniproc-到-multiproc)：单卡到多卡
 4. [分布式 serving](#分布式-serving)：网上那层脚手架
 5. [怎么量](#延迟-vs-吞吐)：延迟 vs 吞吐、`vllm bench`、auto-tune
 
-分析基于 commit [`42172ad`](https://github.com/vllm-project/vllm/tree/42172ad)（2025-08-09）。读者：想弄懂现代 LLM 引擎的人，以及想给 vLLM / SGLang 提 PR 的人。焦点是 [V1](https://docs.vllm.ai/en/latest/usage/v1_guide.html)。作者也摸过现已 [废弃](https://github.com/vllm-project/vllm/issues/18571) 的 V0，许多想法还在。Engine Core 那一节会干一点；后面有例子和图。V0 弃用之后类名还会改；强调想法，不强调签名。结构草图仍是原文附图（字段名就是源码）；讲机制的换成学习图。
+分析基于 commit [`42172ad`](https://github.com/vllm-project/vllm/tree/42172ad)（2025-08-09）。读者：想弄懂现代 LLM 引擎的人，以及想给 vLLM / SGLang 提 PR 的人。焦点是 [V1](https://docs.vllm.ai/en/latest/usage/v1_guide.html)。作者也摸过现已 [废弃](https://github.com/vllm-project/vllm/issues/18571) 的 V0，许多想法还在。Engine Core 那一节可能偏干；后面有例子和图。V0 弃用之后类名还会改；强调想法，不抠精确的函数签名。结构草图仍是原文附图（字段名就是源码）；讲机制的换成学习图。
 
 ## LLM Engine 与 Engine Core
 
-Engine 自己已经能做高吞吐推理，但只在离线世界里。还不能把窗口开给互联网上那个正在等第一个字的人。
+Engine 自己已经能做高吞吐推理，但只适合离线场景，还不能通过网络对外提供服务。
 
-离线例子（改编自 `basic.py`）。环境变量：`VLLM_USE_V1=1`，并 `VLLM_ENABLE_V1_MULTIPROCESSING=0`，好把整台机器看成一个同步、单 GPU、标准 Transformer 的玩具宇宙（DP/TP/PP/EP = 1）。混合模型（Jamba 一类）需要更复杂的 KV 分配器，这篇先不把那扇门打开。
+离线例子（改编自 `basic.py`）。环境变量：`VLLM_USE_V1=1`，并 `VLLM_ENABLE_V1_MULTIPROCESSING=0`，好把整台机器看成一个同步、单 GPU、标准 Transformer 的最小配置（DP/TP/PP/EP = 1）。混合模型（Jamba 一类）需要更复杂的 KV 分配器，这篇先不展开。
 
 ```python
 from vllm import LLM, SamplingParams
@@ -53,28 +53,28 @@ if __name__ == "__main__":
 
 四样东西：
 
-- **vLLM config**：所有旋钮（模型、cache、并行）。
-- **processor**：原始输入 → 校验、tokenize、处理 → `EngineCoreRequest`。
-- **engine core client**：玩具例子里是 `InprocClient`（几乎等于 EngineCore 本人）；长大以后会变成能在规模上 serving 的 `DPLBAsyncMPClient`。
-- **output processor**：`EngineCoreOutputs` → 用户看见的 `RequestOutput`。
+- **vLLM config**：所有配置（模型、cache、并行）。
+- **processor**：原始输入 → 校验、tokenize、处理 → EngineCoreRequest。
+- **engine core client**：这个最小例子里是 InprocClient（几乎等于 EngineCore 本人）；规模上来以后会变成能在规模上 serving 的 DPLBAsyncMPClient。
+- **output processor**：EngineCoreOutputs → 用户看见的 RequestOutput。
 
 Engine core 内部：
 
-- **Model Executor**：驱动 forward。现在是单进程单卡的 `UniProcExecutor`（一个 Worker、一块 GPU）；多卡是 `MultiProcExecutor`。
+- **Model Executor**：驱动 forward。现在是单进程单卡的 UniProcExecutor（一个 Worker、一块 GPU）；多卡是 MultiProcExecutor。
 - **Structured Output Manager**：guided decoding 用。
-- **Scheduler**：决定下一步谁上场。策略 FCFS 或 priority；有 `waiting` / `running` 队列；心里揣着 **KV cache manager**——paged attention 的心脏。
+- **Scheduler**：决定下一步谁上场。策略 FCFS 或 priority；有 `waiting` / `running` 队列；并持有 **KV cache manager**——paged attention 的核心。
 
-KV cache manager 维护 `free_block_queue`：一大池空闲块（量级可以到几十万，取决于显存和 block size）。Paged attention 用这些块当索引：token 住在哪一间房间。
+KV cache manager 维护 `free_block_queue`：一大池空闲块（量级可以到几十万，取决于显存和 block size）。Paged attention 用这些块当索引：token 存在哪一块里。
 
 ![engine constructor](../../../../assets/vllm/blog/architecture/anatomy/01-engine_constructor.png)
 
-**Figure 1（原文）。** 这一节的核心零件，以及它们怎么互相说话。
+**Figure 1（原文）。** 这一节的核心零件，以及它们之间的关系。
 
 标准 Transformer 一层（非 MLA）一块的大小大致是：
 
 `2 (K/V) × block_size(默认 16) × num_kv_heads × head_size × dtype 字节数`（bf16 则 dtype 为 2）
 
-Worker 起来时做三件事（`MultiProcExecutor` 里每个 GPU 进程各做一遍）：
+Worker 起来时做三件事（MultiProcExecutor 里每个 GPU 进程各做一遍）：
 
 **1. Init device**
 
@@ -82,7 +82,7 @@ Worker 起来时做三件事（`MultiProcExecutor` 里每个 GPU 进程各做一
 - 按 `gpu_memory_utilization`（如 0.8 → 80%）看显存够不够
 - 设分布式（DP / TP / PP / EP）
 - 建 `model_runner`（sampler、KV、forward 缓冲：`input_ids`、`positions` …）
-- 建 `InputBatch`（CPU 侧缓冲、KV 的 block table、采样元数据）
+- 建 InputBatch（CPU 侧缓冲、KV 的 block table、采样元数据）
 
 **2. Load model**
 
@@ -90,21 +90,21 @@ Worker 起来时做三件事（`MultiProcExecutor` 里每个 GPU 进程各做一
 
 **3. Initialize KV cache**
 
-- 按层取 KV spec。历史上全是 `FullAttentionSpec`；混合模型（sliding window、Transformer/SSM 如 Jamba）之后变复杂，见 Jenga
+- 按层取 KV spec。历史上全是 FullAttentionSpec；混合模型（sliding window、Transformer/SSM 如 Jamba）之后变复杂，见 Jenga
 - dummy / profiling forward，按显存快照算能放多少块
 - 分配、reshape、绑到 attention；准备 metadata（如 FlashAttention backend）
-- 除非 `--enforce-eager`，对每个 warmup batch 跑一遍并捕获 CUDA graph。CUDA graph 把 GPU 工作烤成一张 DAG，之后 replay，少付 kernel launch 的税
+- 除非 `--enforce-eager`，对每个 warmup batch 跑一遍并捕获 CUDA graph。CUDA graph 把 GPU 工作预先录成一张 DAG，之后 replay，少付 kernel launch 的税
 
 ### generate
 
 每个 prompt：
 
-1. 发一张身份证（request id）和到达时间
+1. 生成唯一 request id，记下到达时间
 2. preprocessor tokenize，得到 `prompt`、`prompt_token_ids`、`type`（text / tokens / embeds …）
-3. 打成 `EngineCoreRequest`（priority、sampling params、其它元数据）
-4. Engine core 包成 `Request`，状态 `WAITING`，进入 scheduler 的 waiting 队列（FCFS 追加，priority 则堆进去）
+3. 打成 EngineCoreRequest（priority、sampling params、其它元数据）
+4. Engine core 包成 Request，状态 `WAITING`，进入 scheduler 的 waiting 队列（FCFS 追加，priority 则堆进去）
 
-同步引擎吃进这批 prompt 就关门。异步引擎每一步之后都再看有没有新人——这就是 **continuous batching**：戏开演以后仍允许进场。Forward 把 batch 压成一条超长序列、自定义 kernel 自己会认人，所以连续组 batch 在同步引擎里其实已经埋着。
+同步引擎吃进这批 prompt 就不再接收新请求。异步引擎每一步之后都再看有没有新请求——这就是 **continuous batching**：推理开始以后仍允许加入。Forward 把 batch 压成一条超长序列，自定义 kernel 能高效处理，所以连续组 batch 在同步引擎里其实已经埋着。
 
 只要还有活，引擎就 `step()`：
 
@@ -115,7 +115,7 @@ Worker 起来时做三件事（`MultiProcExecutor` 里每个 GPU 进程各做一
 停下的理由：
 
 - 超了 `max_model_length` / 自己的 `max_tokens`
-- 采到 EOS（除非 `ignore_eos`——benchmark 时我们常强迫它把话说到钟响）
+- 采到 EOS（除非 `ignore_eos`——benchmark 时我们常强制生成固定数量的输出 token）
 - 命中 `stop_token_ids`（会留在输出里）
 - 输出里出现 stop string（截到第一次出现并中止；stop string 自己不会留在输出里）
 
@@ -128,9 +128,9 @@ Worker 起来时做三件事（`MultiProcExecutor` 里每个 GPU 进程各做一
 两种活：
 
 1. **Prefill**：对全部 prompt token 做一次 forward，通常 compute-bound（阈值随硬件和 prompt 长度变）。最后在末位采样一个 token。
-2. **Decode**：只对最新那个 token forward，以前的 KV 已经住在 cache 里。通常 memory-bandwidth-bound：为了一个字，仍要搬来整栋权重和 KV。
+2. **Decode**：只对最新那个 token forward，以前的 KV 已经缓存在 cache 里。通常 memory-bandwidth-bound：为了算出一个 token，仍要把全部权重和 KV 搬进来。
 
-V1 能在同一步里混着做。V0 一次只能选一种——像一条一次只能开一列车厢的轨道。
+V1 能在同一步里混着做。V0 一次只能选一种——要么 prefill，要么 decode。
 
 调度**优先 running 里的 decode**：算本步要几个新 token（不一定是 1，因为有 speculative 和 async scheduling）→ `allocate_slots` → 从 token 预算里扣掉。然后再从 waiting 里拿 prefill：看有多少 **computed blocks**（没开 prefix cache 就是 0）→ allocate → 从 waiting 挪到 running，状态 `RUNNING` → 扣预算。
 
@@ -152,19 +152,19 @@ V1 能在同一步里混着做。V0 一次只能选一种——像一条一次�
 4. 取出每条序列最后一位的 hidden state，算 logits
 5. 按 greedy / temperature / top-p / top-k 采样
 
-两种走法：eager（普通 PyTorch）；captured（replay 启动时烤好的 CUDA graph）。
+两种走法：eager（普通 PyTorch）；captured（replay 启动时录好的 CUDA graph）。
 
 ![fwd pass](../../../../assets/vllm/blog/architecture/anatomy/04-fwd_pass.png)
 
-## 进阶：在核心上长出来的房间
+## 进阶：在核心上长出来的部分
 
 已经有了：抢占、paged attention、continuous batching。还要讲：chunked prefill、prefix cache、guided decoding、投机解码、分离的 P/D。
 
 ### Chunked prefill
 
-长 prompt 若一次 prefill 吃完整步预算，会独占一个 engine step，把别人的 TTFT 按在地板上。切成每块 n 个 token。例如每块 8 个，长 prompt `P` 写成 `x-y-z`（`z` 可能不满一块），完整 prefill 至少 3 个 engine step（中间还可能排不上），只在最后一块才采样新 token。
+长 prompt 若一次 prefill 吃完整步预算，会独占一个 engine step，推迟其他请求，拉高它们的 TTFT。切成每块 n 个 token。例如每块 8 个，长 prompt `P` 写成 `x-y-z`（`z` 可能不满一块），完整 prefill 至少 3 个 engine step（中间还可能排不上），只在最后一块才采样新 token。
 
-实现上就是 cap 每步新 token；超过 `long_prefill_token_threshold` 就截成这么多。底层索引前面已经讲过。V1 里把它设成正整数即开。prompt 超过 token 预算时，即使你没设，也会被截成 chunked prefill。这是礼貌：长客人也要给别人留座位。
+实现上就是 cap 每步新 token；超过 `long_prefill_token_threshold` 就截成这么多。底层索引前面已经讲过。V1 里把它设成正整数即开。prompt 超过 token 预算时，即使我们没设，也会被截成 chunked prefill。长 prompt 也要给别的请求留出本步预算。
 
 ![Chunked prefill](../../../../assets/vllm/blog/architecture/anatomy/zh/01-chunked-prefill.png)
 
@@ -198,10 +198,10 @@ if __name__ == "__main__":
 第一次 `generate`，调度里 `kv_cache_manager.get_computed_blocks` 会调 `hash_request_tokens`：
 
 1. 把 `long_prefix + prompts[0]` 切成 16-token 的块
-2. 每块完整才算 hash（内置 hash，或更慢、更少碰撞的 SHA-256）：上一块的 hash + 本块 token + 可选元数据（多模态 hash、LoRA id、**cache salt**——打进第一块，只有对上暗号的请求才能复用）
-3. 得到一串 `BlockHash`（hash + token IDs），记进 `self.req_to_block_hashes[request_id]`
+2. 每块完整才算 hash（内置 hash，或更慢、更少碰撞的 SHA-256）：上一块的 hash + 本块 token + 可选元数据（多模态 hash、LoRA id、**cache salt**——打进第一块，只有带同一 cache salt 的请求才能复用这些块）
+3. 得到一串 BlockHash（hash + token IDs），记进 `self.req_to_block_hashes[request_id]`
 
-`find_longest_cache_hit` 第一次当然扑空。然后 `allocate_slots` → `coordinator.cache_blocks`，把新 hash 和分配到的块登记进 `cached_block_hash_to_block`。Forward 把 KV 写进这些房间。前缀在 `long_prefix` 之后立刻分叉，后面再分配的块与本例无关。
+`find_longest_cache_hit` 第一次当然扑空。然后 `allocate_slots` → `coordinator.cache_blocks`，把新 hash 和分配到的块登记进 `cached_block_hash_to_block`。Forward 把 KV 写进这些块。前缀在 `long_prefix` 之后立刻分叉，后面再分配的块与本例无关。
 
 ![prefix pt1](../../../../assets/vllm/blog/architecture/anatomy/06-prefix_pt1.png)
 
@@ -211,11 +211,11 @@ if __name__ == "__main__":
 
 ![prefix pt3](../../../../assets/vllm/blog/architecture/anatomy/08-prefix_pt3.png)
 
-原请求若还活着，引用计数 +1。若已结束，块曾还回池子、计数归零，但 hash 表里仍认得出它们，于是再从 `free_block_queue` 请回来。
+原请求若还活着，引用计数 +1。若已结束，块曾还回池子、计数归零，但 hash 表里仍认得出它们，于是再从 `free_block_queue` 取出来。
 
-块真正作废，是它将要被从队列**左边**重新分配、却发现身上还挂着旧 hash、并且仍在 `cached_block_hash_to_block` 里的时候——那时才擦掉，免得把别人的记忆错当成你的。
+块真正作废，是它将要被从队列**左边**重新分配、却发现身上还挂着旧 hash、并且仍在 `cached_block_hash_to_block` 里的时候——那时才擦掉，免得旧前缀再被 prefix cache 复用。
 
-Prefix cache **只加速 prefill，不加速 decode**。默认开。关掉：`enable_prefix_caching=False`。若你读懂了这段，你也读懂了 paged attention：记忆按页出租，而不是按整幢楼。
+Prefix cache **只加速 prefill，不加速 decode**。默认开。关掉：`enable_prefix_caching=False`。若我们读懂了这段，也就读懂了 paged attention：KV 按块分配和复用，而不是为整条序列预留一整段连续显存。
 
 ### Guided decoding（FSM）
 
@@ -240,13 +240,13 @@ if __name__ == "__main__":
     main()
 ```
 
-玩具（假设按字符切）：prefill 后只允许 P 或 N；抽到 P 就走进 Positive 那条走廊，下一步只许 o。
+最小例子（假设按字符切）：prefill 后只允许 P 或 N；抽到 P 就进入 Positive 那条路径，下一步只许 o。
 
 ![fsm](../../../../assets/vllm/blog/architecture/anatomy/09-fsm.png)
 
 引擎里：
 
-1. 构造时建 `StructuredOutputManager`（拿得到 tokenizer），维护 `_grammar_bitmask`
+1. 构造时建 StructuredOutputManager（拿得到 tokenizer），维护 `_grammar_bitmask`
 2. 新请求状态先是 `WAITING_FOR_FSM`；`grammar_init` 选后端编译器（如 xgrammar，第三方代码）
 3. 文法异步编译
 4. 调度时：编完才改成 `WAITING`，并把 `request_id` 放进 `structured_output_request_ids`；没编完就进 `skipped_waiting_requests`，下一步再试
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
 ### Speculative decoding
 
-自回归里，每个新 token 都要大模型完整走一轮——batch=1 时，为了一个字搬来全部权重（一般是 batch `B`）。小 draft 先廉价猜 `k` 个字；我们最终不要从小模型采样，它只负责猜。
+自回归里，每个新 token 都要大模型完整走一轮——batch=1 时，为了一个 token 搬来全部权重（一般是 batch `B`）。小 draft 先廉价猜 `k` 个 token；我们最终不要从小模型采样，它只负责猜。
 
 1. Draft：小模型在当前 context 上提出 `k` 个 token
 2. Verify：大模型对 context + `k` 个草案跑一次，得到这 `k` 个位置的分布，外加白送的第 `k+1` 个
@@ -270,7 +270,7 @@ if __name__ == "__main__":
    - 大模型对该草案的概率 ≥ draft 的概率 → 接受
    - 否则以 `p_large(token)/p_draft(token)` 接受
    - 在第一处拒绝处停下，或收下全部 `k` 个
-   - 若 `k` 个全收下，再从已经算好的第 `k+1` 个分布「白嫖」一个
+   - 若 `k` 个全收下，再从已经算好的第 `k+1` 个分布免费采一个
    - 若有拒绝：在该位置用 `p_large - p_draft`（夹到 ≥0 再归一化）重采样最后一个
 
 期望上，序列的分布仍等于只从大模型采样。统计上诚实，工程上可能更快。作者建议看 gpt-fast 的实现和原论文的证明。
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 原文写 V1 当时不走「另训一个小 LLM 当 draft」，而用更快、更糙的提案：n-gram、EAGLE、Medusa。
 
 - **n-gram**：取最近 `prompt_lookup_max` 个 token，在序列里找旧匹配；命中就用匹配后面的 `k` 个当草案，否则把窗口收到 `prompt_lookup_min`。当时实现取的是**第一次**匹配后面的 `k` 个；作者觉得按新近度反向搜更自然
-- **EAGLE**：给大模型做手术，留下 embedding 和 LM head，用轻量 MLP 当 draft
+- **EAGLE**：对大模型做模型手术（原文 model surgery），留下 embedding 和 LM head，用轻量 MLP 当 draft
 - **Medusa**：在 LM head 前加辅助线性头，并行猜后面 `k` 步
 
 n-gram 在 vLLM 里：
@@ -309,7 +309,7 @@ if __name__ == "__main__":
     main()
 ```
 
-构造时：init device 建 `drafter`（如 `NgramProposer`）和 `rejection_sampler`（部分 Triton）；load model 时加载 draft 权重（n-gram 是空操作）。
+构造时：init device 建 `drafter`（如 NgramProposer）和 `rejection_sampler`（部分 Triton）；load model 时加载 draft 权重（n-gram 是空操作）。
 
 新请求的 `generate`：
 
@@ -329,9 +329,9 @@ if __name__ == "__main__":
 
 ### 分离的 Prefill / Decode
 
-Prefill 吃算力，decode 吃带宽。拆开以后，TTFT 和 ITL 才能被两只手分别按住（原文偶发写成 `TFTT`，就是 TTFT）。实践中 N 个 prefill 实例、M 个 decode 实例，按实时请求配比伸缩。Prefill 把 KV 写到专门的 KV 服务，decode 来读。长而爆发的 prefill，不再踩着对延迟敏感的 decode 的脚。
+Prefill 吃算力，decode 吃带宽。拆开以后，TTFT 和 ITL 才能被分别更紧地控制（原文偶发写成 `TFTT`，就是 TTFT）。实践中 N 个 prefill 实例、M 个 decode 实例，按实时请求配比伸缩。Prefill 把 KV 写到专门的 KV 服务，decode 来读。长而突发的 prefill，不再拖累对延迟敏感的 decode。
 
-Connector 是交换 KV 的抽象，接口当时仍不稳，近期改动可能不兼容。文中用 `SharedStorageConnector` 讲机制（调试用；「外部服务」其实是本地文件系统）。生产里更快的是 LMCache / NIXL，作者写文时仍觉得它在刀刃上，所以讲解用文件系统版。
+Connector 是交换 KV 的抽象，接口当时仍不稳，近期改动可能不兼容。文中用 SharedStorageConnector 讲机制（调试用；「外部服务」其实是本地文件系统）。生产里更快的是 LMCache / NIXL，作者写文时仍觉得它处在最前沿、还不稳，所以讲解用文件系统版。
 
 两张卡：GPU 0 prefill，GPU 1 decode。
 
@@ -405,7 +405,7 @@ vLLM 里的步骤：
 
 单卡装不下权重：先同机 TP（例如 `TP=8`）；还不够再跨节点 PP。机内带宽远高于机间，所以一般先 TP。PP 通信量更小，但延迟性格不同。这篇不展开 EP 与 sequence parallel。
 
-需要多 GPU 进程和一层编排——就是 `MultiProcExecutor`。
+需要多 GPU 进程和一层编排——就是 MultiProcExecutor。
 
 ![multiprocexecutor](../../../../assets/vllm/blog/architecture/anatomy/14-multiprocexecutor.png)
 
@@ -418,7 +418,7 @@ vLLM 里的步骤：
 7. worker busy loop：`rpc_broadcast_mq.dequeue` → 干活（带上 TP/PP 分片）→ `worker_response_mq.enqueue`
 8. 运行时父进程非阻塞地把活广播进 `rpc_broadcast_mq`，再在指定 output rank 上 `dequeue` 收最终结果
 
-引擎看来只是又一次 `execute_model`：单卡直接调 worker，多卡经广播队列间接调每一个人。再往外是 DP>1、协调层、负载均衡、前面再站一个或多个 API server。
+引擎看来只是又一次 `execute_model`：单卡直接调 worker，多卡经广播队列间接调每一个人。再往外是 DP>1、协调层、负载均衡，前面再放一个或多个 API server。
 
 ## 分布式 serving
 
@@ -455,14 +455,14 @@ vllm serve <model-name>
 
 ### Headless 节点
 
-`CoreEngineProcManager` 按 `--data-parallel-size-local` 起 2 个进程，各跑 `EngineCoreProc.run_engine_core`，造出 `DPEngineCoreProc`，进入 busy loop。
+CoreEngineProcManager 按 `--data-parallel-size-local` 起 2 个进程，各跑 `EngineCoreProc.run_engine_core`，造出 DPEngineCoreProc，进入 busy loop。
 
-`DPEngineCoreProc` 初始化父类 `EngineCoreProc`（`EngineCore` 的孩子）：
+DPEngineCoreProc 初始化父类 EngineCoreProc（EngineCore 的孩子）：
 
 1. `input_queue` / `output_queue`
 2. 用 ZMQ `DEALER` 和另一台的 frontend 握手，拿到协调地址
 3. 初始化 DP group（如 NCCL）
-4. 用 `MultiProcExecutor`（这里 TP=4）初始化 `EngineCore`
+4. 用 MultiProcExecutor（这里 TP=4）初始化 EngineCore
 5. `ready_event`
 6. 后台线程：`process_input_sockets`；再起 output 线程
 7. 主线程等到**两台机器四个进程**的 input 线程都握完手，才 `ready_event.set()`
@@ -472,30 +472,30 @@ vllm serve <model-name>
 稳态：
 
 - **Input 线程**：堵在 input socket 上；API 路由过来的请求解码后 `input_queue.put_nowait`
-- **主线程**：`input_queue.get` → 喂给引擎；`MultiProcExecutor` 跑完把结果放进 `output_queue`
+- **主线程**：`input_queue.get` → 喂给引擎；MultiProcExecutor 跑完把结果放进 `output_queue`
 - **Output 线程**：`output_queue.get` → 送回 API server
 
-另外：DP **wave** 计数（全员空闲就静下来，新活来了计数 +1）；API 还可以发 abort 和控制 RPC；**dummy step**：任一 replica 有活，所有 replica 都要走一步 forward——没请求的人做空步，以免在同步点把有活的人堵住。作者说明：这其实是 MoE 上 expert 层组成 EP/TP、attention 仍是 DP 时才必须的；现在 DP 一律这么做，是因为非 MoE 的内置 DP 用处有限——你完全可以起多份独立 vLLM，自己做负载均衡。
+另外：DP **wave** 计数（全员空闲就静下来，新活来了计数 +1）；API 还可以发 abort 和控制 RPC；**dummy step**：任一 replica 有活，所有 replica 都要走一步 forward——没请求的人做空步，以免在同步点把有活的 replica 堵住。作者说明：这其实是 MoE 上 expert 层组成 EP/TP、attention 仍是 DP 时才必须的；现在 DP 一律这么做，是因为非 MoE 的内置 DP 用处有限——我们完全可以起多份独立 vLLM，自己做负载均衡。
 
 ![dpenginecoreproc](../../../../assets/vllm/blog/architecture/anatomy/16-dpenginecoreproc.png)
 
 ### API server 节点
 
-实例化 `AsyncLLM`（asyncio 包着引擎），内部是 `DPLBAsyncMPClient`（data-parallel、load-balancing、异步、多进程）。
+实例化 AsyncLLM（asyncio 包着引擎），内部是 DPLBAsyncMPClient（data-parallel、load-balancing、异步、多进程）。
 
-`MPClient.launch_core_engines`：建握手用的 ZMQ 地址、起 `DPCoordinator` 进程、再起一个 `CoreEngineProcManager`（和 headless 那侧一样）。
+`MPClient.launch_core_engines`：建握手用的 ZMQ 地址、起 DPCoordinator 进程、再起一个 CoreEngineProcManager（和 headless 那侧一样）。
 
-`AsyncMPClient`：`outputs_queue`（`asyncio.Queue`）；asyncio 任务 `process_outputs_socket` 跟四个 `DPEngineCoreProc` 的 output 线程说话，写入队列；`AsyncLLM` 的 `output_handler` 再读队列，送到 `create_completion`。
+AsyncMPClient：`outputs_queue`（`asyncio.Queue`）；asyncio 任务 `process_outputs_socket` 跟四个 DPEngineCoreProc 的 output 线程说话，写入队列；AsyncLLM 的 `output_handler` 再读队列，送到 `create_completion`。
 
-`DPAsyncMPClient` 还有 `run_engine_stats_update_task` 跟 DP coordinator 说话。Coordinator：定期把队列长度、waiting/running 发给 frontend；处理 frontend 的 `SCALE_ELASTIC_EP`（动态改引擎个数，当时只支持 Ray backend）；把 `START_DP_WAVE` 发给 backend，再把 wave 状态报回去。
+DPAsyncMPClient 还有 `run_engine_stats_update_task` 跟 DP coordinator 说话。Coordinator：定期把队列长度、waiting/running 发给 frontend；处理 frontend 的 `SCALE_ELASTIC_EP`（动态改引擎个数，当时只支持 Ray backend）；把 `START_DP_WAVE` 发给 backend，再把 wave 状态报回去。
 
-Frontend（`AsyncLLM`）上的 asyncio 任务（并发，不是并行）：
+Frontend（AsyncLLM）上的 asyncio 任务（并发，不是并行）：
 
 - 每个客户端请求一条 `generate` 路径
 - `process_outputs_socket` / `output_handler` 处理引擎回来的输出
 - `run_engine_stats_update_task`：发 wave、拉 LB 状态、处理动态伸缩
 
-主进程再挂 FastAPI：`OpenAIServingCompletion` / `OpenAIServingChat`，`/completion`、`/chat/completion`，Uvicorn 对外。
+主进程再挂 FastAPI：OpenAIServingCompletion / OpenAIServingChat，`/completion`、`/chat/completion`，Uvicorn 对外。
 
 一次 `curl` 的一生：
 
@@ -513,33 +513,33 @@ curl -X POST http://localhost:8000/v1/completions -H "Content-Type: application/
 3. `AsyncLLM.generate` → `DPAsyncMPClient.add_request_async`
 4. `get_core_engine_for_request` 按 coordinator 状态选人：`score = len(waiting) * 4 + len(running)`，挑分数最低的
 5. `ADD` 送到那台引擎的 `input_socket`
-6. 该引擎：input 线程解码放进 `input_queue`；主线程反复 `engine_core.step()`（就是前面的 scheduler + 可能是 `MultiProcExecutor`），中间结果进 `output_queue`，直到停止；output 线程从 socket 送回
-7. `AsyncLLM` 的输出任务把 token 推回 FastAPI
-8. FastAPI 附上 finish reason、logprobs、usage，Uvicorn 给你 `JSONResponse`
+6. 该引擎：input 线程解码放进 `input_queue`；主线程反复 `engine_core.step()`（就是前面的 scheduler + 可能是 MultiProcExecutor），中间结果进 `output_queue`，直到停止；output 线程从 socket 送回
+7. AsyncLLM 的输出任务把 token 推回 FastAPI
+8. FastAPI 附上 finish reason、logprobs、usage，Uvicorn 给我们 `JSONResponse`
 
 加更多 API server 时，负载均衡发生在 OS/socket 层，应用几乎无感。Ray 做 DP backend 时，可以暴露 `/scale_elastic_ep` 自动加减 replica。
 
 ## 延迟 vs 吞吐
 
-此前拆的是分子。现在问整座城市：怎样量一套推理系统？
+此前拆的是内部细节（原文用气体分子作比）。现在把镜头拉开，看整套系统：怎样量一套推理系统？
 
 ![一次请求上的三把尺子](../../../../assets/nvidia/benchmarking/blog-01-fundamental-concepts/zh/01-ttft-itl-generation.png)
 
 两个互相拉扯的量：
 
-1. **Latency** — 从提交到字回来。交互式应用里，人在等。
-2. **Throughput** — 每秒多少 token / 请求。离线造数据、清洗、批推理里，机器在等。
+1. **Latency** — 从提交到 token 回来。交互式应用里，用户在等回复。
+2. **Throughput** — 每秒多少 token / 请求。离线造数据、清洗、批推理里，关键是单位时间处理多少。
 
 | 指标 | 含义 |
 |---|---|
 | TTFT | 提交 → 第一个输出 token |
 | ITL | 相邻两个输出 token 之间 |
 | TPOT | 一次请求里 ITL 的平均 |
-| e2e | TTFT + 所有 ITL，或提交到最后一字 |
+| e2e | TTFT + 所有 ITL，或提交到最后一个输出 token |
 | Throughput | token/秒或请求/秒 |
-| Goodput | **仍满足 SLO** 的那部分吞吐。破了 TTFT/TPOT/e2e 预算的 token，不算你赢了 |
+| Goodput | **仍满足 SLO** 的那部分吞吐。破了 TTFT/TPOT/e2e 预算的 token，不算达标 |
 
-简化模型（假设权重 I/O 主导、序列短）：decode 一步的 batch `B` 往 1 降，ITL 降，字不再跟人挤；`B` 往无穷升，ITL 升，但权重搬运被更多 token 摊薄，吞吐升到屋顶。Roofline：低于饱和 batch `B_sat`，步时被 HBM 带宽按住（一层一层把权重灌进片上），算 1 个和 10 个 token 可能差不多久；超过以后变 compute-bound，步时近似随 B 涨。
+简化模型（假设权重 I/O 主导、序列短）：decode 一步的 batch `B` 往 1 降，ITL 降，这个 token 不再和其他 token 争资源；`B` 往无穷升，ITL 升，但权重搬运被更多 token 摊薄，吞吐升到峰值。Roofline：低于饱和 batch `B_sat`，步时被 HBM 带宽按住（一层一层把权重灌进片上），算 1 个和 10 个 token 可能差不多久；超过以后变 compute-bound，步时近似随 B 涨。
 
 ![Roofline](../../../../assets/vllm/blog/architecture/anatomy/zh/05-roofline.png)
 
@@ -565,9 +565,9 @@ vllm bench latency
 
 CI 配置在 `.buildkite/nightly-benchmarks/tests`。还有 auto-tune：驱动 serve benchmark，找满足 SLO 的参数（例如「p99 e2e < 500 ms 的前提下最大吞吐」）。
 
-## 收场
+## 结语
 
-从 `UniProcExecutor` 出发，加上 spec decode 与 prefix cache，放大到 `MultiProcExecutor`（TP/PP>1），再异步、再分布式，最后问系统怎么量。
+从 UniProcExecutor 出发，加上 spec decode 与 prefix cache，放大到 MultiProcExecutor（TP/PP>1），再异步、再分布式，最后问系统怎么量。
 
 作者略过、几乎可以当插件看的还有：TPU / AWS Neuron；MLA、MoE、encoder-decoder（Whisper）、pooling/embedding、EPLB、m-RoPE、LoRA、ALiBi、attention-free、sliding window、多模态、Mamba/Mamba-2/Jamba；TP/PP/SP；混合 KV（Jenga）、beam sampling；实验性 async scheduling。实践里会有耦合。
 

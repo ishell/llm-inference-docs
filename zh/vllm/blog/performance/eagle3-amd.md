@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-07-13-eagle-3-amd-instinct
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# EAGLE3 on Instinct：Quark MXFP4，先量 served acceptance length
+# Instinct 上的 EAGLE3：Quark MXFP4，再量 served acceptance length
 
 英文对照：[en/vllm/blog/performance/eagle3-amd.md](../../../../en/vllm/blog/performance/eagle3-amd.md)  
 原文：https://vllm.ai/blog/2026-07-13-eagle-3-amd-instinct  
-2026-07-13。署名 **Larry Li, Chao Li, Haichen Zhang, Chun Fang, Andy Luo, Spandan Tiwari, and Ashish Sirasao**（AMD Quark）。学习笔记。MI355X / InferenceX 上的 bench，不是你的 SLA。验收数学：[spec-decode.md](spec-decode.md)。CUDA 侧 EAGLE：[p-eagle.md](p-eagle.md) / [eagle-3-1.md](eagle-3-1.md)。后来五条 ROCm 路：[spec-decode-amd.md](spec-decode-amd.md)。Hidden 导出：[extract-hidden-states.md](../architecture/extract-hidden-states.md)。ROCm attention：[rocm-attention.md](../architecture/rocm-attention.md)。草稿家族：[parallel-drafting.md](parallel-drafting.md)。
+2026-07-13。署名 **Larry Li, Chao Li, Haichen Zhang, Chun Fang, Andy Luo, Spandan Tiwari, and Ashish Sirasao**（AMD Quark）。学习译文，不是官方译本。MI355X / InferenceX 上的 bench，不是你的 SLA。验收数学：[spec-decode.md](spec-decode.md)。CUDA 侧 EAGLE：[p-eagle.md](p-eagle.md) / [eagle-3-1.md](eagle-3-1.md)。后来五条 ROCm 路：[spec-decode-amd.md](spec-decode-amd.md)。Hidden 导出：[extract-hidden-states.md](../architecture/extract-hidden-states.md)。ROCm attention：[rocm-attention.md](../architecture/rocm-attention.md)。草稿家族：[parallel-drafting.md](parallel-drafting.md)。
 
 适用：在 Instinct 上用 vLLM 训 EAGLE3、Quark 量化、ROCm 上 serve。不适合：把 **2.00×** 当承诺——BF16 / FP8 两条 Kimi sweep 的构建和 MML 都不一样。
 
@@ -25,7 +25,7 @@ Prefill 可以很快；Decode 仍是 target 一步一个 token。MoE / 注意力
 
 投机解码相对 target 无损：轻草稿先猜几枚；target 一次前向核对。贪心：匹配前缀收下。采样：按 target / draft 概率接受或纠正。第一次拒绝，verifier 吐纠正，草稿从那儿再起；全中则 verifier 再吐一枚 **bonus** token。
 
-**Conditional acceptance rate** = 前面都收下的前提下，这一位还收下的概率。**Acceptance length** = 每个验收周期吐出的 token 数。AL 高能少跑 target 步；落地 TPS 仍要付 drafting + verification 税。
+**Conditional acceptance rate** = 前面都收下的前提下，这一位还收下的概率。**Acceptance length** = 每个验收周期吐出的 token 数。AL 高能少跑 target 步；落地 TPS 仍要付 drafting + verification 开销。
 
 ![greedy speculative decoding](../../../../assets/vllm/blog/performance/eagle3-amd/01-figure1.png)
 
@@ -61,7 +61,7 @@ MXFP4 = OCP Microscaling 4-bit 浮点：小块共用 scale。内存接近 INT4�
 
 ### SPEED-Bench：11 个域和长上下文
 
-Acceptance length（AL）= 每次 target 验收平均吐出的 token。AL = 1 是一次 verify 吐一个，还没算 drafting 税。
+Acceptance length（AL）= 每次 target 验收平均吐出的 token。AL = 1 是一次 verify 吐一个，还没算 drafting 开销。
 
 | Domain | AL |
 | --- | ---: |

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Hybrid SSM 的 P/D 分离：两种记忆，同一根 RDMA 管子
@@ -197,7 +197,7 @@ DS layout within one page:
 
 更简单的路是：把整份 conv 寄到每一个 D，再在本地 permute / slice。Mamba 他们故意不走：
 
-- **没有 staging buffer。** 在 D 上 permute，就要为每个 D worker 分配一块和 **P 的整份 conv** 一样大的临时缓冲。Nemotron-H 上，每块 conv 已经是 `3 * 3072 * 2` 字节 bf16。再乘上千块、所有 Mamba 层——那是从 KV 房间里抠走的。
+- **没有 staging buffer。** 在 D 上 permute，就要为每个 D worker 分配一块和 **P 的整份 conv** 一样大的临时缓冲。Nemotron-H 上，每块 conv 已经是 `3 * 3072 * 2` 字节 bf16。再乘上千块、所有 Mamba 层——那是从 KV 空间里抠走的。
 - **没有事后重排。** DS 布局下，每个 D 只读自己要的字节，直接落进 KV 的最终位置。没有事后 permute kernel。搬运结束，状态立刻能用。
 - **只搬自己那一份。** 每个 D 只搬 `1/TP` 的 conv，不是整份。`D_TP=4` 就是每 rank 少 4 倍。
 - **跳过 HMA padding。** HMA 给 SSM 页垫过，好对齐 FA 页。Mamba 描述符按真正的 `conv_bytes + ssm_bytes` 计，不是垫过的页。线上从不搬 padding。FA 页比裸 SSM 大很多时，每块都能少搬一截。
@@ -213,7 +213,7 @@ Mamba 状态是**每条请求一份固定快照**，传输量跟着 FA 块数走
 
 ## 合在一起：Nemotron-H 走一遍
 
-具体例子：侍候 `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8`，P/D 分离，**TP=2**。
+具体例子：跑 `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-FP8`，P/D 分离，**TP=2**。
 
 **模型结构。** 一共 **52** 层，Mamba / FA 交替。HMA 收成 **5** 组（**4** 组 Mamba，**1** 组 FA）。pooling 之后 **6** 块共享 KV 张量。
 

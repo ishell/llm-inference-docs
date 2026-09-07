@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-09-11-semantic-router
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Semantic Router：按意图决定走不走推理
 
 英文对照：[en/vllm/blog/serving/semantic-router.md](../../../../en/vllm/blog/serving/semantic-router.md)  
 原文：https://vllm.ai/blog/2025-09-11-semantic-router  
-2025-09-11。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。这是立项文。v0.1 架构翻新：[Iris](semantic-router-iris.md)。这是 **控制面**：按意图决定走哪只模型、开不开 CoT。不是引擎里那只 Rust P/D 负载均衡——那是 [Router](router.md)。名字都叫 router，职责不同。试验数字当演示，不是你集群的 SLA。
+2025-09-11。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。这是立项文。v0.1 架构翻新：[Iris](semantic-router-iris.md)。这是 **控制面**：按意图决定走哪只模型、开不开 CoT。不是引擎里那只 Rust P/D 负载均衡——那是 [Router](router.md)。名字都叫 router，职责不同。试验数字当演示，不是某一套集群上的 SLA。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -17,11 +17,11 @@ fetched: 2026-09-04
 
 ## 行业：推理不是越多越好
 
-原文把过去一年写成：混合推理和自动路由，把辩论从「参数堆多高」拧到每 token 的效率、时延、算力该用在哪。
+原文把过去一年写成：混合推理和自动路由，把辩论从「参数堆多高」转到每 token 的效率、时延、算力该用在哪。
 
 GPT-5 被拿来当例子：出彩的不是参数，是路由策略和带配额的推理：
 
-- 轻查询 → 轻路径。「天为什么是蓝的」不必点燃昂贵推理。
+- 轻查询 → 轻路径。「天为什么是蓝的」不必走昂贵推理。
 - 复杂 / 高价值查询 → 开推理的模型。法律分析、财务规划这类多步任务，送到 Chain-of-Thought。
 
 原则：按任务分配算力。每个推理 token 都该换回价值，而不是被消耗掉就算。
@@ -37,7 +37,7 @@ GPT-5 被拿来当例子：出彩的不是参数，是路由策略和带配额�
 
 ## 研究：vLLM Semantic Router
 
-vLLM 能把 GPU 喂饱，却没有「这句要不要推理」这一层语义决策。开发者面对二选一：
+vLLM 能把 GPU 用满，却没有「这句要不要推理」这一层语义决策。开发者面对二选一：
 
 - 推理全开 → 准确上去，成本也上去。
 - 推理全关 → 成本下来，复杂题掉点。
@@ -66,7 +66,7 @@ Semantic Router 用语义分类填这个缺口：该准的走准的路径，不�
 - **Reasoning budget。** 推理不设顶，冷启动时延和资源会涨。没有动态闸门：简单查询可能把 token 花光，关键查询反而推不深。SLO 要盯 TTFT、p95；推理中途也可能要改。
 - **Tool calling。** 工具目录膨胀、工具输出变长，准确会掉。路由侧要先滤工具，目录保持紧。
 
-Classifier 当时跑在路由进程里，**还不是** vLLM 上的 embedding 服务。后面那一节把这扇门留着。
+Classifier 当时跑在路由进程里，**还不是** vLLM 上的 embedding 服务。后面那一节把这件事留着。
 
 ## 项目背景
 
@@ -95,12 +95,12 @@ ModernBERT 当时内嵌在路由里做分类，**尚未**由 vLLM serving。后�
 
 ## 趋势：Just-in-Time Inference
 
-场子从「能不能跑推理」长到「怎样更聪明地跑」。
+局面从「能不能跑推理」长到「怎样更聪明地跑」。
 
 - GPT-5 用商业价值引导推理深度。
 - vLLM Semantic Router 把同类能力交给开源。
 
-往前看：推理策略当场改、不必人手拨开关的系统，会在效率、时延、可持续性上领先。原文把这叫做 just-in-time inference。
+往前看：推理策略当场改、不必人手改配置的系统，会在效率、时延、可持续性上领先。原文把这叫做 just-in-time inference。
 
 ## 一句话
 

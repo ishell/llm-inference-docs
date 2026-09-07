@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-06-02-vllm-omni-autoround
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Omni × AutoRound：W4A16 一次量化、直接 serve
 
 英文对照：[en/vllm/blog/serving/omni-autoround.md](../../../../en/vllm/blog/serving/omni-autoround.md)  
 原文：https://vllm.ai/blog/2026-06-02-vllm-omni-autoround  
-2026-06-02。署名 **vLLM-Omni Community, Intel AutoRound Team**。[AutoRound](https://github.com/intel/auto-round) 的 PTQ 接到 [vLLM-Omni](https://github.com/vllm-project/vllm-omni)：量化离线，热路径只推理。W4A16 是 4-bit 权重、16-bit 激活。LLM Compressor 那条（compressed-tensors 进 vLLM）见 [autoround-llmc.md](../architecture/autoround-llmc.md)。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[qwen3-omni.md](qwen3-omni.md)。页上的 OmniBench / TIIF / B60 是他们的实验合同，不是你的 SLA。
+2026-06-02。署名 **vLLM-Omni Community, Intel AutoRound Team**。[AutoRound](https://github.com/intel/auto-round) 的 PTQ 接到 [vLLM-Omni](https://github.com/vllm-project/vllm-omni)：量化离线，热路径只推理。W4A16 是 4-bit 权重、16-bit 激活。LLM Compressor 那条（compressed-tensors 进 vLLM）见 [autoround-llmc.md](../architecture/autoround-llmc.md)。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[qwen3-omni.md](qwen3-omni.md)。页上的 OmniBench / TIIF / B60 是他们的实验合同，不是某一套集群上的 SLA。
 
 读 `quantization_config.quant_method = "auto-round"`，serve 时**不必**再加 `--quantization`。Qwen3-Omni-30B-A3B：**66 GB → 25 GB**（约 **62%**）。evalscope 上 100 道图+音频题，W4A16 的 OmniBench 总分略**高于** BF16；TIIF 九个结构轴平均漂约 **1.3%**。Intel B60：FLUX.1-dev BF16 transformer **23 GB**，单卡 **24.4 GB** 装不下，要 TP4；W4A16 **7 GB** 单卡装得下（约 **19%** 余量）。腾出的卡做 CFG Parallel，引导生成约 **1.55–1.67×**。Wan2.2 / GLM-Image / FLUX 已通；BAGEL / Ovis 当时 checkpoint 有、runtime 还在接。Intel XPU 与 NVIDIA GPU 都验过。
 
@@ -33,7 +33,7 @@ fetched: 2026-09-04
 
 ## 1. 引言：vLLM-Omni 遇见 AutoRound
 
-Omni 要伺候扩散、多模态 Omni、多阶段生成。这里量化不是「把一只 transformer 捏瘦」——是让一整柜**异构 runtime** 能进真实的卡。
+Omni 要服务扩散、多模态 Omni、多阶段生成。这里量化不是「把一只 transformer 捏瘦」——是让一整柜**异构 runtime** 能进真实的卡。
 
 AutoRound（Intel；EMNLP 2024，signed GD 做 weight rounding）是 tuning 式 PTQ。每个被量化张量三个可训量：rounding 偏移 `V`，clip 的 `alpha` / `beta`。低 bit 比 naive round-to-nearest 稳；checkpoint 是静的——推理路径**零**额外量化开销。页上三层：算法（AutoRound）+ runtime（Omni）+ Hugging Face 上的 INT4 目录。
 

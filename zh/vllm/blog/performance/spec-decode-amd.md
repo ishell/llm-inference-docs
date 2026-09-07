@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# AMD GPU 上的投机解码：五条草稿路
+# AMD GPU 上的投机解码：五条草稿路径
 
 英文对照：[en/vllm/blog/performance/spec-decode-amd.md](../../../../en/vllm/blog/performance/spec-decode-amd.md)  
 原文：https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus  
-2026-08-23。署名页上致谢的 **AMD and Embedded LLM**。学习笔记。bench 在 Instinct **MI300X / MI355X**、ROCm 上；disclaimer 里的快照：vLLM `0.23.1rc1.dev1120+g0f0f28b53`，ROCm/HIP `7.2.53211`。数字是他们那套环境，不是你的 SLA。
+2026-08-23。署名页上致谢的 **AMD and Embedded LLM**。学习译文，不是官方译本。bench 在 Instinct **MI300X / MI355X**、ROCm 上；disclaimer 里的快照：vLLM `0.23.1rc1.dev1120+g0f0f28b53`，ROCm/HIP `7.2.53211`。数字是他们那套环境，不是你的 SLA。
 
 验收数学仍是 [投机解码主线](spec-decode.md)。草稿怎么长：[并行草稿](parallel-drafting.md)（P-EAGLE / DFlash / DSpark）、[P-EAGLE](p-eagle.md)。DSpark 按信心改验收预算（**这批 AMD 实验没开**）：[DSpark 自适应](dspark-adaptive.md)。后来 EAGLE 注意力漂移的修法：[eagle-3-1](eagle-3-1.md)。训练用的 hidden 导出：[extract-hidden-states](../architecture/extract-hidden-states.md)。同一代 GPU 上的 ROCm attention：[rocm-attention](../architecture/rocm-attention.md)。
 
@@ -19,11 +19,11 @@ fetched: 2026-09-05
 
 ## Introduction
 
-大模型能撑很多应用；规模化 serving 却要认真拧。底座仍是标准自回归：吐一个 token，接上去，再吐下一个。简单、可靠；输出必须严格从左到右，所以循环一次只提交一个字。
+大模型能撑很多应用；规模化 serving 却要认真调。底座仍是标准自回归：生成一个 token，接上去，再生成下一个。简单、可靠；输出必须严格从左到右，所以循环一次只提交一个 token。
 
 投机解码 [[1]](#ref-1) 保住这份输出行为，把循环拆成 **draft** 和 **verify**。轻量草稿组件先猜未来候选；原模型当 **target**，提交前再核对。几枚草稿活下来，一次 target 验收就能提交多个输出 token。
 
-这篇讲 vLLM 里投机解码怎么走，并记下他们测试环境里的测量。先复习自回归基线和 draft-and-verify，再看五条草稿路——从 target 拿什么、候选是顺序、自回归、并行还是杂交：**Native MTP**、**Gemma 4 MTP**、**EAGLE-3**、**DFlash**、**DSpark**。然后怎么在他们那套环境里打开、Instinct **MI300X / MI355X** 加 ROCm 上的数字，以及拧 `N`、可观测性和一小节训练。
+这篇讲 vLLM 里投机解码怎么走，并记下他们测试环境里的测量。先复习自回归基线和 draft-and-verify，再看五条草稿路径——从 target 拿什么、候选是顺序、自回归、并行还是杂交：**Native MTP**、**Gemma 4 MTP**、**EAGLE-3**、**DFlash**、**DSpark**。然后怎么在他们那套环境里打开、Instinct **MI300X / MI355X** 加 ROCm 上的数字，以及调 `N`、可观测性和一小节训练。
 
 ## 自回归 Decode 基线
 
@@ -93,7 +93,7 @@ Multi-Token Prediction：模型原生、预测「下一个」以外的 token。v
 
 常见融合：target（或上一 MTP）hidden **加** 移位输入 / 最新草稿 token 的 embedding → fusion / projection → 辅助预测层 → 草稿 logits。Hidden 带着前面的序列；embedding 标明从哪个 token 接着猜。沿 hidden 维拼起来。
 
-`num_speculative_tokens` 和 **物理** MTP 层数不是一回事。`N` 大于头深度时，vLLM 多跑几轮 MTP 前向、复用那条路。`N` 更大 = 候选更多，也 = 顺序草稿税更重。
+`num_speculative_tokens` 和 **物理** MTP 层数不是一回事。`N` 大于头深度时，vLLM 多跑几轮 MTP 前向、复用那条路。`N` 更大 = 候选更多，也 = 顺序草稿开销更重。
 
 Native MTP 跟 target 架构绑死。共享组件往往让额外显存不大。多枚投机 token 仍要在验收前顺序草稿。
 
@@ -139,7 +139,7 @@ DSpark 在并行草稿上再加两件 [[6]](#ref-6)：
 
 骨架：改过的 DFlash。一次并行前向给每个草稿位一份 hidden 和一份 base logits，target 条件方式和 DFlash 相同。
 
-完全并行的草稿看不见同一块里更早选中的 token。几种续写都说得通时，组合会拧：`of course` 和 `no problem` 各自合理，按位置独立预测却可能拼出 `of problem`。
+完全并行的草稿看不见同一块里更早选中的 token。几种续写都说得通时，组合会对不上：`of course` 和 `no problem` 各自合理，按位置独立预测却可能拼出 `of problem`。
 
 骨架之后，轻量 **Markov head** 从左到右选。位置 `k` 用紧邻的上一枚已选 token 造一个小 bias，加到骨架的 base logits 上 → 该位的调整分布。重的草稿网仍只跑一次；只有 Markov 头顺着块走。
 
@@ -221,7 +221,7 @@ Native MTP 不另载一份 draft，还可能和 target 共享 embedding 表或�
 
 ## 实验设置和测量
 
-打开之后，真正的问题是：多出来的草稿活，端到端 serving 有没有变好。候选不必每位都对；target 提交前会验。性能取决于接受了多少，以及省下的 target Decode 能不能盖过草稿 + 验收的税。
+打开之后，真正的问题是：多出来的草稿活，端到端 serving 有没有变好。候选不必每位都对；target 提交前会验。性能取决于接受了多少，以及省下的 target Decode 能不能盖过草稿 + 验收的开销。
 
 质量和 serving 都用 **任务向** benchmark 来评，不用随机 token 串。接受行为跟真实输出的结构和可预测性绑在一起；任务 prompt 更接近实际表现。
 
@@ -267,7 +267,7 @@ Native MTP 不另载一份 draft，还可能和 target 共享 embedding 表或�
 
 **`Qwen3.5-27B`、`Qwen3.5-122B-A10B`、`Qwen3.6-27B`。** 各自 sweep 里 native MTP 的最大值高于对应的 DFlash 最大值。这组最大比：**2.20×**，Qwen3.5-122B-A10B on MATH500。native MTP 取到最大吞吐时的 `N` 在 **4 到 7**，随模型和数据集。
 
-**`Qwen3.6-35B-A3B`。** DFlash **1.77×–2.06×**，四个数据集的最大都在 **N=7**。Native MTP **1.28×–1.49×**，最大在 **N=6**。和 Qwen3.6-27B 同族、排名不同——一家模型之间也会换脸。
+**`Qwen3.6-35B-A3B`。** DFlash **1.77×–2.06×**，四个数据集的最大都在 **N=7**。Native MTP **1.28×–1.49×**，最大在 **N=6**。和 Qwen3.6-27B 同族、排名不同——一家模型之间也会换名次。
 
 **`MiniMax-M3-MXFP8`。** EAGLE-3 在 HumanEval、**N=4** 上到 **2.09×**。（这只 target 跑在 MI355X；见 disclaimer。）
 
@@ -277,13 +277,13 @@ Native MTP 不另载一份 draft，还可能和 target 共享 embedding 表或�
 
 以上只对这套硬件、软件、target、draft checkpoint、负载和 sweep 负责。
 
-## 拧参数
+## 调参数
 
 投机解码是运行时优化，不是一个 `N` 通吃。最好的 `num_speculative_tokens` 取决于接受了多少，以及省下的 target Decode 能不能盖过草稿 + 验收。
 
 所以要能看见。Model card 上的建议是起点；最终设置要用代表负载和端到端测量来选。有用的信号：吞吐、平均接受长度、总体接受率、**按位置** 接受率。
 
-提议窗口更大，一次验收提交多枚的机会更多。后面几位的接受率却常常掉。多出来的候选白付草稿税 → TPS 走平甚至退。
+提议窗口更大，一次验收提交多枚的机会更多。后面几位的接受率却常常掉。多出来的候选白付草稿开销 → TPS 走平甚至退。
 
 ### 从支持的配置起
 
@@ -329,7 +329,7 @@ DSpark：`num_speculative_tokens` 是每一投机轮生成多少候选。这批 
 | Overall acceptance rate | 提议草稿里接受了多大比例 |
 | Per-position acceptance rate | 提议里更后面的位置还值不值得付 |
 
-按位置接受是拧 `N` 的把手。前几位经常活、后面几乎不贡献，缩小 `num_speculative_tokens` 可能靠少付无用草稿而抬 TPS。
+按位置接受是调 `N` 的把手。前几位经常活、后面几乎不贡献，缩小 `num_speculative_tokens` 可能靠少付无用草稿而抬 TPS。
 
 接受率要和吞吐一起读。草稿便宜时，接受率低也能打过基线。接受率高、草稿贵，TPS 不必涨。
 
@@ -339,7 +339,7 @@ GSM8K / MATH500：这轮里中等或更深的 `N` 常常对应更高测得 TPS�
 
 HumanEval / MBPP：中等 `N` 常常落在较高吞吐。代码有局部结构，但格式、标识符、实现选择仍能让一段「看起来像」的续写岔开。
 
-### 拧参流程（原文）
+### 调参流程（原文）
 
 1. 从 checkpoint 支持 / 推荐的配置起。
 2. 用代表 prompt 和生成设置做 benchmark。
@@ -347,7 +347,7 @@ HumanEval / MBPP：中等 `N` 常常落在较高吞吐。代码有局部结构�
 4. 扫若干更小和更大的提议长度。
 5. 按打算服务的负载选指标。这批实验的主指标是端到端 serving TPS。
 
-赢家不必是最长提议、最高接受率、或最大平均接受长度。权衡草稿成本、验收成本、接受的 token，以及你真正在乎的指标。
+赢家不必是最长提议、最高接受率、或最大平均接受长度。权衡草稿成本、验收成本、接受的 token，以及我们真正在乎的指标。
 
 ## 给新 target 训一只 speculator
 
@@ -366,7 +366,7 @@ HumanEval / MBPP：中等 `N` 常常落在较高吞吐。代码有局部结构�
 
 Prompt 应对上预期负载：chat、数学、代码、工具、多语。另留一份评测集。
 
-训练用的回复必须来自 **speculator 将要伺候的那只** target。Tokenizer、chat template、thinking mode、生成配置应对上部署。vLLM 文档强调：把 target 的 tokenizer / chat template 套到 **已有** 回复上，并不会让数据变成「这只 target 的」；回复本身必须来自 target。
+训练用的回复必须来自 **speculator 将要配对的那只** target。Tokenizer、chat template、thinking mode、生成配置应对上部署。vLLM 文档强调：把 target 的 tokenizer / chat template 套到 **已有** 回复上，并不会让数据变成「这只 target 的」；回复本身必须来自 target。
 
 ### Hidden 从哪来
 
@@ -393,7 +393,7 @@ vLLM 服务可以跑 target，把该方法要的层 hidden 露出来。自定义
 
 ### 训完再测
 
-Speculator 配置要对上 target 的 hidden size、词表、tokenizer、选定层。方法自己的旋钮——草稿网深度、block size、序列长、学习率——也要选。
+Speculator 配置要对上 target 的 hidden size、词表、tokenizer、选定层。方法自己的参数——草稿网深度、block size、序列长、学习率——也要选。
 
 训完检查 checkpoint，再和 target 一起在 vLLM 里 serve。训练 loss 不够：要看接受长度、接受率、草稿延迟、GPU 显存、端到端 serving TPS。vLLM Speculators 教程把数据准备、hidden 导出、checkpoint 测试、serve 整条路写完了。
 
@@ -415,7 +415,7 @@ Speculator 配置要对上 target 的 hidden size、词表、tokenizer、选定�
 
 以后的 benchmark 可以加上非学习方法，例如 n-gram 投机和 suffix decoding，尤其适合重复 token 多的负载（改代码、agent 环）。
 
-评测再宽一点：并发、prompt / 输出长度、batch、采样设置，能看出投机解码在不同 serving 条件下怎么变脸。
+评测再宽一点：并发、prompt / 输出长度、batch、采样设置，能看出投机解码在不同 serving 条件下怎么变化。
 
 另一条有用的方向：speculator 训练数据怎么推代码、数学、chat、多语、工具、结构化输出上的接受。给特定负载选或训草稿时，口径会清楚一点。
 

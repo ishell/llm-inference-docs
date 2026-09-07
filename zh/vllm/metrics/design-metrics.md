@@ -1,8 +1,8 @@
 ---
 source: https://docs.vllm.ai/en/stable/design/metrics/
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Metrics 设计 — vLLM V1
@@ -11,7 +11,7 @@ fetched: 2026-09-05
 运维对照表：[production-metrics.md](production-metrics.md)。原文：https://docs.vllm.ai/en/stable/design/metrics/  
 间隔示意图在文档站 `assets/design/metrics/intervals-*.png`，本库不收。
 
-这一页回答：这些直方图是在哪间屋子里、用哪只钟算出来的。路线图曾经挂在 ["Even Better Observability"](https://github.com/vllm-project/vllm/issues/3616)。
+这一页回答：这些直方图是在哪个进程里、用哪套时钟算出来的。路线图曾经挂在 ["Even Better Observability"](https://github.com/vllm-project/vllm/issues/3616)。
 
 ## 目标
 
@@ -21,7 +21,7 @@ fetched: 2026-09-05
 
 ## 两层
 
-1. **Server-level**（Gauge / Counter）：引擎此刻的天气——在跑、在等、KV 占用、token 累计。用来**解释**为什么某条请求的 SLO 破了。
+1. **Server-level**（Gauge / Counter）：引擎此刻的状态——在跑、在等、KV 占用、token 累计。用来**解释**为什么某条请求的 SLO 破了。
 2. **Request-level**（Histogram）：TTFT、ITL、e2e、prompt/decode 长度。通常这些才是 SLO 本身。
 
 心理模型：server-level 解释 request-level。
@@ -44,7 +44,7 @@ V1 里 swapped 那条已经是遗物，见下面废弃。
 
 ### Prometheus 库与 HTTP 层
 
-先 [aioprometheus](https://github.com/vllm-project/vllm/pull/1890)，很快换成 [prometheus_client](https://github.com/vllm-project/vllm/pull/2730)。迁移时 HTTP `MetricsMiddleware` 短暂消失，又用 `prometheus_fastapi_instrumentator` 请回来（[#15657](https://github.com/vllm-project/vllm/pull/15657)）：
+先 [aioprometheus](https://github.com/vllm-project/vllm/pull/1890)，很快换成 [prometheus_client](https://github.com/vllm-project/vllm/pull/2730)。迁移时 HTTP MetricsMiddleware 短暂消失，又用 `prometheus_fastapi_instrumentator` 请回来（[#15657](https://github.com/vllm-project/vllm/pull/15657)）：
 
 ```bash
 curl http://0.0.0.0:8000/metrics | grep -P '^http_(?!.*(_bucket|_created|_sum)).*'
@@ -52,7 +52,7 @@ curl http://0.0.0.0:8000/metrics | grep -P '^http_(?!.*(_bucket|_created|_sum)).
 # http_request_size_bytes_count / http_response_size_bytes_count / http_request_duration_*
 ```
 
-门开了几次，不是字与字之间的缝。把它当 TTFT 的替身，会得到一个很有礼貌的谎言。
+那是 HTTP 请求次数，不是 token 间隔。把它当 TTFT 的替身，数字会对不上。
 
 ### 多进程
 
@@ -62,11 +62,11 @@ curl http://0.0.0.0:8000/metrics | grep -P '^http_(?!.*(_bucket|_created|_sum)).
 
 ## 计算放哪
 
-V1 把 **EngineCore** 当成 GPU 内环，尽量瘦。`AsyncLLM` 是外环，最好和 GPU 重叠。记账放在前端：`AsyncLLM.output_handler_loop` 吃 `EngineCoreOutputs`。实现 PR 簇挂在 [#10582](https://github.com/vllm-project/vllm/issues/10582)（[#11962](https://github.com/vllm-project/vllm/pull/11962) 等一串）。遗产 PR：#1890、#2316、#2730、#4464、#7279。
+V1 把 EngineCore 当成 GPU 内环，尽量保持精简。AsyncLLM 是外环，最好和 GPU 重叠。记账放在前端：`AsyncLLM.output_handler_loop` 接收 EngineCoreOutputs。实现 PR 簇挂在 [#10582](https://github.com/vllm-project/vllm/issues/10582)（[#11962](https://github.com/vllm-project/vllm/pull/11962) 等一串）。遗产 PR：#1890、#2316、#2730、#4464、#7279。
 
-时间间隔必须用**同一进程的 `time.monotonic()`**，不要 `time.time()`（NTP 会拨钟）。跨进程的 monotonic 不能相减——两只钟各说各的「从开机起过了多久」。这就是为什么 TTFT 不在 GPU 进程里减 `arrival_time`。
+时间间隔必须用**同一进程的 `time.monotonic()`**，不要 `time.time()`（NTP 会拨钟）。跨进程的 monotonic 不能相减——两套时钟各说各的「从开机起过了多久」。这就是为什么 TTFT 不在 GPU 进程里减 `arrival_time`。
 
-Scheduler 会把 scheduled / waiting 一类统计塞进 `EngineCoreOutputs`。
+Scheduler 会把 scheduled / waiting 一类统计塞进 EngineCoreOutputs。
 
 ## 间隔（engine-core 事件）
 
@@ -77,7 +77,7 @@ Scheduler 会把 scheduled / waiting 一类统计塞进 `EngineCoreOutputs`。
 | `QUEUED` | 被 engine core 接到，进调度队列 |
 | `SCHEDULED` | 第一次被调度执行 |
 | `PREEMPTED` | 退回 waiting；将来重调度并 **重开 prefill** |
-| `NEW_TOKENS` | 这份 `EngineCoreOutput` 里的 token（整个 `EngineCoreOutputs` 共用一个时间戳） |
+| `NEW_TOKENS` | 这份 EngineCoreOutput 里的 token（整个 EngineCoreOutputs 共用一个时间戳） |
 
 推出来的间隔：
 
@@ -91,17 +91,17 @@ TTFT **不是** 上面那条 prefill 间隔：前端从 `arrival_time`（开始 
 
 文档站三张图：普通情况；decode 期抢占（ITL / decode / inference 被拉长）；prefill 期抢占（TTFT / prefill 被拉长）。Decode 期抢占时已生成的 token 会复用。
 
-前端按 engine-core 的每一拍收集：本拍新 token、本拍完成的 prefill 的 prompt token、本拍新调度请求的 queue 间隔、完成 prefill 的 prefill 间隔 / TTFT、本拍所有人的 ITL（他们在这里也把 ITL 写成 TPOT）。完成的请求再记 inference / decode，以及 e2e。
+前端按 engine-core 的每一拍收集：本拍新 token、本拍完成的 prefill 的 prompt token、本拍新调度请求的 queue 间隔、完成 prefill 的 prefill 间隔 / TTFT、本拍所有请求的 ITL（他们在这里也把 ITL 写成 TPOT）。完成的请求再记 inference / decode，以及 e2e。
 
 ## KV 驻留
 
-`--kv-cache-metrics-sample` 把开销压得很小。抽到的块记：lifetime（分配 → 驱逐）、idle-before-evict（最后一次 touch → 驱逐）、reuse gaps。Prometheus：`vllm:kv_block_lifetime_seconds`、`vllm:kv_block_idle_before_evict_seconds`、`vllm:kv_block_reuse_gap_seconds`。engine core 只在 `SchedulerStats` 里送原始驱逐事件；前端做成 Prometheus 观察，日志开着时也走 `LLM.get_metrics()`。lifetime 和 idle 画在一起，容易看见 stranded cache，或长 decode 把 prompt 钉死。
+`--kv-cache-metrics-sample` 把开销压得很小。抽到的块记：lifetime（分配 → 驱逐）、idle-before-evict（最后一次 touch → 驱逐）、reuse gaps。Prometheus：`vllm:kv_block_lifetime_seconds`、`vllm:kv_block_idle_before_evict_seconds`、`vllm:kv_block_reuse_gap_seconds`。engine core 只在 SchedulerStats 里送原始驱逐事件；前端做成 Prometheus 观察，日志开着时也走 `LLM.get_metrics()`。lifetime 和 idle 画在一起，容易看见 stranded cache，或长 decode 把 prompt 占用住。
 
 ## 怎么对外
 
-- `LoggingStatLogger`：大约每 5 秒一条 INFO——running/waiting、GPU cache %、过去 5 秒的 prompt/gen tok/s、最近 **1k** 次 block 查询的 prefix-cache hit rate。
-- `PrometheusStatLogger`：`/metrics`，给 Prometheus 去刮（页上举例每秒）。Counter 到重启前只增；Gauge 可上可下；Histogram 按桶计数。每条序列带 `model_name`。**bucket 还会改**——「对所有用户都好用的桶」没有一次选对。页上 TTFT 例子：`le="0.02"` 已经有 140 里的 13，`le="0.1"` 才到 140。不要把桶抄进仪表盘当法律。`request_success_total` 按 `finished_reason`：`stop` / `length` / `abort`。
-- `vllm:cache_config_info`：Info 指标的思路（Gauge 钉死为 1），启动配置当 label（`block_size`、`cache_dtype`、`cpu_offload_gb`、`enable_prefix_caching`、`gpu_memory_utilization`…）。`prometheus_client` 在 multiprocess 下从未支持 Info，所以用 Gauge + `multiprocess_mode="mostrecent"`。
+- LoggingStatLogger：大约每 5 秒一条 INFO——running/waiting、GPU cache %、过去 5 秒的 prompt/gen tok/s、最近 **1k** 次 block 查询的 prefix-cache hit rate。
+- PrometheusStatLogger：`/metrics`，给 Prometheus 去刮（页上举例每秒）。Counter 到重启前只增；Gauge 可上可下；Histogram 按桶计数。每条序列带 `model_name`。**bucket 还会改**——「对所有用户都好用的桶」没有一次选对。页上 TTFT 例子：`le="0.02"` 已经有 140 里的 13，`le="0.1"` 才到 140。不要把桶抄进仪表盘当法律。`request_success_total` 按 `finished_reason`：`stop` / `length` / `abort`。
+- `vllm:cache_config_info`：Info 指标的思路（Gauge 固定为 1），启动配置当 label（`block_size`、`cache_dtype`、`cpu_offload_gb`、`enable_prefix_caching`、`gpu_memory_utilization`…）。`prometheus_client` 在 multiprocess 下从未支持 Info，所以用 Gauge + `multiprocess_mode="mostrecent"`。
 - LoRA：`vllm:lora_requests_info` 这个 Gauge 的 **值是墙上时钟**，每拍更新。label：`running_lora_adapters` / `waiting_lora_adapters` 是逗号分隔的 `adapter=count` 字符串，外加 `max_lora`。页上自己说把计数塞进 CSV「quite misguided」，本该用 label 区分 adapter。`multiprocess_mode="livemostrecent"`。[#9477](https://github.com/vllm-project/vllm/pull/9477)；至少有一个下游（Gateway API Inference Extension）。删之前要打招呼。
 - Prefix cache：每次查询记问了多少 token、命中多少。日志给最近 **1k** 次的命中率。Prometheus 该留 **counter**，让 PromQL 自己选窗口：`rate(cache_query_hit[5m]) / rate(cache_query_total[5m])`——不要做成命中率 Gauge。讨论在 [#10582](https://github.com/vllm-project/vllm/issues/10582)。
 

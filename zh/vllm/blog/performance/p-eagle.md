@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-03-13-p-eagle
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# P-EAGLE：一次前向猜 K 个字
+# P-EAGLE：vLLM 里用并行投机解码加快推理
 
 英文对照：[en/vllm/blog/performance/p-eagle.md](../../../../en/vllm/blog/performance/p-eagle.md)  
 原文：https://vllm.ai/blog/2026-03-13-p-eagle  
-2026-03-13。署名 **Amazon and NVIDIA Team**。也发在 [AWS Blogs](https://aws.amazon.com/blogs/machine-learning/p-eagle-faster-llm-inference-with-parallel-speculative-decoding-in-vllm/)。学习笔记。进 vLLM 从 [v0.16.0](https://github.com/vllm-project/vllm/releases/tag/v0.16.0) 起（PR [#32887](https://github.com/vllm-project/vllm/pull/32887)）。开关：`"parallel_drafting": true`。下面数字除非另写模型，都是 **一块 NVIDIA B200**、GPT-OSS-20B。
+2026-03-13。署名 **Amazon and NVIDIA Team**。也发在 [AWS Blogs](https://aws.amazon.com/blogs/machine-learning/p-eagle-faster-llm-inference-with-parallel-speculative-decoding-in-vllm/)。学习译文，不是官方译本。进 vLLM 从 [v0.16.0](https://github.com/vllm-project/vllm/releases/tag/v0.16.0) 起（PR [#32887](https://github.com/vllm-project/vllm/pull/32887)）。开关：`"parallel_drafting": true`。下面数字除非另写模型，都是 **一块 NVIDIA B200**、GPT-OSS-20B。
 
 [EAGLE](https://arxiv.org/pdf/2503.01840) 是投机解码的当时 SOTA，可自回归草稿自己有顶：猜得越多，draft 前向排得越长。**P-EAGLE** 一次前向吐出全部 K 个 draft token。原文标题数字：真实负载、B200 上相对 vanilla EAGLE-3 最高 **1.69×**。
 
@@ -46,7 +46,7 @@ HuggingFace 上已有 GPT-OSS 120B、GPT-OSS 20B、Qwen3-Coder 30B 的预训练�
 
 ## EAGLE's Drafting Bottleneck
 
-EAGLE 相对普通自回归解码大约 **2–3×**，vLLM、SGLang、TensorRT-LLM 里都能见到。草稿仍是 **自回归**：K 个 draft token 要 **K** 次 draft 前向。草稿越能写长，这段税就越按投机深度线性涨，K 不敢开太大。
+EAGLE 相对普通自回归解码大约 **2–3×**，vLLM、SGLang、TensorRT-LLM 里都能见到。草稿仍是 **自回归**：K 个 draft token 要 **K** 次 draft 前向。草稿越能写长，这段开销就越按投机深度线性涨，K 不敢开太大。
 
 ## Our Approach: Parallel-EAGLE (P-EAGLE)
 

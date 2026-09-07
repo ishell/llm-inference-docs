@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-07-29-optimizing-vllm-on-arm-cpus
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Arm CPU 上的 vLLM：瓶颈不在 GEMM
@@ -15,7 +15,7 @@ fetched: 2026-09-05
 
 ## Introduction
 
-CPU 上侍候大模型，是一条正经的部署路：成本低、基建简单、云和机房里到处都是。Arm® Neoverse™ 服务器铺开之后，开源 serving（比如 vLLM）在 Arm CPU 上就得能用、功能齐、还要快。
+CPU 上部署大模型，是一条正经的部署路：成本低、基建简单、云和机房里到处都是。Arm® Neoverse™ 服务器铺开之后，开源 serving（比如 vLLM）在 Arm CPU 上就得能用、功能齐、还要快。
 
 几个月里，他们和 vLLM、PyTorch、oneDNN、KleidiAI 社区一起往上游送。结果是更好用、模型和功能更齐，以及任何跑 vLLM 的 Neoverse 服务器都能吃到的性能增益。
 

@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Elastic Expert Parallelism：MoE 集群不必为了加减卡而重启
 
 英文对照：[en/vllm/blog/serving/elastic-ep.md](../../../../en/vllm/blog/serving/elastic-ep.md)  
 原文：https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism  
-2026-05-14。作者 **Itay Alroy (NVIDIA), Yongji Wu (Sky Computing), Rui Qiao (Anyscale), Tyler Michael Smith (Red Hat), Moein Khazraee (NVIDIA), Omri Kahalon (NVIDIA), Tzu-Ling Kan (NVIDIA), Ron Tourgeman (NVIDIA)**。[RFC #20323](https://github.com/vllm-project/vllm/issues/20323)，落地 [PR #34861](https://github.com/vllm-project/vllm/pull/34861)；NIXL EP 是 [PR #35627](https://github.com/vllm-project/vllm/pull/35627)。容错方向：[RFC #30112](https://github.com/vllm-project/vllm/issues/30112)。DP Attention + EP 背景：[RFC #16037](https://github.com/vllm-project/vllm/issues/16037)。当时实现范围很窄，旗标以原文为准。Wide-EP 主菜在 [large-scale.md](large-scale.md)。
+2026-05-14。作者 **Itay Alroy (NVIDIA), Yongji Wu (Sky Computing), Rui Qiao (Anyscale), Tyler Michael Smith (Red Hat), Moein Khazraee (NVIDIA), Omri Kahalon (NVIDIA), Tzu-Ling Kan (NVIDIA), Ron Tourgeman (NVIDIA)**。[RFC #20323](https://github.com/vllm-project/vllm/issues/20323)，落地 [PR #34861](https://github.com/vllm-project/vllm/pull/34861)；NIXL EP 是 [PR #35627](https://github.com/vllm-project/vllm/pull/35627)。容错方向：[RFC #30112](https://github.com/vllm-project/vllm/issues/30112)。DP Attention + EP 背景：[RFC #16037](https://github.com/vllm-project/vllm/issues/16037)。当时实现范围很窄，旗标以原文为准。Wide-EP 主线在 [large-scale.md](large-scale.md)。
 
-Expert parallelism（EP）是高吞吐伺候 MoE 的关键刀。WideEP（EP 铺过许多 worker）把 KV 容量做大，高并发或很长上下文才站得住。RL 要又长又快；agent 的多轮对话会把上下文越拉越长。
+Expert parallelism（EP）是高吞吐跑 MoE 的关键手段。WideEP（EP 铺过许多 worker）把 KV 容量做大，高并发或很长上下文才站得住。RL 要又长又快；agent 的多轮对话会把上下文越拉越长。
 
 在 vLLM 里，和许多推理框架一样，EP 一直是**静态**的：启动时几张卡，就几张卡。流量涨了加不进去，闲了减不下来。唯一的办法是换配置**整台重启**——慢，而且会丢掉一大截正在飞的请求。
 
@@ -36,14 +36,14 @@ curl -X POST http://localhost:8000/scale_elastic_ep \
 > **给运营的 TL;DR：**
 > - Elastic EP 让 vLLM 在运行时改 DP 大小，MoE 部署放大缩小都不必重启 server。
 > - 触发：`POST /scale_elastic_ep`；vLLM 改活拓扑，必要时重分专家。
-> - 这条运行时重配路径，是容错 serving 的核心积木。
+> - 这条运行时重配路径，是容错 serving 的核心构件。
 > - NIXL EP 可以明显减少 scale 时的重初始化，并在 EP 侧做失败探测、报告、恢复。
 
 ## Background: Expert Parallelism and DP Attention
 
 MoE 里 attention 仍是密的，FFN 大多换成稀疏专家：每个 token 只去被选中的那几位专家家里。谈弹性之前，先把 Elastic EP 踩着的两把刀讲清。
 
-**Data Parallel (DP) Attention** 是请求级并行：每个 engine-core 管自己那一份请求，自己的 KV，自己的 scheduler。MLA 一类架构上尤其重要——纯 TP 会把 KV 在每张卡上复制一份，房子立刻变窄，batch 上不去。
+**Data Parallel (DP) Attention** 是请求级并行：每个 engine-core 管自己那一份请求，自己的 KV，自己的 scheduler。MLA 一类架构上尤其重要——纯 TP 会把 KV 在每张卡上复制一份，有效显存立刻变窄，batch 上不去。
 
 **Expert Parallelism (EP)** 用在专家层。不是把每一位专家切碎摊到多张 GPU，而是整颗整颗分到不同 GPU；token 只被 dispatch 到拥有被选中专家的那些卡。
 
@@ -118,7 +118,7 @@ Elastic EP 用**两段屏障**。第一段带超时：没到齐，就推断同�
 
 ## Path to Fault Tolerance
 
-Elastic EP 是容错的核心积木，因为它给出了失败之后需要的运行时重配路径。某个 rank 挂了：先 scale-down 摘掉死人、重分专家，有替补卡再 scale-up，不必把整台部署重启。这是 [RFC #30112](https://github.com/vllm-project/vllm/issues/30112) 那条故障容忍方向的一块地基。
+Elastic EP 是容错的核心构件，因为它给出了失败之后需要的运行时重配路径。某个 rank 挂了：先 scale-down 摘掉死人、重分专家，有替补卡再 scale-up，不必把整台部署重启。这是 [RFC #30112](https://github.com/vllm-project/vllm/issues/30112) 那条故障容忍方向的一块地基。
 
 高层恢复流：
 

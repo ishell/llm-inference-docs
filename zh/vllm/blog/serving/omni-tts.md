@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-06-23-vllm-omni-tts
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # TTS：Talker 要 TTFP，Code2Wav 要吞吐
 
 英文对照：[en/vllm/blog/serving/omni-tts.md](../../../../en/vllm/blog/serving/omni-tts.md)  
 原文：https://vllm.ai/blog/2026-06-23-vllm-omni-tts  
-2026-06-23。署名 **vLLM-Omni TTS Team**。Omni 从 omni-modality 扩到语音：Qwen3-TTS、VoxCPM2、Higgs Audio V3、Fish Speech S2 Pro。怎么伺候：分阶段 serving、batch、CUDA Graphs、模型专用 kernel。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[qwen3-omni.md](qwen3-omni.md)。学习笔记；页上 cookbook 数字不是你的 SLA。
+2026-06-23。署名 **vLLM-Omni TTS Team**。Omni 从 omni-modality 扩到语音：Qwen3-TTS、VoxCPM2、Higgs Audio V3、Fish Speech S2 Pro。怎么跑：分阶段 serving、batch、CUDA Graphs、模型专用 kernel。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[qwen3-omni.md](qwen3-omni.md)。学习笔记；页上 cookbook 数字不是某一套集群上的 SLA。
 
 TTS 不是单只 LLM。Talker 是延迟绑的单 token Decode；Code2Wav 是吞吐绑的并行 decode。同一只调度两边都亏。块太小，跨块不连续；太大，**TTFP**（Time To First Audio Packet）爆。没有一只菜谱：Qwen3-TTS 阶段分离 + connector 切块 + Talker 预处理批量化；VoxCPM2 整段 `torch.compile` + CFM/LocDiT 尾部批；Higgs 多 codebook 状态留 GPU；Fish `q_len=1` Decode attention。
 
@@ -31,11 +31,11 @@ TTS 不是单只 LLM。Talker 是延迟绑的单 token Decode；Code2Wav 是吞�
 
 两边都用自回归模型；serving 瓶颈不一样。
 
-**TTS 是管线，通常多阶段。** 典型：Talker 自回归预测 codec token；Code2Wav 从这些 token 还原波形。Talker 是延迟绑的单 token Decode；Code2Wav 是吞吐绑的并行 decoder。一只调度伺候两边：Talker 延迟堵住 Code2Wav 的输入，Code2Wav 的并行吃不饱。延迟和吞吐一起亏。
+**TTS 是管线，通常多阶段。** 典型：Talker 自回归预测 codec token；Code2Wav 从这些 token 还原波形。Talker 是延迟绑的单 token Decode；Code2Wav 是吞吐绑的并行 decoder。一只调度服务两边：Talker 延迟堵住 Code2Wav 的输入，Code2Wav 的并行吃不饱。延迟和吞吐一起亏。
 
 **Streaming 输出有硬延迟预算。** 用户指望几百毫秒内听到第一包。Connector 必须支持切块 streaming；块大小直接打 **TTFP**。太小：Code2Wav 跨块缺上下文。太大：第一包来不及。
 
-**吞吐仍然要紧。** 在线 serving 的成本看一张 GPU 能撑多少并发，以及墙钟每秒能吐出多少秒音频。Talker 和 Code2Wav 瓶颈不同；connector 还要付传输税。提吞吐就是把两阶段配平，再各自拆掉内部瓶颈。
+**吞吐仍然要紧。** 在线 serving 的成本看一张 GPU 能撑多少并发，以及墙钟每秒能吐出多少秒音频。Talker 和 Code2Wav 瓶颈不同；connector 还要付传输开销。提吞吐就是把两阶段配平，再各自拆掉内部瓶颈。
 
 **Figure（pipeline）。** Talker → connector → Code2Wav serving 路径。
 
@@ -47,12 +47,12 @@ vLLM-Omni 不定一只死菜谱。选哪根杠杆，看管线结构、Decode 状
 
 | Technique | Applies to | Why it matters |
 |---|---|---|
-| Stage separation and connector chunking | Qwen3-TTS, Higgs Audio V3 | Talker 延迟和 Code2Wav 吞吐可以各自拧。 |
+| Stage separation and connector chunking | Qwen3-TTS, Higgs Audio V3 | Talker 延迟和 Code2Wav 吞吐可以各自调。 |
 | Batched decode preprocessing | Qwen3-TTS | 砍掉 Talker Decode 热路径上反复的 per-request Python。 |
 | Whole-forward `torch.compile` | VoxCPM2 | 让 Dynamo 看见更多 MiniCPM4 前向循环，少 Python↔compiled 边界。 |
 | CFM/LocDiT decode-tail batching | VoxCPM2 | 许多 per-request 小扩散调用收成更大的 GPU batch。 |
 | GPU-resident decode state | Higgs Audio V3 | 多 codebook 状态更新离开 Python 循环，少同步。 |
-| Model-specific q_len=1 attention | Fish Speech S2 Pro | 专伺候纯 Decode attention，不付通用 paged/varlen 的税。 |
+| Model-specific q_len=1 attention | Fish Speech S2 Pro | 专服务纯 Decode attention，不付通用 paged/varlen 的开销。 |
 
 不是每项优化都能套到每只 TTS 架构。活是给模型形状挑对杠杆。
 
@@ -70,13 +70,13 @@ Qwen3-TTS 的 Code2Wav 是轻量 **non-DiT** decoder；**不**需要迭代去噪
 
 早期 Qwen3-TTS 把 connector streaming 块和 Code2Wav decode 块绑在同一参数上，主要是 `codec_chunk_frames`。Connector 块小，Code2Wav 看见的 decode 块也小（连续性吃亏）。为了质量把块加大，第一包延迟跟着涨。
 
-旋钮拆开：
+配置拆开：
 
 - `codec_chunk_frames`：connector streaming 块大小（Talker 往 Code2Wav 的传输节奏）
 - `decode_chunk_frames` 和 `decode_left_context_frames`：Code2Wav 内部 decode 窗口和左上下文，跟 connector 切块无关
 - `initial_codec_chunk_frames`：更小的第一块 codec，让 Code2Wav 早点开工；后面块回到常规尺寸
 
-Connector 可以用小块砍第一包延迟，同时 Code2Wav 保住 **300** 帧 decode 窗口加 **25** 帧左上下文。各自拧（[PR #3485](https://github.com/vllm-project/vllm-omni/pull/3485)）。
+Connector 可以用小块砍第一包延迟，同时 Code2Wav 保住 **300** 帧 decode 窗口加 **25** 帧左上下文。各自调（[PR #3485](https://github.com/vllm-project/vllm-omni/pull/3485)）。
 
 **Figure。** Connector 切块脱钩。
 
@@ -84,7 +84,7 @@ Connector 可以用小块砍第一包延迟，同时 Code2Wav 保住 **300** 帧
 
 下一个瓶颈：Talker Decode。每一步都要请求级预处理：speaker embedding、`trailing_text` 维护、输入 embedding 构造。c=1 时开销小。c=64 时每步 Decode 要扫 64 条请求；Python 循环和张量切片开始显眼。
 
-在 **H20 × 2** 上 profile 过 Talker Decode，声音克隆，c=64。更宽的热路径动手之前的 warm run：模型外的 Python 和 runner 侧工作——`preprocess_decode_batch`、`make_omni_output`、`process_additional_info`、`build_mm_cpu`、bookkeeping sync——落在 **每 Decode 步毫秒级**。一句大约要 **200** 步 Decode。c=64 时这笔税沿整段序列重复。
+在 **H20 × 2** 上 profile 过 Talker Decode，声音克隆，c=64。更宽的热路径动手之前的 warm run：模型外的 Python 和 runner 侧工作——`preprocess_decode_batch`、`make_omni_output`、`process_additional_info`、`build_mm_cpu`、bookkeeping sync——落在 **每 Decode 步毫秒级**。一句大约要 **200** 步 Decode。c=64 时这笔开销沿整段序列重复。
 
 c=64 时 `nvidia-smi`：基线平均 GPU 利用率大约 **14%**（Stage 0）和 **6%**（Stage 1）。GPU 在等 Python 调度、小张量分配、kernel launch——不是缺 FLOPs。
 
@@ -210,7 +210,7 @@ Fish Speech S2 Pro（Fish Audio）：Dual-AR，训在超过 **1000 万小时**�
 
 Profiling：高并发时 Fish slow_ar 大部分时间花在 q_len=1 SlowAR attention，以及 DAC↔runtime 交接。Fish Decode 很窄：q_len=1，fp16/bf16，head_dim=**128**，block size **16**，Fish GQA layout。
 
-给 SlowAR Decode attention 写的 Fish 专用 Triton kernel（[PR #3773](https://github.com/vllm-project/vllm-omni/pull/3773)）。**不**伺候 Prefill 或其他模型。形状对不上 → 原来的 attention 路径。
+给 SlowAR Decode attention 写的 Fish 专用 Triton kernel（[PR #3773](https://github.com/vllm-project/vllm-omni/pull/3773)）。**不**服务 Prefill 或其他模型。形状对不上 → 原来的 attention 路径。
 
 两条路。短序列到 **1024** token：标准 online softmax 一遍过。Grid `(batch_size, num_kv_heads)`；每个 program 处理一行 batch 和一只 KV head，罩住它的 Q heads。Block size 写死 **16**，跟 vLLM 的 KV cache block size 对齐，所以 block table lookup 是直接 `tl.load`，不必额外 gather。长序列：split-partial-combine——切成段，各自算 partial m/l/acc，再用 online softmax 递推合并。让带参考音频的长上下文请求仍走快路径。
 
@@ -228,7 +228,7 @@ Fish Speech Fast AR：四层轻量 transformer，在每步 slow_ar 之后预测 
 
 一次分配 `_embed_buf`、`_pos_ids`、`_k_cache`、`_v_cache` 再复用。`_embed_buf` 形状 `(batch_size, num_codebooks + 1, hidden_dim)` 罩住一次 Fast AR Decode 的所有时间步。`_k_cache` / `_v_cache` 按层、batch、KV head、序列位置、head dim 预分配，所以 `forward_one` 原地读写。
 
-Fast AR 也 `torch.compile`。不像 VoxCPM2 的 MiniCPM4，Fast AR 只有四层——compile 开销小。`fullgraph=False`，因为 attention 用 `F.scaled_dot_product_attention` 而不是 paged attention；SDPA 内部可能 graph-break。Dynamo memoize 少数 subgraph。`dynamic=True` 让 compiled 结果能伺候 batch-size 变化。
+Fast AR 也 `torch.compile`。不像 VoxCPM2 的 MiniCPM4，Fast AR 只有四层——compile 开销小。`fullgraph=False`，因为 attention 用 `F.scaled_dot_product_attention` 而不是 paged attention；SDPA 内部可能 graph-break。Dynamo memoize 少数 subgraph。`dynamic=True` 让 compiled 结果能服务 batch-size 变化。
 
 ### DAC 和 runtime 侧优化
 

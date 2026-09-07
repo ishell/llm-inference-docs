@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-07-10-vime-rocm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vime on ROCm：`vllm/vime-rocm`，MI355X 上 Qwen3-8B ~4100 tok/gpu/s
 
 英文对照：[en/vllm/blog/serving/vime-rocm.md](../../../../en/vllm/blog/serving/vime-rocm.md)  
 原文：https://vllm.ai/blog/2026-07-10-vime-rocm  
-2026-07-10。署名 **AMD contributors & vime community**。主线发布：[vime](vime.md)（2026-06-09）。镜像：`vllm/vime-rocm`。教程：[amd_tutorial.md](https://github.com/vllm-project/vime/blob/main/docs/en/platform_support/amd_tutorial.md)。slime：[THUDM/slime](https://github.com/THUDM/slime)。硬件插件亲戚：[hardware-plugin.md](../../architecture/hardware-plugin.md)。引擎侧 pause / 权重 API 是另一层：[native-rl](native-rl.md)。逐 bit on-policy **不是**这篇：[bitwise-rl](bitwise-rl.md)。MI355X 上 Qwen3-8B 的数字是页上的合同，不是你的 SLA。
+2026-07-10。署名 **AMD contributors & vime community**。主线发布：[vime](vime.md)（2026-06-09）。镜像：`vllm/vime-rocm`。教程：[amd_tutorial.md](https://github.com/vllm-project/vime/blob/main/docs/en/platform_support/amd_tutorial.md)。slime：[THUDM/slime](https://github.com/THUDM/slime)。硬件插件亲戚：[hardware-plugin.md](../../architecture/hardware-plugin.md)。引擎侧 pause / 权重 API 是另一层：[native-rl](native-rl.md)。逐 bit on-policy **不是**这篇：[bitwise-rl](bitwise-rl.md)。MI355X 上 Qwen3-8B 的数字是页上的合同，不是某一套集群上的 SLA。
 
 vime 发布之后，AMD 和 vime 组把 ROCm 接上：Instinct 上跑通端到端，ROCm 专用修补往上游送，再给一份预编译容器，AMD 用户不必从源码砌栈。ROCm 路径和 CUDA 路径 knobs 同名，不等于 kernel 同形。对表时看他们给的 `train_rollout_logprob_abs_diff`，不要默认 bitwise。
 

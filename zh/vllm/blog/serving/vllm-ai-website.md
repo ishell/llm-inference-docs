@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-12-27-vllm-ai-website
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vllm.ai 网站：活动从 GitHub PR 挪走，代码仓专心合代码
@@ -11,7 +11,7 @@ fetched: 2026-09-04
 原文：https://vllm.ai/blog/2025-12-27-vllm-ai-website  
 2025-12-27。署名 **vLLM Team**。社区会务文。没有推理数字。站点：[vllm.ai](https://vllm.ai)。样子学 [pytorch.org](https://pytorch.org)。以前跳到 [vllm-project/vllm](https://github.com/vllm-project/vllm)。
 
-适用：知道活动和会务改寄到哪。不适合：来找 TPS。
+这篇讲活动和会务改寄到哪。没有 TPS。
 
 **原文 TL;DR。** 安装选择器 + Events 页。Meetup 幻灯和会务离开主仓。反馈：`website-feedback@vllm.ai`。另：`talentpool@` / `collaboration@` / `social-promotion@`。[vLLM Daily](https://github.com/vllm-project/vllm-daily) 每日摘要 commits；RSS 跟 commits atom。
 
@@ -29,7 +29,7 @@ fetched: 2026-09-04
 
 ## 为什么要新站
 
-几乎所有 vLLM 信息都堆在 GitHub；活动公告和 meetup 幻灯靠往代码仓提 PR。那是给想合代码的人加税。往后：社区活动和会务上网站；GitHub 专心开发。
+几乎所有 vLLM 信息都堆在 GitHub；活动公告和 meetup 幻灯靠往代码仓提 PR。那是给想合代码的人加负担。往后：社区活动和会务上网站；GitHub 专心开发。
 
 代价：不能再往主仓 PR 一张海报。网站意见寄 **website-feedback@vllm.ai**。
 

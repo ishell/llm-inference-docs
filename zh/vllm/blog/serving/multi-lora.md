@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-02-26-multi-lora
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Multi-LoRA 进 MoE：一只 GPU 侍候多套适配器
+# Multi-LoRA 进 MoE：一块 GPU 上同时跑多套适配器
 
 英文对照：[en/vllm/blog/serving/multi-lora.md](../../../../en/vllm/blog/serving/multi-lora.md)  
 原文：https://vllm.ai/blog/2026-02-26-multi-lora  
-2026-02-26。署名 **AWS AI Team**（Danielle Maddix Robinson, Florian Saupe, George Novack, Haipeng Li, Mani Kumar Adari, Xiang Song, Yu Gong）。学习重写，不是官方译本。vLLM ≥**0.15.0**。贯穿例子：[gpt-oss](gpt-oss.md) 20B。SageMaker AI / Bedrock 上还有额外调参。也发在 AWS Blogs。1600/600、rank 32、8 只适配器——**他们**那条负载，不是你的 SLA。
+2026-02-26。署名 **AWS AI Team**（Danielle Maddix Robinson, Florian Saupe, George Novack, Haipeng Li, Mani Kumar Adari, Xiang Song, Yu Gong）。学习译文，不是官方译本。vLLM ≥**0.15.0**。贯穿例子：[gpt-oss](gpt-oss.md) 20B。SageMaker AI / Bedrock 上还有额外调参。也发在 AWS Blogs。1600/600、rank 32、8 只适配器——**他们**那条负载，不宜直接当作生产 SLA。
 
 **原文 TL;DR：**
 
@@ -24,9 +24,9 @@ fetched: 2026-09-05
 
 Multi-LoRA 是常见的微调路：不重训整份权重，原权重冻住，往层里塞小的可训适配器。推理时，多套定制模共享同一张 GPU，按请求把适配器换进换出。五个客户各只用掉专用 GPU 的 10%，就可以挤到一张卡上——五张闲卡变成一张忙卡。
 
-下文先讲 vLLM 里 MoE 的 multi-LoRA 推理怎么接，再讲 kernel 级优化，最后说你怎么用上。贯穿例子是 GPT-OSS 20B。
+下文先讲 vLLM 里 MoE 的 multi-LoRA 推理怎么接，再讲 kernel 级优化，最后说我们怎么用上。贯穿例子是 GPT-OSS 20B。
 
-本地部署用 **0.15.0** 或更新即可。Multi-LoRA serving 现在覆盖 GPT-OSS、Qwen3-MoE、DeepSeek、Llama MoE。同一套优化也帮了稠密模，例如 Llama3.3 70B、Qwen3 32B。Amazon 侧相对 vLLM 0.15.0 还有额外延迟改进：GPT-OSS 20B 上 OTPS（Output Tokens Per Second，模型往外吐字有多快）高 **19%**，TTFT（Time To First Token，等到第一个非空 token 要等多久）低 **8%**。要吃到这截，把 LoRA 定制模放到 [Amazon SageMaker AI](https://aws.amazon.com/sagemaker/ai/) 或 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 上。
+本地部署用 **0.15.0** 或更新即可。Multi-LoRA serving 现在覆盖 GPT-OSS、Qwen3-MoE、DeepSeek、Llama MoE。同一套优化也帮了稠密模，例如 Llama3.3 70B、Qwen3 32B。Amazon 侧相对 vLLM 0.15.0 还有额外延迟改进：GPT-OSS 20B 上 OTPS（Output Tokens Per Second，模型往外吐 token 有多快）高 **19%**，TTFT（Time To First Token，从提交到第一个非空 token）低 **8%**。要吃到这截，把 LoRA 定制模放到 [Amazon SageMaker AI](https://aws.amazon.com/sagemaker/ai/) 或 [Amazon Bedrock](https://aws.amazon.com/bedrock/) 上。
 
 ## Implementing multi-LoRA inference for MoE models in vLLM
 
@@ -46,9 +46,9 @@ Multi-LoRA 微调冻住基座 `W`（例如 `gate_up` 的 `W_gate_up`），另训
 
 **Figure 1。** MoE-LoRA 怎么工作：hidden 4096，intermediate 11008，LoRA rank `r = 32`。
 
-每只专家有两次权重投影：`gate_up` 和 `down`。一套 LoRA 给**每个**投影都加 shrink + expand。于是每只专家一共要四次 LoRA kernel：`gate_up` 的 shrink/expand，`down` 的 shrink/expand。Multi-LoRA serving 里，多套适配器同时伺候不同用户或任务，系统必须把「每专家、每适配器、每请求」这四次算子管住——这就是 MoE 上的性能瓶颈。
+每只专家有两次权重投影：`gate_up` 和 `down`。一套 LoRA 给**每个**投影都加 shrink + expand。于是每只专家一共要四次 LoRA kernel：`gate_up` 的 shrink/expand，`down` 的 shrink/expand。Multi-LoRA serving 里，多套适配器同时服务不同用户或任务，系统必须把「每专家、每适配器、每请求」这四次算子管住——这就是 MoE 上的性能瓶颈。
 
-这四次运算的矩阵有一维（LoRA rank `r`）比另一维（hidden / intermediate）小 **100–300×**。标准 GEMM 为大致方阵设计，瘦矩阵上成绩难看，所以后文那些 kernel 优化才必要。
+这四次运算的矩阵有一维（LoRA rank `r`）比另一维（hidden / intermediate）小 **100–300×**。标准 GEMM 为大致方阵设计，瘦矩阵上表现不好，所以后文那些 kernel 优化才必要。
 
 除了瘦矩阵，给 MoE 加 multi-LoRA 还有两道题。第一，vLLM 当时没有在 MoE 层上做 LoRA 的 kernel：现成的稠密 Multi-LoRA kernel 不懂 expert routing。第二，MoE LoRA 叠了两层稀疏：expert routing（token 分到不同专家）再加 adapter selection（请求用不同适配器）。这种复合稀疏要专门的 kernel。
 
@@ -78,7 +78,7 @@ shrink 和 expand 的 LoRA kernel 还去掉了不必要的 mask 和 dot。Triton
 
 ### Tuning kernel configurations for Amazon SageMaker AI and Amazon Bedrock
 
-Triton kernel 要拧块大小：`BLOCK_SIZE_M`、`BLOCK_SIZE_N`、`BLOCK_SIZE_K`，决定矩阵计算怎么切给 thread group。更高级的有 `GROUP_SIZE_M`（thread group 排序、管 cache 局部性）和 `SPLIT_K`（沿内维把求和并行化）。
+Triton kernel 要调块大小：`BLOCK_SIZE_M`、`BLOCK_SIZE_N`、`BLOCK_SIZE_K`，决定矩阵计算怎么切给 thread group。更高级的有 `GROUP_SIZE_M`（thread group 排序、管 cache 局部性）和 `SPLIT_K`（沿内维把求和并行化）。
 
 他们发现：MoE LoRA kernel 若沿用标准 fused MoE 的默认配置，在 multi-LoRA serving 上成绩差。那些默认值没把 LoRA index 那一维网格、以及多适配器带来的复合稀疏算进去。于是加了用户可指定文件夹、加载自定义调参配置的路径；细节见 vLLM LoRA Tuning 文档。四个 `fused_moe_lora` op（`gate_up_shrink`、`gate_up_expand`、`down_shrink`、`down_expand`）一起调，因为它们共享 `BLOCK_SIZE_M`。SageMaker AI 和 Bedrock 客户会自动加载这套配置，GPT-OSS 20B 到 **171 OTPS** / **124 ms TTFT**。
 

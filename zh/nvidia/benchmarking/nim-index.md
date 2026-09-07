@@ -1,7 +1,8 @@
 ---
 source: https://docs.nvidia.com/nim/benchmarking/llm/latest/index.html
 lang: zh
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # NIM LLM 压测手册（目录）

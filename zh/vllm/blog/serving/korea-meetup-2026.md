@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-04-14-vllm-korea-meetup-2026
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 韩国 Meetup 2026：V1、playground、NPU 插件、Omni 拆管线
@@ -25,7 +25,7 @@ Kim：距首场六个月——Steering Group 治理，定期 meetup 和 workshop
 
 ![Li Ming](../../../../assets/vllm/blog/serving/korea-meetup-2026/03-intro_liming.jpg)
 
-Li Ming：[vllm-playground](playground.md) 把 **140+** 旋钮收成 GUI——缩短 time-to-first-run，CPU 和 macOS，带性能可视化。
+Li Ming：[vllm-playground](playground.md) 把 **140+** 配置项收成 GUI——缩短 time-to-first-run，CPU 和 macOS，带性能可视化。
 
 他们记下的一句话：serving 不再是「选哪个框架」，是在不像的环境里都跑得省。
 
@@ -51,7 +51,7 @@ Juho Lee（XCENA，CXL 3.0 智能内存）。LLM serving 首先是 **集群效�
 
 ### Track 1-2 — Upstage：开源权重 → 生产服务
 
-Inseo Song（Upstage / Solar）。训完才是难的。Chat template 要同时伺候 OpenAI 兼容 API、多轮、reasoning、function calling、结构化输出；token 级状态解析。vLLM 里用 parser 和 logits processor 细抠生成。带走的一句：「稳地 serve」比「模型好」难。
+Inseo Song（Upstage / Solar）。训完才是难的。Chat template 要同时支持 OpenAI 兼容 API、多轮、reasoning、function calling、结构化输出；token 级状态解析。vLLM 里用 parser 和 logits processor 细抠生成。带走的一句：「稳地 serve」比「模型好」难。
 
 ### Track 2-1 — 三星：air-gap 企业
 

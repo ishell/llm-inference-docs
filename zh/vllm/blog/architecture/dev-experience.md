@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-01-10-dev-experience
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 安装与开发：nightly 按 commit 钉死，uv 比 pip 快两个数量级（他们那台机）
@@ -105,7 +105,7 @@ export VLLM_COMMIT=33f460b17a54acb3b6cc0b03f4a17876cff5eafd
 pip install https://wheels.vllm.ai/${VLLM_COMMIT}/vllm-1.0.0.dev-cp38-abi3-manylinux1_x86_64.whl
 ```
 
-## 收束 / 联系
+## 结语 / 联系
 
 信任、追踪改动、一起改。合作：[vllm-questions@lists.berkeley.edu](mailto:vllm-questions@lists.berkeley.edu)。[GitHub](https://github.com/vllm-project/vllm)、[Slack](https://slack.vllm.ai/)。
 

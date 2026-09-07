@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-01-05-vllm-sr-iris
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Semantic Router v0.1 Iris：从 14 类到信号链
@@ -128,7 +128,7 @@ helm install semantic-router oci://ghcr.io/vllm-project/charts/semantic-router
 
 Helm chart 带他们称为 sensible 的默认值和一长串可改项。
 
-**Dashboard：** 网页控制台——路由策略、模型配置、交互式 chat playground，当场看路由决定。路由流、时延分布、分类阈值，都在浏览器里拧。
+**Dashboard：** 网页控制台——路由策略、模型配置、交互式 chat playground，当场看路由决定。路由流、时延分布、分类阈值，都在浏览器里调。
 
 ### 5. 生态
 

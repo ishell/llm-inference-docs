@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-11-19-docker-model-runner-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Docker Model Runner × vLLM：safetensors 走高吞吐，GGUF 仍 llama.cpp
@@ -27,7 +27,7 @@ Model Runner 已经能用 Docker 跑 LLM。从第一天就打算接多种引擎�
 
 ## 怎么跑
 
-装后端，再跑模型。请求里不用再写引擎名。
+我们装后端，再跑模型。请求里不用再写引擎名。
 
 ```bash
 docker model install-runner --backend vllm --gpu cuda
@@ -70,7 +70,7 @@ curl --location 'http://localhost:12434/v1/chat/completions' \
 - **GGUF**：llama.cpp 的原生格式。便携、量化。商品硬件、带宽紧的时候。架构和权重打在一个文件里。
 - **Safetensors**：vLLM 的原生格式；高吞吐、高端路径。
 
-路由看你 pull 了什么，不看 `curl` 里有没有写引擎。
+路由看我们 pull 了什么，不看 `curl` 里有没有写引擎。
 
 ## Docker Hub 上当时的 vLLM 模型
 

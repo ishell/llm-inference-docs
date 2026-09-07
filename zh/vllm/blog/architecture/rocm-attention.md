@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-02-27-rocm-attention-backend
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # ROCm 上的七条 attention 路：编排，不是移植
@@ -168,7 +168,7 @@ def extend_forward():
 
 ## AITER MLA：给 DeepSeek 调的
 
-DeepSeek / Kimi 的 **MLA** 把 KV 压到 **576** 维（标准 MHA 大约 **8K**）——大约 **14×** 省内存。Attention 的脾气变了，MHA 那套菜谱搬不过去。
+DeepSeek / Kimi 的 **MLA** 把 KV 压到 **576** 维（标准 MHA 大约 **8K**）——大约 **14×** 省内存。Attention 的特性变了，MHA 那套做法搬不过去。
 
 ### 混合做法
 
@@ -184,7 +184,7 @@ DeepSeek / Kimi 的 **MLA** 把 KV 压到 **576** 维（标准 MHA 大约 **8K**
 
 ### Absorbed 与 non-absorbed
 
-所有 MLA 后端共用一份菜谱：
+所有 MLA 后端共用一套做法：
 
 - **Prefill / Extend（non-absorbed）。** 在未压缩表示上跑标准 MHA kernel。
 - **Decode（absorbed）。** 专用 MLA kernel，直接在压缩后的 **576 维** latent 上算。
@@ -410,7 +410,7 @@ AMD ROCm 上的七条 attention 路：
 | MLA | **ROCM_AITER_MLA** | `--attention-backend ROCM_AITER_MLA` | **推荐**，开 AITER 时自动选 |
 | MLA | ROCM_AITER_TRITON_MLA | `--attention-backend ROCM_AITER_TRITON_MLA` | 另一条 AITER MLA |
 
-## 收束
+## 结语
 
 「只移植」那一页翻过去了。七条 ROCm attention 后端都有对照 bench。
 
@@ -451,4 +451,4 @@ AMD AI Framework 团队于 **2026-01-29** 在 Instinct MI300X、MI325X、MI355X 
 
 Ubuntu 22.04 LTS，Linux kernel **5.15.0-116-generic**，**ROCm 7.0**，PyTorch **2.9.0a0**，vLLM **0.14.0rc2**（2026-01-15）。
 
-服务器厂商配置可能不同。成绩会随配置、软件、vLLM 版本、驱动和优化代际变化。学习笔记，不是 SLA。
+服务器厂商配置可能不同。成绩会随配置、软件、vLLM 版本、驱动和优化代际变化。学习译文，不是 SLA。

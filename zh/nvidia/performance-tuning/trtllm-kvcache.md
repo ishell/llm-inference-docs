@@ -1,15 +1,15 @@
 ---
 source: https://nvidia.github.io/TensorRT-LLM/features/kvcache.html
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-07
 ---
 
 # KV Cache 系统（邻居页）
 
 生成阶段不必重复计算已经算过的 K/V。TensorRT-LLM 的 KV 还支持**跨请求复用**，以及卸载、带优先级的驱逐。它认得不同的 attention 窗口，也认得 MQA / GQA。
 
-运行时那一页（`trtllm-runtime-flags.md`）只拧「给 KV 多少显存」和 sliding window。这一页是同一栋房子的结构图。
+运行时那一页（「trtllm-runtime-flags.md」）只调「给 KV 多少显存」和 sliding window。这一页是同一套系统的结构说明。
 
 ## 块池
 
@@ -17,7 +17,7 @@ KV 是一块一块的池子。每块装固定数量的 token。**每块的 token
 
 多池时，空闲显存在初始化时按比例切开，之后是静态的。官方承认这不是最优，正在改。
 
-填满的块进一棵 **radix 树**。后来的请求如果前缀相同，就跳过计算、共享这块显存。复用既省算力，也省房子。
+填满的块进一棵 **radix 树**。后来的请求如果前缀相同，就跳过计算、共享这块显存。复用既省算力，也省 KV 空间。
 
 ## 驱逐与卸载
 
@@ -54,7 +54,7 @@ scheduler_config:
 
 `max_attention_window` 可以是按层的整数列表。比层数短就循环：`[4096, 256]` 表示奇数层全窗口、偶数层 256。
 
-## 盐值：谁能复用谁的记忆
+## 盐值：谁能复用谁的 KV
 
 `cache_salt` 把盐混进块的 hash。只有盐相同的请求才能共享缓存——用来隔离租户，挡住「从别人的 KV 里偷 prompt」这类攻击。隔离**完全靠 hash**：盐进摘要，前缀是否命中只看 digest 相不相等，不再逐 token 比对。因此块 key 必须是有抗碰撞能力的密码学 hash（256-bit digest；SHA-256 大约 128-bit 碰撞阻力）。**不要换成非密码学 hash**，否则可以构造碰撞绕过隔离。
 

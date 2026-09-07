@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-11-22-ray-symmetric-run
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # `ray symmetric-run`：多机起 vLLM 不必先扮演 head/worker
@@ -11,7 +11,7 @@ fetched: 2026-09-04
 原文：https://vllm.ai/blog/2025-11-22-ray-symmetric-run  
 2025-11-22。Richard Liaw（Anyscale/Ray）、Kaichao You（vLLM）。写给 SLURM / `mpssh` / `pssh` 这类「每台机器敲同一条命令」的人。[Elastic EP](elastic-ep.md) 也依赖 Ray DP backend；这篇是把集群**先拉起来**的那条命令。
 
-Ray 多了一条 `ray symmetric-run`：在集群的**每一台节点**上跑**同一条入口**。HPC 和并行 SSH 起多机 vLLM 时，姿势终于对上了。原文先写旧流程的别扭，再走两台机器的例子，最后才是新 API。
+Ray 多了一条 `ray symmetric-run`：在集群的**每一台节点**上跑**同一条入口**。HPC 和并行 SSH 起多机 vLLM 时，和工作习惯对齐了。原文先写旧流程的别扭，再走两台机器的例子，最后才是新 API。
 
 Ray 当时刚加入 PyTorch Foundation。vLLM 和 Ray 两边在对齐下一层基础设施。
 
@@ -25,10 +25,10 @@ Figure 1：Ray `symmetric-run` 总览。
 
 来找 Ray 的人，手里已经有一套起法。
 
-- 裸集群上的交互活：`mpssh` / `pssh`，一条命令，用「rank」当参数。
+- 裸集群上的交互式工作：`mpssh` / `pssh`，一条命令，用「rank」当参数。
 - HPC（SLURM、PBS）：**对称执行**——所有节点同时跑同一个入口，像 MPI。
 
-Ray 推荐的作业姿势是另一种哲学。入口在 **head** 上跑；head 编排，把活派给 **worker**。运行时的生命周期和作业执行是两套事，于是你要记两套命令：一套把 head/worker 角色立起来，另一套才真正干活。
+Ray 推荐的作业姿势是另一种哲学。入口在 **head** 上跑；head 编排，把活派给 **worker**。运行时的生命周期和作业执行是两套事，于是我们要记两套命令：一套把 head/worker 角色立起来，另一套才真正干活。
 
 ## Motivating Example
 
@@ -60,7 +60,7 @@ ray stop
 
 这种配法通常要试错。常见的漏是 `VLLM_HOST_IP`。漏了就要拆集群，在 `ray start` 上补变量，整条流程再走一遍。
 
-指望「一条对称命令」的人，会在这里磨很久。`ray symmetric-run` 是对这件事的回答。
+指望「一条对称命令」的人，会在这里花很多时间试错。`ray symmetric-run` 是对这件事的回答。
 
 ## What `symmetric-run` does
 
@@ -82,10 +82,10 @@ ray symmetric-run \
 
 1. 以 `--head` 启动 Ray。
 2. 等节点登记——原文散文写等 **四** 台；示例 CLI 是 `--min-nodes 2`。
-3. 跑你的命令（`vllm serve Qwen/Qwen3-32B …`）。
+3. 跑我们的命令（`vllm serve Qwen/Qwen3-32B …`）。
 4. 做完后关掉 Ray。
 
-**Worker：** 只做 `ray start --address head-node:6379`，等到作业结束再自杀。不必另写 SSH 编排或启动脚本。
+**Worker：** 只做 `ray start --address head-node:6379`，等到作业结束再退出。不必另写 SSH 编排或启动脚本。
 
 环境变量写在命令前面，会进 Ray runtime：
 

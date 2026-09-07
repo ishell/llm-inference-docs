@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-08-22-rdt-weight-transfer
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # RDT 分片权重搬运：Kimi K2 7.53 秒
@@ -37,7 +37,7 @@ Kimi K2 BF16，**48 × (8×H100)**：训练 **32** 节点、推理 **16** 节点
 1. **每个 worker 都收到整模。** TP8 只留 ⅛，其余扔掉。大 MoE（Kimi K2，常常 wide-EP）更糟：单层完整参数仍可到 **几十 GB**——峰值显存和传送时间一起涨。
 2. **Broadcast 是集体通信。** NCCL 要组里每个人都到。掉队的 rank 会卡住 collective；副本一挂，整组可能要重建。
 
-更早的大规模分片：[LMSYS P2P update](https://www.lmsys.org/blog/2026-04-29-p2p-update/)、[Perplexity，两秒以内](https://research.perplexity.ai/articles/weight-transfer-for-rl-post-training-in-under-2-seconds)。这篇盯的是 **通用**：vLLM 能伺候的模型几乎都要能走；别的 RL 框架只要肯描述布局就能接。
+更早的大规模分片：[LMSYS P2P update](https://www.lmsys.org/blog/2026-04-29-p2p-update/)、[Perplexity，两秒以内](https://research.perplexity.ai/articles/weight-transfer-for-rl-post-training-in-under-2-seconds)。这篇盯的是 **通用**：vLLM 能服务的模型几乎都要能走；别的 RL 框架只要肯描述布局就能接。
 
 ## Weight loading in vLLM
 
@@ -68,7 +68,7 @@ Layerwise reloading（[来源](https://docs.vllm.ai/en/latest/training/layerwise
 1. **GQA 下的 QKV fusion。** `q_proj`、`k_proj`、`v_proj` 融进一张量。GQA 的 KV head 可以比 TP rank 少，于是两个 worker 可能 **Q 不同、K/V 相同**。标准 MHA 里 Q / K / V 的切法是一致的，这里不是。
 2. **Llama-4 的 fused expert。** HuggingFace 里 expert 张量先转置，再拆成 `gate_proj` 和 `up_proj`，然后才按这个 worker 该拿的 expert 去选。
 
-按模型手写 1–4 养不起。通用的办法：运行时把 loader **实际做的事记下来**。
+按模型手写 1–4 维护不起。通用的办法：运行时把 loader **实际做的事记下来**。
 
 ### Solution: a recording-tensor dry run
 

@@ -1,17 +1,17 @@
 ---
 source: https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/useful-build-time-flags.html
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-07
 ---
 
 # 第 2 章：编译期旗标
 
-这些开关写进引擎的骨头里。改了就要重建。LLM-API 走 `BuildConfig`；CLI 走 `trtllm-build`。完整清单在官方 Command Line Reference。
+这些开关写进引擎本身。改了就要重建。LLM-API 走 BuildConfig；CLI 走 `trtllm-build`。完整清单在官方 Command Line Reference。
 
-数字仍然是演示。环境、SKU、互联、负载一变，涨幅会换脸。
+数字仍然是演示。环境、SKU、互联、负载一变，涨幅会变。
 
-上一章留下的那张成绩单——token/s 1564、ITL 31 ms——是这一页的对照物。下面每一项都先讲它做什么，再给出怎么开，再拿同一套 70B / 4×H100 / 2048/2048 去撞一次秒表。
+上一章留下的那张成绩单——token/s 1564、ITL 31 ms——是这一页的对照物。下面每一项都先讲它做什么，再给出怎么开，再拿同一套 70B / 4×H100 / 2048/2048 去打一次秒表。
 
 ```python
 from tensorrt_llm import LLM, BuildConfig
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
 TensorRT 用 **optimization profile** 描述输入张量的 min / optimal / max 形状。它为 optimal 优化，同时还能在 min–max 之间活着。TensorRT-LLM 把 profile 的制造藏起来了，但 `max_batch_size` 和 `max_num_tokens`（下一章）会悄悄参与。默认只造 **一个** profile。
 
-线上的请求负载会把形状拧来拧去。开多个 profile，引擎可以按当下的形状选更合适的 kernel。**编译更久，运行时没有已知的副作用。生产建议永远开。**
+线上的请求负载会把形状变来变去。开多个 profile，引擎可以按当下的形状选更合适的 kernel。**编译更久，运行时没有已知的副作用。生产建议永远开。**
 
 唯一要记住的：同一句 prompt，在不同负载下可能走进不同的 kernel。输出不必 bit-exact，质量通常不受伤。你若需要完全确定性，就别开。
 
@@ -48,7 +48,7 @@ TensorRT 用 **optimization profile** 描述输入张量的 min / optimal / max 
 | Average TTFT (ms) | 147.6976 | 145.8958 |
 | Average ITL (ms) | 31.3276 | 19.6452 |
 
-几乎全线变好。ITL 从 31 ms 掉到 20 ms——decode 突然会走路了。
+几乎全线变好。ITL 从 31 ms 掉到 20 ms——decode 明显加快。
 
 ## Paged context attention
 
@@ -93,7 +93,7 @@ CLI：`trtllm-build --gemm_plugin auto`
 | Average TTFT (ms) | 145.4089 | 147.8307 |
 | Average ITL (ms) | 19.6523 | 15.4133 |
 
-吞吐和 ITL 明显变好，TTFT 略升——decode 高兴，第一个字稍微多等了一点。
+吞吐和 ITL 明显变好，TTFT 略升——decode 更好，TTFT 稍微多等了一点。
 
 ## Reduce-norm fusion（Llama / Mistral）
 
@@ -139,7 +139,7 @@ CLI：`trtllm-build --pp_reduce_scatter`
 | Average TTFT (ms) | 147.6976 | 146.6628 | 0.70 |
 | Average ITL (ms) | 31.3276 | 14.4493 | 53.88 |
 
-token/s 大约 **+31%**，ITL 大约 **−54%**，TTFT 几乎不动。第一个字还在等同一场雨，后面的字开始跑起来了。
+token/s 大约 **+31%**，ITL 大约 **−54%**，TTFT 几乎不动。TTFT 还在同一量级，后面的 token 开始跑起来了。
 
 ### 建议（官方原意）
 

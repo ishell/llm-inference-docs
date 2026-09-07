@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-06-02-session-aware-agentic-routing
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # SAAR：长程 agent 问的是「现在能不能换模」
 
 英文对照：[en/vllm/blog/serving/semantic-router-session.md](../../../../en/vllm/blog/serving/semantic-router-session.md)  
 原文：https://vllm.ai/blog/2026-06-02-session-aware-agentic-routing  
-2026-06-02。署名 **Xunzhuo Liu, Bowei He, Huamin Chen, Haichen Zhang (AMD), Andy Luo (AMD), and the vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。v0.2：[athena](semantic-router-athena.md)。产品化写进 [Themis](semantic-router-themis.md)。视觉信号：[vision](semantic-router-vision.md)。后来的 MoM 专章：[mom](semantic-router-mom.md)。Looper：[micro-agent](semantic-router-micro-agent.md)。AMD 现场池：[mom-amd](semantic-router-mom-amd.md)。不要和引擎里的 [Router](router.md) 混。数字是确定性矩阵 + AMD ROCm 现场跑，当演示。
+2026-06-02。署名 **Xunzhuo Liu, Bowei He, Huamin Chen, Haichen Zhang (AMD), Andy Luo (AMD), and the vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。v0.2：[athena](semantic-router-athena.md)。产品化写进 [Themis](semantic-router-themis.md)。视觉信号：[vision](semantic-router-vision.md)。后来的 MoM 专章：[mom](semantic-router-mom.md)。Looper：[micro-agent](semantic-router-micro-agent.md)。AMD 现场池：[mom-amd](semantic-router-mom-amd.md)。不要和引擎里的 [Router](router.md) 混。数字是确定性矩阵 + AMD ROCm 现场跑，当演示。
 
 同目录还有：[modular](semantic-router-modular.md)、[amd](semantic-router-amd.md)、[fusion](semantic-router-fusion.md)、[halugate](halugate.md)。
 
@@ -50,7 +50,7 @@ Agent 又把路由单位换了。coding / 研究 agent 是一次 **session**：�
 - 工具结果甩给没开口要工具的模型。
 - 不可移植的 continuation id 送到另一台物理 backend。
 - 暖了很久的 session 因为这句很短就把 prefix locality 扔掉。
-- 逻辑模型 `auto` 不好查：到底哪只物理模型伺候了这一轮。
+- 逻辑模型 `auto` 不好查：到底哪只物理模型服务了这一轮。
 
 Agent **该**换模：任务变难就从便宜走到强，碰到安全边界再走回来。要 session 上下文才知道哪些瞬间能换。
 
@@ -154,7 +154,7 @@ routing:
           switch_history_weight: 0.04
 ```
 
-政策旋钮，不是万能常数。短客服可以 idle 松一点；长 coding agent 可以把工具环和 prefix cache 锁死一点。
+政策配置，不是固定常数。短的客服会话可以 idle 松一点；长 coding agent 可以把工具环和 prefix cache 锁死一点。
 
 ## 可观测是功能的一部分
 
@@ -271,7 +271,7 @@ idle 工作负载带着真实墙钟 sleep；那个 p95 **不是**热路径路由
 
 Iris 让决策可组合。Athena 往系统脑走。[Vision](semantic-router-vision.md) 把证据面从文本扩到请求级。SAAR 把 **时间** 拉长：不只这条请求，还要看它落在长交互的哪一段。
 
-Router 不成 agent。它只认得伺候 agent 所需的最少 session 事实。`auto` 后面的路由该知道：何时允许换、何时禁止、暖了很久的 session 换一刀要付多少。
+Router 不成 agent。它只认得服务 agent 所需的最少 session 事实。`auto` 后面的路由该知道：何时允许换、何时禁止、已经暖了很久的 session 换一次要付多少。
 
 ## 一起做
 

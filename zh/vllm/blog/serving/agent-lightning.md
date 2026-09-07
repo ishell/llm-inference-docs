@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-10-22-agent-lightning
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # `return_token_ids`：Agent RL 别再二次分词
@@ -19,7 +19,7 @@ LLM 的 RL 训的是 token 序列，trainer 要的是行为政策 **实际采样
 
 Agent 栈更爱 OpenAI 风格的 `chat.completions` / `completions`，而不是生的 `generate`：聊天模板和角色（system / user / assistant）、tool / function calling、结构化输出。这些 API 历史上只回 **字符串**。存下来的文本，训练时还要再分词。实践里不稳，也不准：**retokenization drift**。
 
-症状：学习曲线抖，以及「你以为在优化的数据」和「模型真正采到的」对不上，还不好查。
+症状：学习曲线抖，以及「我们以为在优化的数据」和「模型真正采到的」对不上，还不好查。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -39,7 +39,7 @@ Agent 栈更爱 OpenAI 风格的 `chat.completions` / `completions`，而不是�
 
 **Chat template 不一致。** 模板不是唯一的。同一只 LLaMA，[vLLM 例子](https://github.com/vllm-project/vllm/tree/1d165d6d859d3c50720f0c07209db2363c4fd33b/examples) 里可以有多份，[HuggingFace](https://huggingface.co/meta-llama) 上又是另一份。推理和训练用不同框架，整段 ID 都会漂。一个空格就够。
 
-这三处造成 retokenization drift，再变成训练不稳：推理和训练不一致，更新是 **off-policy**。On-policy 对稳的 RL 是承重墙；这种 off-policy **甚至不在 token 这一层**，token 级 importance sampling 修不到。
+这三处造成 retokenization drift，再变成训练不稳：推理和训练不一致，更新是 **off-policy**。On-policy 对稳的 RL 是前提；这种 off-policy **甚至不在 token 这一层**，token 级 importance sampling 修不到。
 
 另一条路：把模型吐出的 ID 存下来，单轮早就这么做。这要求 agent 和推理引擎在 token 层说话。多数 agent —— 尤其 LangChain 一类 —— 只认 OpenAI 兼容 API，自己不会 tokenize / detokenize。更长的讨论：[Token IDs and why they matter](https://microsoft.github.io/agent-lightning/stable/deep-dive/serving-llm/#token-ids-and-why-they-matter)。
 
@@ -82,11 +82,11 @@ Agent Lightning 概念图。
 
 以 store 为中心，每次训练迭代都抽象成两步：把 agent 跑出来的数据（span）收进 store；再从 store 取出算法要的，送去训练。
 
-这一刀换来算法上的自由。采集可以走 [各种 tracer](https://microsoft.github.io/agent-lightning/latest/tutorials/traces/)，也可以 [emit 自定义消息](https://microsoft.github.io/agent-lightning/latest/tutorials/write-agents/#emitting-rewards-messages-and-more)——不同奖励、任意中间变量。算法侧用 [query span](https://microsoft.github.io/agent-lightning/latest/deep-dive/birds-eye-view/?h=query#putting-it-all-together-a-reinforcement-learning-example-verl)，再经 [adapter](https://microsoft.github.io/agent-lightning/latest/deep-dive/birds-eye-view/#adapter) 变换。
+这一拆换来算法上的自由。采集可以走 [各种 tracer](https://microsoft.github.io/agent-lightning/latest/tutorials/traces/)，也可以 [emit 自定义消息](https://microsoft.github.io/agent-lightning/latest/tutorials/write-agents/#emitting-rewards-messages-and-more)——不同奖励、任意中间变量。算法侧用 [query span](https://microsoft.github.io/agent-lightning/latest/deep-dive/birds-eye-view/?h=query#putting-it-all-together-a-reinforcement-learning-example-verl)，再经 [adapter](https://microsoft.github.io/agent-lightning/latest/deep-dive/birds-eye-view/#adapter) 变换。
 
 同一框架也盖得住 [算法定制](https://microsoft.github.io/agent-lightning/latest/algorithm-zoo/verl/#customization)（credit assignment、用部分数据训辅助模型、训练时改数据），以及别种算法：[automatic prompt tuning (APO)](https://microsoft.github.io/agent-lightning/latest/algorithm-zoo/apo/)、[筛高奖励数据再用 Unsloth 拟合](https://microsoft.github.io/agent-lightning/latest/how-to/unsloth-sft/)。
 
-第二条好处：模块切开，系统复杂度下来，各组件还能用 **不同** 的资源。Agent RL 栈里本来就有 agent 框架（LangChain、MCP）、推理引擎（vLLM）、训练框架（Megatron-LM）。耦在一起，异构就是税。解开之后：agent 侧可以要 CPU，推理和训练要 GPU；各自横向扩展。
+第二条好处：模块切开，系统复杂度下来，各组件还能用 **不同** 的资源。Agent RL 栈里本来就有 agent 框架（LangChain、MCP）、推理引擎（vLLM）、训练框架（Megatron-LM）。耦在一起，异构就会变成开销。解开之后：agent 侧可以要 CPU，推理和训练要 GPU；各自横向扩展。
 
 页上更多材料：
 

@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-10-31-run-multimodal-reasoning-agents-nvidia-nemotron
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Nemotron Nano 2 VL：12B 视频/文档，EVS 砍冗余帧
 
 英文对照：[en/vllm/blog/serving/nemotron-nano-vl.md](../../../../en/vllm/blog/serving/nemotron-nano-vl.md)  
 原文：https://vllm.ai/blog/2025-10-31-run-multimodal-reasoning-agents-nvidia-nemotron  
-2025-10-31。署名 **NVIDIA Nemotron Team**。这篇是 day-0 上手，当时走 **nightly** 轮子——没有钉死 `vllm==`。上下文 **128K**。Encoder：[CRADIOH-V2](https://huggingface.co/nvidia/C-RADIOv2-H)；砍 token：[Efficient Video Sampling (EVS)](https://arxiv.org/abs/2510.14624)；LLM 骨架：[Nano 2](nemotron-nano2.md)。后继加音频：[Nano Omni](nemotron-omni.md)。同一套 hybrid 家族：[Nano](nemotron-3-nano.md) / [Super](nemotron-3-super.md) / [Ultra](nemotron-3-ultra.md) / [Lightning](nemotron-35-lightning.md)。Mamba 拆分 serving：[hybrid-ssm.md](hybrid-ssm.md)。这是 vLLM 上的 **perception VLM**，不是 [vLLM-Omni](vllm-omni.md) 那条扩散/TTS 栈。VLM 套榜均分 **74** vs 当时顶 VL **64.2** 是页上的演示，不是你的 SLA。
+2025-10-31。署名 **NVIDIA Nemotron Team**。这篇是 day-0 上手，当时走 **nightly** 轮子——没有钉死 `vllm==`。上下文 **128K**。Encoder：[CRADIOH-V2](https://huggingface.co/nvidia/C-RADIOv2-H)；砍 token：[Efficient Video Sampling (EVS)](https://arxiv.org/abs/2510.14624)；LLM 骨架：[Nano 2](nemotron-nano2.md)。后继加音频：[Nano Omni](nemotron-omni.md)。同一套 hybrid 家族：[Nano](nemotron-3-nano.md) / [Super](nemotron-3-super.md) / [Ultra](nemotron-3-ultra.md) / [Lightning](nemotron-35-lightning.md)。Mamba 拆分 serving：[hybrid-ssm.md](hybrid-ssm.md)。这是 vLLM 上的 **perception VLM**，不是 [vLLM-Omni](vllm-omni.md) 那条扩散/TTS 栈。VLM 套榜均分 **74** vs 当时顶 VL **64.2** 是页上的演示，不是某一套集群上的 SLA。
 
 **原文 TL;DR：**
 

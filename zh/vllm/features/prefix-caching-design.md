@@ -1,11 +1,11 @@
 ---
 source: https://docs.vllm.ai/en/stable/design/prefix_caching/
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Prefix cache 怎么记账
+# Prefix cache 设计
 
 英文对照：[en/vllm/features/prefix-caching-design.md](../../../en/vllm/features/prefix-caching-design.md)  
 原文：https://docs.vllm.ai/en/stable/design/prefix_caching/  
@@ -44,16 +44,16 @@ Block 3: |<------------------ prefix -------------------->| |<--- block tokens -
 
 ## 隔离：`cache_salt`
 
-可选的每请求 salt 打进 **第一块** 的哈希。只有盐相同的人能复用 KV。用来挡住靠延迟差猜缓存内容的计时攻击。页上 JSON 示例：聊天请求里 `"cache_salt": "your-cache-salt"`。
+可选的每请求 salt 打进 **第一块** 的哈希。只有盐相同的请求能复用 KV。用来挡住靠延迟差猜缓存内容的计时攻击。页上 JSON 示例：聊天请求里 `"cache_salt": "your-cache-salt"`。
 
 ## 数据结构
 
-做在 KV cache manager 里。简化的 `KVCacheBlock`：`block_id`（不变）、`block_hash`（装满才赋、驱逐时清）、`ref_cnt`，再加上 `prev_free_block` / `next_free_block` 做成侵入式空闲队列。
+做在 KV cache manager 里。简化的 KVCacheBlock：`block_id`（不变）、`block_hash`（装满才赋、驱逐时清）、`ref_cnt`，再加上 `prev_free_block` / `next_free_block` 做成侵入式空闲队列。
 
 两点：
 
 1. 管理器初始化时把所有块一次分配成池，免得 Python 对象来回造，块也随时能点名。
-2. 双向指针直接长在块上 → 中间元素挪到队尾 O(1)，不必再套一层 `deque`。
+2. 双向指针直接做在块上 → 中间元素挪到队尾 O(1)，不必再套一层 `deque`。
 
 初始化后四件套：**block pool**、空闲队列的头尾指针、**cache blocks**（`hash → block ID`）、**request blocks**（`request ID → 已分配 ID`）。文档站 Figure: Component Overview。
 
@@ -66,7 +66,7 @@ Block 3: |<------------------ prefix -------------------->| |<--- block tokens -
    1. 算还要几块新的；不够就返回。
    2. **Touch** 已命中的块：`ref_cnt += 1`；若没别人在用，从空闲队列摘下来（免得被赶走）。
    3. 从空闲队列 **头** 弹块。头若还在缓存里，等于 **驱逐** —— 从此别人不能再复用。
-   4. 刚装满的块 **立刻** 进缓存，同一 batch 里后来的人也能打中。
+   4. 刚装满的块 **立刻** 进缓存，同一 batch 里后来的请求也能打中。
 
 ### 正在跑的请求
 

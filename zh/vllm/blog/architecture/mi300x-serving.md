@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2024-10-23-vllm-serving-amd
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# 在 AMD MI300X 上侍候 LLM：当时的最佳实践
+# 在 AMD MI300X 上部署 LLM：当时的最佳实践
 
 英文对照：[en/vllm/blog/architecture/mi300x-serving.md](../../../../en/vllm/blog/architecture/mi300x-serving.md)  
 原文：https://vllm.ai/blog/2024-10-23-vllm-serving-amd  
 2024-10-23。客座：**Embedded LLM** 与 **Hot Aisle Inc.**。学习译文，不是官方译本。vLLM **0.6.2**（commit `cb3b2b9`）。旗标、镜像、数字都是那一天的；今日请以文档为准。后来的 ROCm attention 路由：[rocm-attention.md](rocm-attention.md)；硬件插件：[hardware-plugin.md](hardware-plugin.md)。CK vs Triton、hipBLASLt、TP vs PP 另见 [Leonard Lin](https://shisa.ai/blog/posts/tuning-vllm-mi300x/)。
 
-**TL;DR。** vLLM 在 AMD MI300X 上相对 Text Generation Inference（TGI）：Llama 3.1 **405B** 吞吐约 **1.5×**、TTFT 约 **1.7×**；Llama 3.1 **70B** 吞吐约 **1.8×**、TTFT 约 **5.1×**。下文拧八个 vLLM 旋钮。只想看当时最优参数，跳到 [Quick Start Guide](#quick-start-guide)。
+**TL;DR。** vLLM 在 AMD MI300X 上相对 Text Generation Inference（TGI）：Llama 3.1 **405B** 吞吐约 **1.5×**、TTFT 约 **1.7×**；Llama 3.1 **70B** 吞吐约 **1.8×**、TTFT 约 **5.1×**。下文调八个 vLLM 参数。只想看当时最优参数，跳到 [Quick Start Guide](#quick-start-guide)。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -48,13 +48,13 @@ ROCm 是 AMD 对 CUDA 的那一套。有人还不熟，但它在长成能打的�
 
 ### Key Settings and Configurations
 
-他们在 MI300X 上拧过许多 vLLM 旋钮。学到的是：
+他们在 MI300X 上调过许多 vLLM 参数。学到的是：
 
 - **Chunked Prefill。** 口诀：MI300X 上多数情况先关，吞吐更好。
 - **Multi-Step Scheduling。** GPU 利用率和整体表现能明显抬头。`--num-scheduler-steps` 取 **10 到 15**。
-- **Prefix Caching。** 和 chunked prefill 叠用，在某些流量上会发光。用户请求的 prefix cache 命中低，不妨把 chunked prefill 和 prefix caching **一起关**。
+- **Prefix Caching。** 和 chunked prefill 叠用，在某些流量上收益明显。用户请求的 prefix cache 命中低，不妨把 chunked prefill 和 prefix caching **一起关**。
 - **Graph Capture。** 模型支持长上下文时，`--max-seq-len-to-capture` 设 **16384**。再加大不保证更快，有时会因 bucket 变粗而掉速。
-- **AMD-Specific Optimizations。** 关掉 NUMA balancing、拧 `NCCL_MIN_NCHANNELS`，还能再挤一点。
+- **AMD-Specific Optimizations。** 关掉 NUMA balancing、调 `NCCL_MIN_NCHANNELS`，还能再挤一点。
 - **KV Cache Data Type。** 求最优表现：用默认 KV dtype，它会自动跟上模型精度。
 - **Tensor Parallelism。** 追吞吐：用能装下权重和上下文的**最小 TP**，再开多个 vLLM 实例。追延迟：TP 等于节点上的 GPU 数。
 - **Maximum Number of Sequences。** `--max-num-seqs` 提到 **512** 或更高，按显存和算力来。短进短出时，利用率和吞吐会好看一截。
@@ -66,7 +66,7 @@ ROCm 是 AMD 对 CUDA 的那一套。有人还不熟，但它在长成能打的�
 
 Chunked prefill 当时还是实验功能：大 prefill 切成小块，和 decode 请求组在同一个 batch 里。compute-bound 的阅读，和 memory-bound 的说话，叠在一起。打开：LLM 构造器里 `--enable_chunked_prefill=True`，或命令行 `--enable-chunked-prefill`。
 
-他们跑下来：把 chunked prefill 的值拧过，比完全关掉只**略好**一点。拿不准开不开，就先关——一般会好过默认。这句话只对 **MI300X**。
+他们跑下来：把 chunked prefill 的值调过，比完全关掉只**略好**一点。拿不准开不开，就先关——一般会好过默认。这句话只对 **MI300X**。
 
 ![case1 rps](../../../../assets/vllm/blog/architecture/mi300x-serving/07-Requests-Per-Second.png)
 ![case1 ttft](../../../../assets/vllm/blog/architecture/mi300x-serving/08-Mean-TTFT-ms-.png)
@@ -74,7 +74,7 @@ Chunked prefill 当时还是实验功能：大 prefill 切成小块，和 decode
 
 #### Case 2: Number of scheduler steps
 
-_Multi-step scheduling_ 进 vLLM **v0.6.0**，声称更高 GPU 利用率、更好整体表现。同日亲戚：[v0.6 吞吐文](https://vllm.ai/blog/2024/09/05/perf-update.html)（本库：[v0.6-throughput.md](../performance/v0.6-throughput.md)）。魔法是：调度和输入准备做一次，然后让模型连跑若干步、中间不打断 GPU。CPU 开销摊到这几步上，GPU 少空转。
+_Multi-step scheduling_ 进 vLLM **v0.6.0**，声称更高 GPU 利用率、更好整体表现。同日亲戚：[v0.6 吞吐文](https://vllm.ai/blog/2024/09/05/perf-update.html)（本库：[v0.6-throughput.md](../performance/v0.6-throughput.md)）。做法是：调度和输入准备做一次，然后让模型连跑若干步、中间不打断 GPU。CPU 开销摊到这几步上，GPU 少空转。
 
 打开：`--num-scheduler-steps` 大于 **1**（1 是默认）。他们发现再往上收益递减，所以上限停在 **15**。
 
@@ -133,9 +133,9 @@ cat /proc/sys/kernel/numa_balancing
 
 - **Tuning NCCL Communication。** NVIDIA Collective Communications Library（NCCL）管卡间通信。MI300X 上，[AMD vLLM fork 的性能文档](https://github.com/ROCm/vllm/blob/main/ROCm_performance.md) 建议 `NCCL_MIN_NCHANNELS=112`。
 
-这两项一起开，他们测到的是**轻微**提升。这和 ["NanoFlow: Towards Optimal Large Language Model Serving Throughput"](https://arxiv.org/abs/2408.12757) 对得上：拧网络有好处，但 LLM 推理仍主要由 compute-bound 和 memory-bound 的活决定，通信那一刀幅度有限。
+这两项一起开，他们测到的是**轻微**提升。这和 ["NanoFlow: Towards Optimal Large Language Model Serving Throughput"](https://arxiv.org/abs/2408.12757) 对得上：调网络有好处，但 LLM 推理仍主要由 compute-bound 和 memory-bound 的活决定，通信那一块幅度有限。
 
-增益虽小，把环境变量拧干净，仍是把 AMD 这台机器再挤一毫米。
+增益虽小，把环境变量调干净，仍能再挤一点 AMD 这台机器。
 
 ![case5 rps](../../../../assets/vllm/blog/architecture/mi300x-serving/19-Requests-Per-Second.png)
 ![case5 ttft](../../../../assets/vllm/blog/architecture/mi300x-serving/20-Mean-TTFT-ms-.png)
@@ -145,7 +145,7 @@ cat /proc/sys/kernel/numa_balancing
 
 默认：vLLM 按模型精度自动分配 KV cache 类型。MI300X 上也支持原生 FP8 KV——KV 更瘦，可部署的上下文就能更长。
 
-他们拿 Auto KV 和 FP8 KV 对默认基线。下图：Auto（红）的 requests per second 高于 FP8（黄）。理论上，这可能是 `Llama-3.1-70B-Instruct (bfloat16)` 上的量化税；税看起来不大，若能换来 KV 房间大幅下降，有些场景仍划算。
+他们拿 Auto KV 和 FP8 KV 对默认基线。下图：Auto（红）的 requests per second 高于 FP8（黄）。理论上，这可能是 `Llama-3.1-70B-Instruct (bfloat16)` 上的量化税；税看起来不大，若能换来 KV 占用大幅下降，有些场景仍划算。
 
 ![case6 rps](../../../../assets/vllm/blog/architecture/mi300x-serving/22-Requests-per-Second.png)
 ![case6 ttft](../../../../assets/vllm/blog/architecture/mi300x-serving/23-Mean-TTFT-ms-.png)
@@ -157,7 +157,7 @@ Tensor parallelism 把单个张量切到多设备上，层内或算子内并行�
 
 把 TP 度加大，等于多给算力，但加速**不总是线性**：设备越多通信越重，每张卡上的活越少。MI300X 本身就很能打，每卡活太少反而吃不饱，扩展更难看。
 
-所以追吞吐：他们建议**多开 vLLM 实例**，而不是把 TP 拧到头——吞吐更容易接近线性。若第一优先是压延迟，再加大 TP 可能更对。
+所以追吞吐：他们建议**多开 vLLM 实例**，而不是把 TP 拉到最大——吞吐更容易接近线性。若第一优先是压延迟，再加大 TP 可能更对。
 
 ![case7 rps](../../../../assets/vllm/blog/architecture/mi300x-serving/25-Requests-per-Second.png)
 ![case7 ttft](../../../../assets/vllm/blog/architecture/mi300x-serving/26-Mean-TTFT-ms-.png)
@@ -221,7 +221,7 @@ sudo docker run -it \
 
 ## Conclusion
 
-这篇把 vLLM 在 AMD MI300X 上侍候大模型的力气拧过一遍。仔细调 chunked prefill、multi-step scheduling、CUDA graph capture，相对默认配置和别的 serving 方案，吞吐和响应都能抬一截。当时的结论：在 AMD 硬件上部署 LLM，vLLM 是合适的选择。
+这篇把 vLLM 在 AMD MI300X 上部署大模型的配置调过一遍。仔细调 chunked prefill、multi-step scheduling、CUDA graph capture，相对默认配置和别的 serving 方案，吞吐和响应都能抬一截。当时的结论：在 AMD 硬件上部署 LLM，vLLM 是合适的选择。
 
 但要承认：探索主要对着**短进短出的 chatbot**。摘要、长文生成还要另查。Triton 和 CK attention kernel 的差异，也值得再挖。
 

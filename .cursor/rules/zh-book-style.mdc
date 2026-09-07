@@ -1,0 +1,15 @@
+---
+description: Chinese notes follow Crafting Interpreters ZH book voice
+globs: zh/**/*.md
+alwaysApply: false
+---
+
+# 中文笔记口吻（book-zh）
+
+对齐 `zh/STYLE.md`（Crafting Interpreters 中译本）。`voice: book-zh`。
+
+- 讲解运行和动手配置用「我们」；机制本身可用「它」。
+- 原文没有的比喻不要加（屋子、门厅、钝刀、侍候、拧旋钮、厨师、烤蛋糕）。
+- TTFT / ITL / Prefill / Decode / CLI / 类名保持英文；普通术语首次加粗。
+- 类名不必反引号；旗标和字面量要反引号。完整句末用句号。
+- 改口吻时保留全部数字、代码、章节、caveat。不是官方译本。

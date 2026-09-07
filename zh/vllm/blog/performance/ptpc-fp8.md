@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-02-24-ptpc-fp8-rocm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# PTPC-FP8：ROCm 上更贴 BF16 的 FP8
+# PTPC-FP8：在 AMD ROCm 上提升 vLLM 性能
 
 英文对照：[en/vllm/blog/performance/ptpc-fp8.md](../../../../en/vllm/blog/performance/ptpc-fp8.md)  
 原文：https://vllm.ai/blog/2025-02-24-ptpc-fp8-rocm  
-2025-02-24。署名 **AMD and Embedded LLM**。PR：[vllm#12501](https://github.com/vllm-project/vllm/pull/12501)。需要 **vLLM ≥ 0.7.3**。数字是 **MI300X** 上、commit `4ea48fb35cf67d61a1c3f18e3981c362e1d8e26f` 的演示，不是你卡上的 SLA。
+2025-02-24。署名 **AMD and Embedded LLM**。学习译文，不是官方译本。PR：[vllm#12501](https://github.com/vllm-project/vllm/pull/12501)。需要 **vLLM ≥ 0.7.3**。数字是 **MI300X** 上、commit `4ea48fb35cf67d61a1c3f18e3981c362e1d8e26f` 的演示，不是你卡上的 SLA。
 
 这是 **权重 + 激活** 的 FP8，现场从 Hugging Face 量化，不必预量化。和 [FP8 KV](fp8-kvcache.md) 分清：那篇是 KV dtype 和 attention 计算；这篇是 GEMM 上的权重量化。ROCm 上后来的 attention 编排：[rocm-attention](../architecture/rocm-attention.md)。KV 再往 3–4 bit 压：[turboquant](turboquant.md)。
 
@@ -25,7 +25,7 @@ fetched: 2026-09-04
 
 **PTPC-FP8** = Per-Token-Activation, Per-Channel-Weight FP8。激活按 token 缩放，权重按 channel 缩放，比传统 per-tensor FP8 更准。
 
-## 引言：量化的麻烦，和这把尺子
+## 引言：量化的麻烦，和这篇对照
 
 LLM 算得贵。FP8 减显存、加速矩阵乘，但传统量化撞上 outlier。PTPC 的说法：近 BF16 的精度，FP8 的速度，直接吃 Hugging Face 权重。
 
@@ -92,7 +92,7 @@ output = torch._scaled_mm(input, weight,
 
 ![Fused GEMM](../../../../assets/vllm/blog/performance/ptpc-fp8/03-FusedGEMM.svg)
 
-MI300X 上有原生 FP8。原文写的好处：缩放在片上做完再写回；少一次多余算；相对两步实现最多约 **2.5×**。没有这只融合核，PTPC 的精度优势会先被内存税吃掉。
+MI300X 上有原生 FP8。原文写的好处：缩放在片上做完再写回；少一次多余算；相对两步实现最多约 **2.5×**。没有这只融合核，PTPC 的精度优势会先被内存开销吃掉。
 
 ## MI300X 上的速度和精度
 
@@ -182,11 +182,11 @@ docker run -it \
 VLLM_USE_TRITON_FLASH_ATTN=0 vllm serve <your-model> --max-seq-len-to-capture 16384 --enable-chunked-prefill=False --num-scheduler-steps 15 --max-num-seqs 1024 --quantization ptpc_fp8
 ```
 
-**原文示例里的坑：** 关着 chunked prefill（`--enable-chunked-prefill=False`），开着多 step scheduler（`--num-scheduler-steps 15`），还把 `VLLM_USE_TRITON_FLASH_ATTN=0`。旗标以你那版文档为准，不要把这一行冻成永远正确的默认。
+**原文示例里的坑：** 关着 chunked prefill（`--enable-chunked-prefill=False`），开着多 step scheduler（`--num-scheduler-steps 15`），还把 `VLLM_USE_TRITON_FLASH_ATTN=0`。旗标以那版文档为准，不要把这一行冻成永远正确的默认。
 
 ## 收束
 
-原文把 PTPC 写成准确率和速度之间的那块甜区：近 BF16 的精度，FP8 的速度，让更多人在 AMD 硬件上用得起大模型。邀请跑、反馈、给 vLLM 提 PR。页上的数字仍是那一次 MI300X 演示。
+原文把 PTPC 写成准确率和速度之间的折中：近 BF16 的精度，FP8 的速度，让更多人在 AMD 硬件上用得起大模型。邀请跑、反馈、给 vLLM 提 PR。页上的数字仍是那一次 MI300X 演示。
 
 ## 附录：lm-evaluation-harness
 

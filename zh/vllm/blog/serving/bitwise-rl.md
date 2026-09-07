@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-11-10-bitwise-consistent-train-inference
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 逐 bit 对齐：vLLM × TorchTitan 的 on-policy

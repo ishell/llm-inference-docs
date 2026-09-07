@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-04-28-nemotron-omni
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Nemotron 3 Nano Omni：一只 30B/3B 吃图声视频，吞吐对比钉死每用户速率
 
 英文对照：[en/vllm/blog/serving/nemotron-omni.md](../../../../en/vllm/blog/serving/nemotron-omni.md)  
 原文：https://vllm.ai/blog/2026-04-28-nemotron-omni  
-2026-04-28。署名 **NVIDIA Nemotron Team**。镜像 `vllm[audio]==0.20.0`。规格表上下文 **256K**；起服片段是 `--max-model-len 131072`。BF16 / FP8 / NVFP4。端口 **5000**。前身 VLM（没有音频）：[Nano 2 VL](nemotron-nano-vl.md)。文本亲戚：[Nano](nemotron-3-nano.md) / [Super](nemotron-3-super.md) / [Ultra](nemotron-3-ultra.md) / [Lightning](nemotron-35-lightning.md)。更早的 9B：[Nano 2](nemotron-nano2.md)。桌上 Spark 的坑：[dgx-spark.md](dgx-spark.md)。Mamba 拆分 serving：[hybrid-ssm.md](hybrid-ssm.md)。训练环挨着 [native-rl.md](native-rl.md)。这是 **perception 子代理**，不是 [vLLM-Omni](vllm-omni.md) 那条扩散/TTS 栈。引言 **9×** / 图上 **7.4×** / **9.2×** / 多模态智能 **20%** 是页上的演示，不是你的 SLA。
+2026-04-28。署名 **NVIDIA Nemotron Team**。镜像 `vllm[audio]==0.20.0`。规格表上下文 **256K**；起服片段是 `--max-model-len 131072`。BF16 / FP8 / NVFP4。端口 **5000**。前身 VLM（没有音频）：[Nano 2 VL](nemotron-nano-vl.md)。文本亲戚：[Nano](nemotron-3-nano.md) / [Super](nemotron-3-super.md) / [Ultra](nemotron-3-ultra.md) / [Lightning](nemotron-35-lightning.md)。更早的 9B：[Nano 2](nemotron-nano2.md)。桌上 Spark 的坑：[dgx-spark.md](dgx-spark.md)。Mamba 拆分 serving：[hybrid-ssm.md](hybrid-ssm.md)。训练环挨着 [native-rl.md](native-rl.md)。这是 **perception 子代理**，不是 [vLLM-Omni](vllm-omni.md) 那条扩散/TTS 栈。引言 **9×** / 图上 **7.4×** / **9.2×** / 多模态智能 **20%** 是页上的演示，不是某一套集群上的 SLA。
 
 **原文 TL;DR：**
 
@@ -23,7 +23,7 @@ fetched: 2026-09-04
 
 [Nemotron 3 Nano Omni](https://developer.nvidia.com/blog/nvidia-nemotron-3-nano-omni-powers-multimodal-agent-reasoning-in-a-single-efficient-open-model) 被写成效率最高、精度也带头的开源多模态，给 **子代理**：视觉、音频、语言在同一圈里感知再推理。
 
-企业代理本来就把屏幕、文档、音频、视频、文本搅在同一趟。多数栈还是视觉 / 语音 / 语言各一只再拧：多跳推理、编排乱、上下文碎。
+企业代理本来就把屏幕、文档、音频、视频、文本搅在同一趟。多数栈还是视觉 / 语音 / 语言各一只再拼：多跳推理、编排乱、上下文碎。
 
 两条硬需求：
 

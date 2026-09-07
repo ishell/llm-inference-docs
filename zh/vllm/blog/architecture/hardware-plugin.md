@@ -1,11 +1,11 @@
 ---
 source: https://vllm.ai/blog/2025-05-12-hardware-plugin
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Hardware Plugin：把卡从主干里请出去
+# Hardware Plugin：把硬件后端从主干拆出去
 
 英文对照：[en/vllm/blog/architecture/hardware-plugin.md](../../../../en/vllm/blog/architecture/hardware-plugin.md)  
 原文：https://vllm.ai/blog/2025-05-12-hardware-plugin  
@@ -19,12 +19,12 @@ RFC 要办的事：硬件用**解耦**的方式进 vLLM——快、按模块长�
 
 - **代码变复杂。** 每家后端自己写一份 `Executor`、`Worker`、`Runner`、`Attention`。非通用代码散落整棵树。
 - **维护贵。** 后端作者要付，社区也要付。后端维护的人一不在，社区那点人手加不进新功能。
-- **谈不上扩展。** 分层（Executor / Worker / Runner / Attention）看起来干净，可**新卡**仍要侵入式改、打补丁，而不是动态注册。加一家后端像开刀。
+- **谈不上扩展。** 分层（Executor / Worker / Runner / Attention）看起来干净，可**新卡**仍要侵入式改、打补丁，而不是动态注册。加一家后端仍要改主干。
 
 他们要的解法：
 
 - **代码解耦。** 后端住在自己的包里，主干变干净。
-- **维护变轻。** 主干的人盯通用功能，不必被每家卡的脾气淹没。
+- **维护变轻。** 主干的人盯通用功能，不必被每家卡的细节拖住。
 - **接入更快、更独立。** 新后端少改主干，可以按自己的钟走。
 
 ## 它是什么（底下两份 RFC）
@@ -110,4 +110,4 @@ Spyre 侧（可插拔 **scheduler**）：[Joe Runde](https://github.com/joerunde
 
 另外：[yancong](https://github.com/ice-tong)（可扩展量化）、[Aviv Keshet](https://github.com/akeshet)（可扩展 `SamplingParams`）。
 
-[torch.compile](torch-compile.md) 把优化从模型文件拿走；这篇把硬件从主干拿走。两件事都是为了让「又来一家卡」不必开一刀主干。
+[torch.compile](torch-compile.md) 把优化从模型文件拿走；这篇把硬件从主干拿走。两件事都是为了让「又来一家卡」不必改主干。

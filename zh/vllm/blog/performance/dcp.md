@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-08-07-decode-context-parallelism
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Decode Context Parallelism：长上下文别再按头去切 KV
+# vLLM 的 Decode Context Parallelism：给长上下文负载
 
 英文对照：[en/vllm/blog/performance/dcp.md](../../../../en/vllm/blog/performance/dcp.md)  
 原文：https://vllm.ai/blog/2026-08-07-decode-context-parallelism  
-2026-08-07。作者 **Seonghee Lee, Sungsoo Ha, Omri Almog (NVIDIA), Lucas Wilkinson (Red Hat AI)**。vLLM 支持 DCP 已近一年；agent 把上下文拉到 **64K–1M** 之后，这篇才把它写清楚。CLI：`--decode-context-parallel-size`（帮助里也有 `-dcp`）。NVIDIA TensorRT-LLM 侧相近的方向叫 [Helix Parallelism](https://github.com/NVIDIA/TensorRT-LLM/blob/main/docs/source/blogs/tech_blog/blog22_Helix_Parallelism_Scaling_Multi_Million_Token_Decoding_with_KV_Cache_Sharding.md)。文档：[Decode Context Parallel](https://docs.vllm.ai/en/latest/serving/context_parallel_deployment/#decode-context-parallel)。摘要里的成绩：相对标准 TP，长上下文 agent 负载上吞吐约 **3×**。
+2026-08-07。作者 **Seonghee Lee, Sungsoo Ha, Omri Almog (NVIDIA), Lucas Wilkinson (Red Hat AI)**。学习译文，不是官方译本。vLLM 支持 DCP 已近一年；agent 把上下文拉到 **64K–1M** 之后，这篇才把它写清楚。CLI：`--decode-context-parallel-size`（帮助里也有 `-dcp`）。NVIDIA TensorRT-LLM 侧相近的方向叫 [Helix Parallelism](https://github.com/NVIDIA/TensorRT-LLM/blob/main/docs/source/blogs/tech_blog/blog22_Helix_Parallelism_Scaling_Multi_Million_Token_Decoding_with_KV_Cache_Sharding.md)。文档：[Decode Context Parallel](https://docs.vllm.ai/en/latest/serving/context_parallel_deployment/#decode-context-parallel)。摘要里的成绩：相对标准 TP，长上下文 agent 负载上吞吐约 **3×**。
 
 本地图（原文版权仍归原站；学习对照用）。原文 2.2 节说「见下表」；活页上的表是 JS / Plotly 控件，笔记不收。正文数字都在。
 
@@ -22,9 +22,9 @@ fetched: 2026-09-05
 - **Grouped-query attention (GQA)：** KV head 本来就少。TP 最多切到**每卡一个 KV head**；`tensor_parallel_size` 超过 KV head 数，cache 就开始在 GPU 之间**复制**。
 - **Multi-head latent attention (MLA)：** Key/Value 收成一份低秩 **latent**，所有 query head 共用——等于只有一个 KV head。普通 TP 没头可切，latent 在每个 TP rank 上**整份复制**。
 
-复制把 HBM 吃掉，并发上不去，吞吐和每 token 成本一起坏。[分布式推理](../serving/distributed-inference.md) 那张「TP 给 KV 腾房间」的超线性图，在 MLA 上会反过来。
+复制把 HBM 吃掉，并发上不去，吞吐和每 token 成本一起坏。[分布式推理](../serving/distributed-inference.md) 那张「TP 给 KV 腾显存」的超线性图，在 MLA 上会反过来。
 
-Decode Context Parallelism 按**序列维**切：每卡只存、只读自己那一段 KV。房子空出来，每卡才能再加人、batch 才能再涨。要高带宽的卡间互联，才能在许多长 agent 同住时仍保持可交互。
+Decode Context Parallelism 按**序列维**切：每卡只存、只读自己那一段 KV。显存腾出来，每卡才能再加人、batch 才能再涨。要高带宽的卡间互联，才能在许多长上下文 agent 同时跑时仍保持可交互。
 
 vLLM 支持 DCP 已近一年。这篇现在才写，是因为长上下文 agent 把收益推到了台前。
 
@@ -56,7 +56,7 @@ vLLM 支持 DCP 已近一年。这篇现在才写，是因为长上下文 agent 
 
 ![figure 3](../../../../assets/vllm/blog/performance/dcp/04-figure-3.png)
 
-差别在 KV 住哪儿。基线 TP 在每张 GPU 上复制 KV，峰值内存很快顶满：并发 **64** 时 KV **100%**，吞吐卡在大约 **1,863 tok/s/GPU**——再塞不进人。DCP 按序列切，每卡只存每条请求 KV 的 **1/N**。并发 **512** 仍只有约 **82%** KV，**6,091 tok/s/GPU**。
+差别在 KV 存在哪。基线 TP 在每张 GPU 上复制 KV，峰值内存很快顶满：并发 **64** 时 KV **100%**，吞吐卡在大约 **1,863 tok/s/GPU**——再塞不进人。DCP 按序列切，每卡只存每条请求 KV 的 **1/N**。并发 **512** 仍只有约 **82%** KV，**6,091 tok/s/GPU**。
 
 **核心价值：** 恰恰在「复制 KV 的 TP 先 OOM」的长上下文上，DCP 还能把并发撑上去。
 
@@ -64,7 +64,7 @@ vLLM 支持 DCP 已近一年。这篇现在才写，是因为长上下文 agent 
 
 ![figure 4](../../../../assets/vllm/blog/performance/dcp/05-figure-4.png)
 
-按完整序列长度（input + output）再画一条吞吐–交互 Pareto。请求分成五档：**&lt;32K**、**32–64K**、**64–128K**、**128–200K**、**200K+**。DCP 在 **200K+** 仍停在同一条高而稳的前沿上；短桶和长桶几乎重叠：吞吐随并发涨，单用户速度在长上下文上仍可用。复制 KV 的 TP 在这里已经没有房间。
+按完整序列长度（input + output）再画一条吞吐–交互 Pareto。请求分成五档：**&lt;32K**、**32–64K**、**64–128K**、**128–200K**、**200K+**。DCP 在 **200K+** 仍停在同一条高而稳的前沿上；短桶和长桶几乎重叠：吞吐随并发涨，单用户速度在长上下文上仍可用。复制 KV 的 TP 在这里已经没有显存余量。
 
 ## 3. Challenges of Serving Long Contexts
 
@@ -168,4 +168,4 @@ vLLM 里已经是原生支持。它和行业里同一方向站在一起——NVI
 
 数字测在 **NVIDIA B200**、Kimi K2.6 **NVFP4**；用支持 `--decode-context-parallel-size` 的现行 vLLM 复现。Kimi K3 的 DCP 成绩当时还在做。
 
-长上下文的地图：TP 切头、DCP 切序列、Mooncake 把前缀放到池子里、P/D 把阅读和说话拆开。四件事不是互斥的。
+长上下文可以叠在一起：TP 切头、DCP 切序列、Mooncake 把前缀放到池子里、P/D 把 Prefill 和 Decode 拆开。四件事不是互斥的。

@@ -262,7 +262,7 @@ def trtllm_tp():
 def trtllm_knobs():
     W, H = 2200, 720
     im, d = canvas(W, H)
-    title(d, W, "三个尺寸旋钮")
+    title(d, W, "三个尺寸上限")
     knobs = [
         ("max_batch_size", "同时几个人在场", "编译时留够，运行时还能再拧"),
         ("max_num_tokens", "这一拍最多打包多少 token", "去 padding 后的预算，决定 workspace"),

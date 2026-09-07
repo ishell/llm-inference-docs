@@ -1,12 +1,13 @@
 ---
 source: https://docs.nvidia.com/nim/benchmarking/llm/latest/benchmarking-lora.html
 lang: zh
-fetched: 2026-08-30
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # LoRA 模型怎么测
 
-PEFT（参数高效微调）可以低成本微调大模型。NIM 支持 LoRA，并能同时加载多个 adapter。按 PEFT 指南加载 Hugging Face 或 NeMo adapter，用环境变量把 adapter 目录传给 NIM。
+**PEFT**（参数高效微调）可以低成本微调大模型。NIM 支持 LoRA，并能同时加载多个 adapter。按 PEFT 指南加载 Hugging Face 或 NeMo adapter，用环境变量把 adapter 目录传给 NIM。
 
 加载后，把 model ID 换成 LoRA 名字即可查询：
 

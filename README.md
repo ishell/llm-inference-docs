@@ -1,15 +1,15 @@
 # LLM 推理笔记
 
-个人学习库，**不是官方译本**。对照 NVIDIA NIM / TensorRT-LLM / AIPerf 与 vLLM 的公开文档写成学习笔记：指标名、CLI、公式保留英文。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。
+个人学习库，**不是官方译本**。对照 NVIDIA NIM / TensorRT-LLM / AIPerf 与 vLLM 的公开文档写成学习笔记：指标名、CLI、公式保留英文。中文口吻对齐《Crafting Interpreters》中译本，体例见 [zh/STYLE.md](zh/STYLE.md)。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。
 
 建议从网页首页或下面的阅读顺序读起。怎么把压测、性能测试和调优串起来，见 [zh/GUIDE.md](zh/GUIDE.md)。
 
 目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是官方译本。vLLM 博客全表在 [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md)；带日期的 **129 篇都有中英学习译文**（按原文分节写完，不是压缩 stub）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。NVIDIA 一侧仍是压缩对照，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
-- `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。最短路径几篇用了偏文学的科技笔记笔调：把「等待第一个 token」当成人的事情来写，但不改公式。）
+- `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。书面语、用「我们」讲解，见 [zh/STYLE.md](zh/STYLE.md)。）
 
-正文图下在 `assets/`（按笔记相对路径），中英笔记里用 Markdown 引用。版权仍归原站，只作学习对照；站点 logo、作者头像、封面库存图不收。中文页里讲机制的图是另画的学习图（说明用中文，TTFT / ITL / Prefill / Decode 留英文），不是在官方原图上盖字；英文页仍用原站附图。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按同一笔调写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。
+正文图下在 `assets/`（按笔记相对路径），中英笔记里用 Markdown 引用。版权仍归原站，只作学习对照；站点 logo、作者头像、封面库存图不收。中文页里讲机制的图是另画的学习图（说明用中文，TTFT / ITL / Prefill / Decode 留英文），不是在官方原图上盖字；英文页仍用原站附图。NVIDIA Developer Blog 那一组（系列 1–4、GenAI-Perf OpenAI 文、Mastering LLM Techniques）已按 [zh/STYLE.md](zh/STYLE.md) 写成学习译文；TensorRT-LLM **Performance Tuning Guide** 六章及 KV / IFB / bench 邻居页也是；NVIDIA **tools/**（AIPerf 入口/调度/指标/五类打法、GenAI-Perf、Perf Analyzer、Triton 调优）同款；vLLM 必读博客同款。
 
 ## 目录
 
@@ -98,7 +98,7 @@ assets/                     # 正文图（与 zh/en 相对路径对齐）
 | features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 学习译文 |
 | features | [v1-guide](zh/vllm/features/v1-guide.md) | https://docs.vllm.ai/en/stable/usage/v1_guide/ | 学习译文 |
 | blog | [MUST-READ](zh/vllm/blog/MUST-READ.md) | https://vllm.ai/blog · https://vllm.ai/blog/rss.xml | 必读 + 本地链接 |
-| blog | [FLAG-MAP](zh/vllm/blog/FLAG-MAP.md) | `optimization.md` 旋钮 → 博客 | 对照表 |
+| blog | [FLAG-MAP](zh/vllm/blog/FLAG-MAP.md) | `optimization.md` 旗标 → 博客 | 对照表 |
 | blog | [CATALOG](en/vllm/blog/CATALOG.md) | https://vllm.ai/llms.txt | 全表（英文） |
 | blog / architecture | [paged-attention](zh/vllm/blog/architecture/paged-attention.md) | https://vllm.ai/blog/2023-06-20-vllm | 学习译文 |
 | blog / architecture | [vs-deepspeed](zh/vllm/blog/architecture/vs-deepspeed.md) | https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed | 学习译文 |

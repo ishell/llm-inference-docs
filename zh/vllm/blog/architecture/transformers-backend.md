@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-04-11-transformers-backend
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Transformers modeling backend：新架构先跑起来
@@ -11,7 +11,7 @@ fetched: 2026-09-04
 原文：https://vllm.ai/blog/2025-04-11-transformers-backend  
 2025-04-11。署名 **The Hugging Face Team**。2025-07-21 起支持视觉语言模型。原文没有机制图。这是 **覆盖面**，不是性能默认：原生 `modeling_*.py` 已经能跑，就走原生。
 
-适用：Hub 上还没有 vLLM 原生实现的架构，想先用 PagedAttention 和 continuous batching 伺候起来。不适合：把 `model_impl="transformers"` 当成吞吐开关。
+适用：Hub 上还没有 vLLM 原生实现的架构，想先用 PagedAttention 和 continuous batching 跑起来。不适合：把 `model_impl="transformers"` 当成吞吐开关。
 
 [Transformers](https://huggingface.co/docs/transformers/main/en/index) 是模型生态那一层：研究、微调、统一接口。[vLLM](https://docs.vllm.ai/en/latest/) 是部署那一层：从 Hub 拉模型，为吞吐和时延优化。modeling backend 把 Transformers 的实现接到 vLLM 底下——架构已经在 Transformers 里了，就先用 vLLM 的调度和 KV 去跑。
 
@@ -167,7 +167,7 @@ print("Completion result:", completion.choices[0].text)
 
 Transformers 为**加新模型**优化（[add a new model](https://huggingface.co/docs/transformers/en/add_new_model)）。往 vLLM 加一只原生实现要更绕（[contributing models](https://docs.vllm.ai/en/latest/contributing/model/index.html)）：调度、paged KV、CUDA graph 都要对齐。
 
-理想世界：模型一进 Transformers，vLLM 就能伺候。这层 backend 往那个理想挪了一步。
+理想世界：模型一进 Transformers，vLLM 就能跑。这层 backend 往那个理想挪了一步。
 
 兼容清单：[Custom models](https://docs.vllm.ai/en/latest/models/supported_models.html#custom-models)。他们按这份清单改过 `modeling_gpt2.py`，样板 PR：[huggingface/transformers#36934](https://github.com/huggingface/transformers/pull/36934)。
 
@@ -216,4 +216,4 @@ print("Completion result:", completion)
 
 vLLM 负责吞吐路径，Transformers backend 负责把 `kyutai/helium-1-preview-2b` 加载进来。相对纯 Transformers 推理，原文仍只给定性：更低时延、更好的资源利用率——没有对照表。
 
-收束也是同一句话：Transformers 的模型面，加上 vLLM 的推理优化。新架构、自定义 Hub 模型、后来的多模态，都是这条桥上的交通。原生路径一旦落地，就不必再写 `model_impl`。
+结语也是同一句话：Transformers 的模型面，加上 vLLM 的推理优化。新架构、自定义 Hub 模型、后来的多模态，都走这条桥。原生路径一旦落地，就不必再写 `model_impl`。

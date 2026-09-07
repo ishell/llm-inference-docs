@@ -1,15 +1,15 @@
 ---
 source: https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_analyzer/genai-perf/README.html
 lang: zh
-voice: literary-study
-fetched: 2026-09-01
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # GenAI-Perf
 
 英文对照：[en/nvidia/tools/genai-perf.md](../../../en/nvidia/tools/genai-perf.md)
 
-官方横幅：**正在停更。** 新项目用 AIPerf（`aiperf.md`）。命令几乎同构，概念仍适用。NIM Performance 页面上的老数字，有一批就是用这套仪式测出来的。换工具，不要换尺子。
+官方横幅：**正在停更。** 新项目用 AIPerf（`aiperf.md`）。命令几乎同构，概念仍适用。NIM Performance 页面上的老数字，有一批就是用这套流程测出来的。换工具，不要换尺子。
 
 客户端打已经起来的生成式服务：output token throughput、TTFT、TTST、ITL、request throughput。服务必须先活着。支持 OpenAI chat/completions、Triton TensorRT-LLM backend；也可用自定义前端或 Jinja2 payload 打自家 API。自定义前端更自由，Jinja2 只改信封。
 
@@ -54,7 +54,7 @@ genai-perf config -f genai_perf_config.yaml \
 
 模板里的 endpoint 段：`model_selection_strategy`（`round_robin` / `random`）、`backend`、`type`（默认 `kserve`）、`streaming`、`url`、`grpc_method`。打 Triton TensorRT-LLM 时，模型 config 要把 `exclude_input_in_output` 设 true，否则输出会把输入 echo 回来，OSL 会被灌胖。
 
-`--override-config` 用来改两三只旋钮而不改 YAML。
+`--override-config` 用来改两三处配置而不改 YAML。
 
 `genai-perf analyze` 可扫一组刺激（并发 / 速率），一次命令多场景。`process export files` 用来把分布式多次导出合成一张表。细节回原页 Analyze / Process Export Files。
 
@@ -91,7 +91,7 @@ LLM 没有客户端 batch：一条请求就是一次推理。embeddings / rankin
 -H "Authorization: Bearer ${API_KEY}" -H "Accept: text/event-stream"
 ```
 
-## 指标（与 AIPerf 对齐的那几只）
+## 指标（与 AIPerf 对齐的那几项）
 
 | 指标 | 含义 | 聚合 |
 |---|---|---|
@@ -104,7 +104,7 @@ LLM 没有客户端 batch：一条请求就是一次推理。embeddings / rankin
 | Output Token Throughput | 整场输出 token / 基准时长 | 整场一个值 |
 | Request Throughput | 完成条数 / 基准时长 | 整场一个值 |
 
-空内容的首包不算 TTFT。ITL **不含** TTFT。系统吞吐的分母是整场墙钟，和 per-user（1/ITL）不是同一只表。NIM 第 2 章把这件事写成人话。
+空内容的首包不算 TTFT。ITL **不含** TTFT。系统吞吐的分母是整场墙钟，和 per-user（1/ITL）不是同一张表。NIM 第 2 章把这件事写清楚了。
 
 GPU 遥测（功耗、利用率、显存、温度、时钟、ECC、NVLink、PCIe…）来自同机 DCGM Exporter 的 `/metrics`。`--verbose` 才打到控制台。自定义指标 CSV 见官方 GPU Telemetry tutorial。
 

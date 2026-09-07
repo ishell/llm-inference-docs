@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-06-01-vllm-dgx-spark
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # DGX Spark：128GB 统一内存上的小并发 NVFP4，不是机房卡
@@ -13,7 +13,7 @@ fetched: 2026-09-05
 
 **TL;DR：**
 
-- CPU、GPU、OS、容器、权重、KV 抢 **同一池 128 GB**。`--gpu-memory-utilization` 必须留余量；菜谱用 **0.85**。
+- CPU、GPU、OS、容器、权重、KV 抢 **同一池 128 GB**。`--gpu-memory-utilization` 必须留余量；recipe 用 **0.85**。
 - `--max-num-seqs 4`。再高，单 token 带宽税压过 continuous batch，TTFT 会尖。
 - 适合 **约 100–130B NVFP4 MoE**、**约 10–15B** active。Dense、高并发也能跑，只是跟带宽和统一内存不对齐。
 - 官方镜像 `vllm/vllm-openai:cu130-nightly` 是**轨道**不是 pin。部署要钉 digest。
@@ -39,15 +39,15 @@ fetched: 2026-09-05
 
 ## 技术摘要
 
-Spark 上的 vLLM 是一台**本地 OpenAI 兼容 endpoint**：内存、batch、KV、Prometheus，用来伺候大块 NVFP4。Nemotron-3-Super 的菜谱走 [官方 OpenAI-compatible server 镜像](https://docs.vllm.ai/en/latest/deployment/docker/)，再加 Spark 专用 flag。
+Spark 上的 vLLM 是一台**本地 OpenAI 兼容 endpoint**：内存、batch、KV、Prometheus，用来跑大块 NVFP4。Nemotron-3-Super 的 recipe 走 [官方 OpenAI-compatible server 镜像](https://docs.vllm.ai/en/latest/deployment/docker/)，再加 Spark 专用 flag。
 
-架构决定配置：`sm_121` 消费级 Blackwell、CPU+GPU 统一池、Spark 自己的带宽。continuous batching、paged KV、NVFP4 kernel、`/metrics` 才是这台盒子上该拧的旋钮。
+架构决定配置：`sm_121` 消费级 Blackwell、CPU+GPU 统一池、Spark 自己的带宽。continuous batching、paged KV、NVFP4 kernel、`/metrics` 才是这台机器上该调的参数。
 
-`--gpu-memory-utilization` 切的是**统一池**的一份。`--max-num-seqs` 要低：Spark 适合小 batch，不是高并发。当时的构建默认应开 **CUDA graphs**，除非部署有理由关。为吞吐去拧更新的 FP4 kernel、async scheduling、MTP speculative decoding——那是**模型和发版**的事，不是万能 Spark 默认。
+`--gpu-memory-utilization` 切的是**统一池**的一份。`--max-num-seqs` 要低：Spark 适合小 batch，不是高并发。当时的构建默认应开 **CUDA graphs**，除非部署有理由关。为吞吐去调更新的 FP4 kernel、async scheduling、MTP speculative decoding——那是**模型和发版**的事，不是万能 Spark 默认。
 
 ## DGX Spark 架构与内存模型
 
-GB10 Grace Blackwell SoC。三件事喂给后文所有旋钮。
+GB10 Grace Blackwell SoC。后面的配置都建立在这三件事上。
 
 **统一内存把能在桌上养活的模型变大。** 比「GPU 显存是一块孤岛」能多塞一些推理。原文写：视架构和运行时，单台 Spark 上加载更大的 NVFP4、**到 200B 参数**是可行的。vLLM 这边的把手：`--gpu-memory-utilization`、`--max-model-len`、`--max-num-seqs`、paged KV。多 Spark：靠 ConnectX「低延迟、高带宽」做分布式——页上**没有** Gbps 数字。
 
@@ -65,7 +65,7 @@ GB10 Grace Blackwell SoC。三件事喂给后文所有旋钮。
 
 老式 lockstep batch 会等最长的那条请求。continuous batching 每一步 Decode 都能进、能出。配上 paged KV，Spark 才能在不太碎片的前提下养活若干 in-flight。
 
-他们在 Spark 上伺候 **120B NVFP4 MoE** 时：单用户 KV 占用通常 **低于 5%**，小 batch demo **低于 30%**。
+他们在 Spark 上跑 **120B NVFP4 MoE** 时：单用户 KV 占用通常 **低于 5%**，小 batch demo **低于 30%**。
 
 ### 本地 endpoint 上的 OpenAI 兼容流式
 
@@ -83,17 +83,17 @@ GB10 Grace Blackwell SoC。三件事喂给后文所有旋钮。
 
 他们那次 Nemotron-3-Super：CUDA 13 nightly [`vllm/vllm-openai:cu130-nightly`](https://hub.docker.com/r/vllm/vllm-openai/tags?name=cu130-nightly)，带 Spark 的 parser、FP4、调度、内存设置。nightly 会动——把它当**轨道**。部署请钉 release / commit nightly / digest。
 
-Spark 不需要另做一套 serving 接口。Spark 特有的工作在**菜谱、镜像、flag**，对准 GB10 `sm_121`。
+Spark 不需要另做一套 serving 接口。Spark 特有的工作在**recipe、镜像、flag**，对准 GB10 `sm_121`。
 
 ## 运行时配置与环境变量
 
-### 先查的菜谱和文档
+### 先查的 recipe 和文档
 
-从 [vLLM Recipes](https://recipes.vllm.ai/) 起，再对生成的 [`vllm serve` CLI](https://docs.vllm.ai/en/latest/cli/serve/) 和 [Docker 文档](https://docs.vllm.ai/en/latest/deployment/docker/)。[OpenAI-compatible server](https://docs.vllm.ai/en/latest/serving/openai_compatible_server/) 和 [production metrics](https://docs.vllm.ai/en/latest/usage/metrics/) 放在手边。NVIDIA Spark 指南仍是 Spark 专用菜谱、parser 插件、kernel 设置的权威。
+从 [vLLM Recipes](https://recipes.vllm.ai/) 起，再对生成的 [`vllm serve` CLI](https://docs.vllm.ai/en/latest/cli/serve/) 和 [Docker 文档](https://docs.vllm.ai/en/latest/deployment/docker/)。[OpenAI-compatible server](https://docs.vllm.ai/en/latest/serving/openai_compatible_server/) 和 [production metrics](https://docs.vllm.ai/en/latest/usage/metrics/) 放在手边。NVIDIA Spark 指南仍是 Spark 专用 recipe、parser 插件、kernel 设置的权威。
 
 ### 选模型
 
-Spark 上最大的杠杆，**先于**拧 flag。**Figure 3**（本地 `04-…svg`）是**方向性**的模型拟合，不是性能表：100–130B MoE NVFP4、约 10–15B active，才是本地交互的强拟合。Nemotron-3-Super-120B-A12B-NVFP4 是具体例子。别的 Spark 体量 NVFP4 MoE：原则相同，从**那一个**模型的菜谱起。
+Spark 上最大的杠杆，**先于**调 flag。**Figure 3**（本地 `04-…svg`）是**方向性**的模型拟合，不是性能表：100–130B MoE NVFP4、约 10–15B active，才是本地交互的强拟合。Nemotron-3-Super-120B-A12B-NVFP4 是具体例子。别的 Spark 体量 NVFP4 MoE：原则相同，从**那一个**模型的 recipe 起。
 
 ### 预先放下权重
 
@@ -103,15 +103,15 @@ Spark 上最大的杠杆，**先于**拧 flag。**Figure 3**（本地 `04-…svg
 
 例子：`vllm serve nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-NVFP4`，再加：
 
-**`--gpu-memory-utilization`。** GPU 可见内存的比例。在 Spark 上那就是统一池：OS、kernel page cache、容器、KV 增长、别的进程。从菜谱起，看余量和并发再拧。
+**`--gpu-memory-utilization`。** GPU 可见内存的比例。在 Spark 上那就是统一池：OS、kernel page cache、容器、KV 增长、别的进程。从 recipe 起，看余量和并发再调。
 
 **`--max-model-len 131072`。** prompt + completion 上限。131K 是因为系统提示、tool schema、文件、历史很容易超过 **20K** token。可以往模型支持的上限抬，也可以为演示压低。它**不是**每条 in-flight 都按最坏情况预留 KV——vLLM 按**正在用的** context 调度。
 
-**`--max-num-seqs 4`。** 同时 in-flight 的序列数。当时 Nemotron NVFP4 on Spark 的菜谱把这个压低。超过四路并发 decode，单 token 带宽税会压过 continuous batching 的好处，TTFT 尖。
+**`--max-num-seqs 4`。** 同时 in-flight 的序列数。当时 Nemotron NVFP4 on Spark 的 recipe 把这个压低。超过四路并发 decode，单 token 带宽税会压过 continuous batching 的好处，TTFT 尖。
 
 **Automatic prefix caching。** [Prefix caching](https://docs.vllm.ai/en/latest/design/prefix_caching/) 在 **vLLM V1 默认开**；例子里不传 `--enable-prefix-caching`。长共享系统提示有用。应用在命中为零时也必须正确。
 
-**Tool / reasoning parser。** 跟**模型菜谱**，不是硬件默认。只有模型会吐支持的 reasoning 块才设 reasoning parser；客户端真要 tool 才加 `--enable-auto-tool-choice` 和 tool-call parser。当时构建：Nemotron-3 可用内置 `--reasoning-parser nemotron_v3`。更老的 Spark 菜谱可能还写外部插件 `super_v3`。
+**Tool / reasoning parser。** 跟**模型 recipe**，不是硬件默认。只有模型会吐支持的 reasoning 块才设 reasoning parser；客户端真要 tool 才加 `--enable-auto-tool-choice` 和 tool-call parser。当时构建：Nemotron-3 可用内置 `--reasoning-parser nemotron_v3`。更老的 Spark recipe 可能还写外部插件 `super_v3`。
 
 值得评估、不要直接抄进 runbook：
 
@@ -121,11 +121,11 @@ Spark 上最大的杠杆，**先于**拧 flag。**Figure 3**（本地 `04-…svg
 
 ### 何时覆盖 vLLM 默认
 
-单 GPU Spark：先菜谱 + 默认。显式覆盖只在你为「这个模型、这个镜像、这块硬件」验过之后。
+单 GPU Spark：先 recipe + 默认。显式覆盖只在我们为「这个模型、这个镜像、这块硬件」验过之后。
 
-**Backend。** 量化 linear 和 MoE backend 保持 `auto`，除非验过的菜谱钉死某一个。正确的 FP4 路径随发版和架构变；较新的 **FlashInfer CUTLASS** 比旧 Spark 指南强得多。要钉，优先 `--linear-backend`、`--moe-backend`。这条路上更老的环境变量已经 **deprecated**。
+**Backend。** 量化 linear 和 MoE backend 保持 `auto`，除非验过的 recipe 钉死某一个。正确的 FP4 路径随发版和架构变；较新的 **FlashInfer CUTLASS** 比旧 Spark 指南强得多。要钉，优先 `--linear-backend`、`--moe-backend`。这条路上更老的环境变量已经 **deprecated**。
 
-**版本 workaround。** 某些 Spark 菜谱里的兼容环境变量是某个 tag 的事，不是 vLLM 的一般要求。例如：单 Spark、没用 tensor parallelism 的命令，不需要 FlashInfer allreduce backend 覆盖。
+**版本 workaround。** 某些 Spark recipe 里的兼容环境变量是某个 tag 的事，不是 vLLM 的一般要求。例如：单 Spark、没用 tensor parallelism 的命令，不需要 FlashInfer allreduce backend 覆盖。
 
 **Checkpoint 量化。** vLLM 从模型 config 读量化。预量化的 NVFP4 checkpoint 让 `--quantization` **空着**。只有你打算在加载时再量化，才去设。
 
@@ -137,11 +137,11 @@ Spark 上最大的杠杆，**先于**拧 flag。**Figure 3**（本地 `04-…svg
 
 ### 可预期 vs 吞吐
 
-这篇测量：`--kv-cache-dtype` 不设，speculative decoding **关**，CUDA graphs **开**。是这份模型 / 镜像 / 负载的菜谱选择，不是 Spark 宇宙默认。冲吞吐仍可试 FP8 KV、async scheduling、投机、显式 backend——要复测。
+这篇测量：`--kv-cache-dtype` 不设，speculative decoding **关**，CUDA graphs **开**。是这份模型 / 镜像 / 负载的 recipe 选择，不是 Spark 宇宙默认。冲吞吐仍可试 FP8 KV、async scheduling、投机、显式 backend——要复测。
 
 他们为公开 demo 优化：可预期的本地 serving、清楚的遥测、稳定的回答。
 
-**Figure 4**（本地 `05-…svg`）：从老实 demo 滑到拧过的吞吐（FP4 backend、async scheduling、投机）。
+**Figure 4**（本地 `05-…svg`）：从老实 demo 滑到调过的吞吐（FP4 backend、async scheduling、投机）。
 
 ## 例子负载：vllm-spark-game
 
@@ -196,7 +196,7 @@ docker run -d --name vllm --ipc=host --restart unless-stopped \
 
 **Prefill 随 prompt 近线性。** prompt 大约变四倍，TTFT 大约变三倍。Prefill 从 **140** 爬到将近 **1,900 tok/s**，长 prompt 把每次请求的固定开销摊薄。Prefill 是计算密集、整段可并行。
 
-**Decode 窄带 22.7–23.7 tok/s。** judge 那条更在乎人能感到的延迟，它只生成两个 token。Decode 仍取决于 active 参数、FP4 路径、CUDA graphs、具体镜像。这是 Nemotron-3-Super 在**一台** Spark 上的菜谱结果——不是 Spark 或 vLLM 的天花板。
+**Decode 窄带 22.7–23.7 tok/s。** judge 那条更在乎人能感到的延迟，它只生成两个 token。Decode 仍取决于 active 参数、FP4 路径、CUDA graphs、具体镜像。这是 Nemotron-3-Super 在**一台** Spark 上的 recipe 结果——不是 Spark 或 vLLM 的天花板。
 
 复现时把镜像 tag、context 长度、CUDA graph 开关、backend、调度写在旁边。
 
@@ -204,10 +204,10 @@ docker run -d --name vllm --ipc=host --restart unless-stopped \
 
 ## 运维要点
 
-先选模型类：100–130B NVFP4 MoE 对上容量和 active 画像；dense 通常不对齐本地交互 Decode。官方镜像 + Spark 验过的菜谱，好过自己源码编，除非你要自定义 kernel。按共享池拧 `--gpu-memory-utilization`。JIT 先暖。`/metrics` 给出 KV 占用和 TTFT 直方图。
+先选模型类：100–130B NVFP4 MoE 对上容量和 active 画像；dense 通常不对齐本地交互 Decode。官方镜像 + Spark 验过的 recipe，好过自己源码编，除非我们要自定义 kernel。按共享池调 `--gpu-memory-utilization`。JIT 先暖。`/metrics` 给出 KV 占用和 TTFT 直方图。
 
 ## 收束
 
-Spark 是开发、demo、小 batch serving 的本地推理盒子。画像跟机房 GPU 服务器不同。统一内存、`sm_121`、模型专用 FP4、本地 Decode——负载怎么拧特别要紧。模型、镜像、flag 验过之后，应用仍然拿到 OpenAI 兼容 API、流式、continuous batching、paged KV、Prometheus。
+Spark 是开发、demo、小 batch serving 的本地推理机器。画像跟机房 GPU 服务器不同。统一内存、`sm_121`、模型专用 FP4、本地 Decode——负载怎么配特别要紧。模型、镜像、flag 验过之后，应用仍然拿到 OpenAI 兼容 API、流式、continuous batching、paged KV、Prometheus。
 
 *原文：[Inferact](https://inferact.ai) 写在办公室里一直开着的那台 Spark 上。*

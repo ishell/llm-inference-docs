@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-12-13-speculators-v030
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Speculators v0.3.0：把 EAGLE-3 草稿训出来
+# Speculators v0.3.0：给 vLLM 补上投机解码训练
 
 英文对照：[en/vllm/blog/performance/speculators-v030.md](../../../../en/vllm/blog/performance/speculators-v030.md)  
 原文：https://vllm.ai/blog/2025-12-13-speculators-v030  
-2025-12-13。署名 **Fynn Schmitt-Ulms、Helen Zhao、Rahul Tuli and Dipika Sikka（Red Hat AI Model Optimization Team）**。仓库：[vllm-project/speculators](https://github.com/vllm-project/speculators)，发版 [v0.3.0](https://github.com/vllm-project/speculators/releases/tag/v0.3.0)。学习笔记。后来的 DFlash / 在线训练：[v0.5.0](speculators-v050.md)。hidden 导出后来收成引擎能力：[extract-hidden-states](../architecture/extract-hidden-states.md)。验收数学仍是 [spec-decode](spec-decode.md)。并行草稿总览：[parallel-drafting](parallel-drafting.md)。
+2025-12-13。署名 **Fynn Schmitt-Ulms、Helen Zhao、Rahul Tuli and Dipika Sikka（Red Hat AI Model Optimization Team）**。仓库：[vllm-project/speculators](https://github.com/vllm-project/speculators)，发版 [v0.3.0](https://github.com/vllm-project/speculators/releases/tag/v0.3.0)。学习译文，不是官方译本。后来的 DFlash / 在线训练：[v0.5.0](speculators-v050.md)。hidden 导出后来收成引擎能力：[extract-hidden-states](../architecture/extract-hidden-states.md)。验收数学仍是 [spec-decode](spec-decode.md)。并行草稿总览：[parallel-drafting](parallel-drafting.md)。
 
 投机解码要 **每只 verifier 一只草稿**。训起来难，给 vLLM 用的生产级训练工具当时又少。v0.3.0 把离线数据 → 训练 → `vllm serve` 串成一条。数字是页上的量级，不是你的 SLA。
 
@@ -21,13 +21,13 @@ fetched: 2026-09-04
 
 ## 规模化推理
 
-过去十年模型又大又强，推理账单跟着涨。LLM 按 token 顺序吐字，每一步都要穿过几十亿参数；模型再大，这段顺序计算就越像瓶颈——能力在，速度不在。
+过去十年模型又大又强，推理账单跟着涨。LLM 按 token 顺序生成，每一步都要穿过几十亿参数；模型再大，这段顺序计算就越像瓶颈——能力在，速度不在。
 
 投机解码是当时看好的一条：小草稿先猜，大 verifier 再并行验收，把「一步一个 token」拆开。这篇讲这套优化、介绍 Speculators，并钻进 v0.3.0：研究者、工程师、ML 实践者可以端到端做出投机解码模型，再无缝接到 vLLM。
 
 ## 什么是投机解码
 
-投机解码让 LLM **一次前向吐出多个 token**。一只便宜、跑得快的 **draft**（常常就一块 transformer block）自回归猜一串；完整尺寸的 **verifier**（你真正在 serve 的那只）并行处理这些候选。每个位置，verifier 决定同不同意草稿的预测：拒绝则丢掉后面的序列；接受则进最终回复。
+投机解码让 LLM **一次前向吐出多个 token**。一只便宜、跑得快的 **draft**（常常就一块 transformer block）自回归猜一串；完整尺寸的 **verifier**（我们真正在 serve 的那只）并行处理这些候选。每个位置，verifier 决定同不同意草稿的预测：拒绝则丢掉后面的序列；接受则进最终回复。
 
 原文列的好处：
 
@@ -127,7 +127,7 @@ vllm serve RedHatAI/Llama-3.1-8B-Instruct-speculator.eagle3
 
 vLLM 读 `speculators_config` 里的投机设置（例如 verifier 名字），把草稿和 verifier 装进同一只 server。标准化配置让模型 **自己知道该怎么跑**；部署投机解码跟部署普通 LLM 一样短。细节见文末 [附录](#speculators_config)。
 
-短命令适合上手。要更细的控制，用长语法：换 config 里那只 verifier、拧投机参数（例如猜多少 token）。长命令 serve 的是底座 verifier，草稿走 `--speculative-config`。例如换成量化 verifier：
+短命令适合上手。要更细的控制，用长语法：换 config 里那只 verifier、调投机参数（例如猜多少 token）。长命令 serve 的是底座 verifier，草稿走 `--speculative-config`。例如换成量化 verifier：
 
 ```bash
 vllm serve RedHatAI/Qwen3-8B-FP8-dynamic \
@@ -136,7 +136,7 @@ vllm serve RedHatAI/Qwen3-8B-FP8-dynamic \
   --speculative-config '{"model": "RedHatAI/Qwen3-8B-speculator.eagle3", "num_speculative_tokens": 5, "method": "eagle3"}'
 ```
 
-这里 verifier 是 FP8 的 Qwen3-8B（而不是 `speculators_config` 里默认的 BF16），投机 token 从默认 **3** 加到 **5**，吞吐或许更高——仍是页上的旋钮，不是承诺。
+这里 verifier 是 FP8 的 Qwen3-8B（而不是 `speculators_config` 里默认的 BF16），投机 token 从默认 **3** 加到 **5**，吞吐或许更高——仍是页上的参数，不是承诺。
 
 ## 生产接入：投机解码进 serving
 

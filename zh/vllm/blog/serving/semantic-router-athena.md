@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-03-10-v0.2-vllm-sr-athena-release
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Semantic Router v0.2 Athena：换底座，当系统脑
 
 英文对照：[en/vllm/blog/serving/semantic-router-athena.md](../../../../en/vllm/blog/serving/semantic-router-athena.md)  
 原文：https://vllm.ai/blog/2026-03-10-v0.2-vllm-sr-athena-release  
-2026-03-10。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。脊柱：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。分类核 LoRA：[modular](semantic-router-modular.md)。HaluGate：[halugate](halugate.md)。后来视觉路径的坑：[vision](semantic-router-vision.md)。合作愿景：[amd](semantic-router-amd.md)。现场池：[mom-amd](semantic-router-mom-amd.md)。下一版：[themis](semantic-router-themis.md)。不要和引擎里的 [Router](router.md) 混。MI300X 延迟和社区数字是发版快照。
+2026-03-10。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router](semantic-router.md)。主干：[semantic-router-signal](semantic-router-signal.md)。v0.1：[iris](semantic-router-iris.md)。分类核 LoRA：[modular](semantic-router-modular.md)。HaluGate：[halugate](halugate.md)。后来视觉路径的坑：[vision](semantic-router-vision.md)。合作愿景：[amd](semantic-router-amd.md)。现场池：[mom-amd](semantic-router-mom-amd.md)。下一版：[themis](semantic-router-themis.md)。不要和引擎里的 [Router](router.md) 混。MI300X 延迟和社区数字是发版快照。
 
 同目录还有：[session](semantic-router-session.md)、[fusion](semantic-router-fusion.md)、[micro-agent](semantic-router-micro-agent.md)、[mom](semantic-router-mom.md)。
 
@@ -96,7 +96,7 @@ FA 怎么接：`onnx-binding/ort-ck-flash-attn` 下一只独立的 **ONNX Runtim
 
 ### 2. 选模变成一等原语
 
-不再是路线图。可训的 ML 选择器，加上运行时策略。管线位置写死：抽信号 → 匹配决策 → **决策命中之后**，**按决策的算法** 在它的 `modelRefs` 里挑。选模是「这条请求属于这条决策」和「该哪只模型伺候」之间的最后一步。
+不再是路线图。可训的 ML 选择器，加上运行时策略。管线位置写死：抽信号 → 匹配决策 → **决策命中之后**，**按决策的算法** 在它的 `modelRefs` 里挑。选模是「这条请求属于这条决策」和「该哪只模型来服务」之间的最后一步。
 
 | Family | Method | 干什么 |
 | --- | --- | --- |
@@ -262,7 +262,7 @@ ROCm 镜像编 ONNX 后端的 router，装 ROCm ONNX Runtime，能加载 CK Flas
 - 白皮书：[Signal Driven Decision Routing for Mixture-of-Modality Models](https://vllm-semantic-router.com/white-paper/)
 - 多模态 / 模态感知训练，含跨模态 embedding 和 mmBERT 分类器 / 模态 router
 - 经 CK Flash Attention、ONNX 图改写、ROCm 向推理，把更长上下文加速推进核
-- 研究制品到可部署 runtime 的桥拧紧
+- 研究制品到可部署 runtime 的桥收紧
 
 ![athena 11](../../../../assets/vllm/blog/serving/semantic-router-athena/14-athena-11.png)
 

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-10-28-kimi-k2-accuracy
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Kimi K2 tool-calling：坏的是 chat template 握手，不是 MoE kernel
@@ -118,11 +118,11 @@ Hub 模板更新后再跑 K2-Vendor-Verifier：
 
 ## 要点和做法
 
-1. **魔鬼在 chat template。** 它是模型和 serving 框架之间的握手。模板逻辑的每一块，都要拿框架的假设对一遍。
+1. **关键在 chat template。** 它是模型和 serving 框架之间的握手。模板逻辑的每一块，都要拿框架的假设对一遍。
 2. **把抽象揭开。** `/chat/completions` 方便，也会把根因藏住。落到 `/completions`。手工拼输入，才能把问题隔离。
-3. **Token ID 才是最终真相。** 最细的问题，要看真正送给模型的那串 token ID。能返回 token ID 的 OpenAI 兼容 API 有用——和 [agent-lightning.md](agent-lightning.md) 同一扇门。上面几处没走到这一层，但工具箱里要有。
+3. **Token ID 才是最终真相。** 最细的问题，要看真正送给模型的那串 token ID。能返回 token ID 的 OpenAI 兼容 API 有用——和 [agent-lightning.md](agent-lightning.md) 同一条路径。上面几处没走到这一层，但工具箱里要有。
 4. **先懂框架的设计哲学。** vLLM 对 `**kwargs` 的严格处理是 **安全选择**，不是 bug（[PR #25794](https://github.com/vllm-project/vllm/pull/25794)）。
-5. **开源生态的挑战。** Enforcer 是打磨过的专有 API 的标志。在 vLLM 里把它做稳、做干净，是社区的活。
+5. **开源生态的挑战。** Enforcer 是打磨过的专有 API 的标志。在 vLLM 里把它做稳、做干净，是社区要做的事。
 
 ## 结语
 
@@ -130,4 +130,4 @@ Hub 模板更新后再跑 K2-Vendor-Verifier：
 
 ## 致谢
 
-Kimi 工程师：根因判断，Hub 上改得快。vLLM 的 Kaichao You、Chauncey Jiang：带进项目，把 tool-call 路径讲清楚。vLLM 在 serving 里的位置，要靠把螺丝拧开才看得见。
+Kimi 工程师：根因判断，Hub 上改得快。vLLM 的 Kaichao You、Chauncey Jiang：带进项目，把 tool-call 路径讲清楚。vLLM 在 serving 里的位置，要靠把这条路径拆开才看得见。

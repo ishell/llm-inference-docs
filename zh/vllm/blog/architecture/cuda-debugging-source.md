@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-12-03-improved-cuda-debugging
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 挂死的 kernel 对回源码行
 
 英文对照：[en/vllm/blog/architecture/cuda-debugging-source.md](../../../../en/vllm/blog/architecture/cuda-debugging-source.md)  
 原文：https://vllm.ai/blog/2025-12-03-improved-cuda-debugging  
-2025-12-03。署名 **Kaichao You（vLLM）**。学习笔记。接几个月前的 [CUDA core dump](cuda-debugging.md)：先点出是哪只 kernel；这篇再往下，点到 **哪一行**。
+2025-12-03。署名 **Kaichao You（vLLM）**。学习译文，不是官方译本。接几个月前的 [CUDA core dump](cuda-debugging.md)：先点出是哪只 kernel；这篇再往下，点到 **哪一行**。
 
 IMA dump 已经能在异步执行里指出出事的 kernel。用的人多了，下一步要的是更细：触发问题的那一行源码。这篇先讲怎样抓住 **挂死** 的 kernel，再讲怎样把复杂 kernel 对回源码。
 
@@ -285,7 +285,7 @@ $ grep -C20 7ff533bb91d0 output.txt
 
 **警告：** dump 要吃得开，行信息是关键。推荐 `export NVCC_PREPEND_FLAGS='-lineinfo'`：不用改编译脚本，所有编出来的 kernel 都带上。正因为透明，`ccache` 一类缓存可能 **忽略** 这面旗，复用旧产物、根本没重编。从源码编时关掉编译缓存。JIT 则去查对应工具怎么加行信息。
 
-## 收束
+## 结语
 
 两套进阶办法。一是用户触发的 dump，抓住挂死的 kernel；二是二进制里的行信息，把复杂 kernel 对回源码。IMA 一类问题尤其有用。两套一起，他们查过 [CUTLASS MLA attention backend 里一次难复现的 hang](https://github.com/vllm-project/vllm/pull/26026)——根因其实在上游 CUTLASS 示例，后来在 [v4.3.0](https://github.com/NVIDIA/cutlass/commit/b1d6e2c9b334dfa811e4183dfbd02419249e4b52) 修了。
 

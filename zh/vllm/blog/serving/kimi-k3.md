@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-07-27-k3
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Kimi K3 day-0：2.8T hybrid MoE，KDA prefix cache 和 DSpark 一起转
 
 英文对照：[en/vllm/blog/serving/kimi-k3.md](../../../../en/vllm/blog/serving/kimi-k3.md)  
 原文：https://vllm.ai/blog/2026-07-27-k3  
-2026-07-27。vLLM Team and Inferact。权重 [`moonshotai/Kimi-K3`](https://huggingface.co/moonshotai/Kimi-K3)。DSpark [`Inferact/Kimi-K3-DSpark`](https://huggingface.co/Inferact/Kimi-K3-DSpark)。菜谱 [recipes.vllm.ai/moonshotai/Kimi-K3](https://recipes.vllm.ai/moonshotai/Kimi-K3)。预告 [kimi-k3-preview.md](kimi-k3-preview.md)。模型文 [kimi.com/blog/kimi-k3](https://www.kimi.com/blog/kimi-k3)。FlashKDA、Flash-Flash-KDA。因复杂依赖，**当时只有 Docker 能用**；镜像含若干预发布依赖，包括 [FlashInfer](https://github.com/flashinfer-ai/flashinfer)。跳过社交预览图和页上 GIF/MP4。本地图版权仍归原站。
+2026-07-27。vLLM Team and Inferact。权重 [`moonshotai/Kimi-K3`](https://huggingface.co/moonshotai/Kimi-K3)。DSpark [`Inferact/Kimi-K3-DSpark`](https://huggingface.co/Inferact/Kimi-K3-DSpark)。recipe [recipes.vllm.ai/moonshotai/Kimi-K3](https://recipes.vllm.ai/moonshotai/Kimi-K3)。预告 [kimi-k3-preview.md](kimi-k3-preview.md)。模型文 [kimi.com/blog/kimi-k3](https://www.kimi.com/blog/kimi-k3)。FlashKDA、Flash-Flash-KDA。因复杂依赖，**当时只有 Docker 能用**；镜像含若干预发布依赖，包括 [FlashInfer](https://github.com/flashinfer-ai/flashinfer)。跳过社交预览图和页上 GIF/MP4。本地图版权仍归原站。
 
 上周 [preview](https://vllm.ai/blog/2026-07-22-kimi-k3-preview) 讲生产级集成；今天权重公开，支持上线。最兴奋的挑战：让 KDA、MXFP4 MoE、KV cache、P/D 拆分、speculative decoding、长上下文 recipes 在能跑的 serving 引擎里一起转。Preview 讲 kernel 和 cache，尤其 recurrent state 上的 prefix caching。这篇是实用指南：vLLM 怎么适配架构、数字背后的 kernel、day 0 什么能用。
 

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-09-16-vllm-meetup
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 韩国首场 Meetup：350+ 报名，插件、TPU、量化评测
@@ -35,7 +35,7 @@ Daniele Trifirò（Red Hat Senior Software Engineer）。周发版、贡献者�
 
 ![Hong-seok](../../../../assets/vllm/blog/serving/korea-meetup-2025/04-vllm_meetup_HSkim.png)
 
-Hong-Seok Kim（Rebellions Chief Software Architect）。加速器创业公司为什么在乎 vLLM；他们怎么往生态里塞。插件路径：定制硅上部署，体验接近 GPU。有了 vLLM：Rebellions NPU 上直接跑 MoE，并行和 continuous batching 也不必另做一套接入。给下一代加速器留门。
+Hong-Seok Kim（Rebellions Chief Software Architect）。加速器创业公司为什么在乎 vLLM；他们怎么往生态里接。插件路径：定制硅上部署，体验接近 GPU。有了 vLLM：Rebellions NPU 上直接跑 MoE，并行和 continuous batching 也不必另做一套接入。给下一代加速器留接口。
 
 ## Hyungjun Kim — 量化和评测
 
@@ -51,4 +51,4 @@ Hyungjun Kim（SqueezeBits）。量化已经是部署的一部分。vLLM 两条�
 
 ![closing](../../../../assets/vllm/blog/serving/korea-meetup-2025/07-image-6.png)
 
-首场：实用、能规模化的真实 serving。Rebellions、Red Hat 和本地工程师答应继续办、继续往上游扔。
+首场：实用、能规模化的真实 serving。Rebellions、Red Hat 和本地工程师答应继续办、继续往上游提交。

@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-01-27-intro-to-llama-stack-with-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Llama Stack × vLLM：inference 是可换的 Provider，不是另一套引擎
@@ -17,7 +17,7 @@ fetched: 2026-09-04
 
 ## Llama Stack 是什么
 
-Llama Stack 把生成式 AI 应用需要的核心积木写成可互操作的 API，每块都有 Service Provider。预打包的 **distribution** 可以在本地、手机/桌面、机房、公有云上跑——**同一套 API**，同一套开发体验。
+Llama Stack 把生成式 AI 应用需要的核心构件写成可互操作的 API，每块都有 Service Provider。预打包的 **distribution** 可以在本地、手机/桌面、机房、公有云上跑——**同一套 API**，同一套开发体验。
 
 页上点名的模型：Llama 3.3，以及 Llama Guard 这类专用模型。安全、agent、向量仍是 Stack **别的** provider。每种 API 实现叫 **Provider**；用户在配置里换。vLLM 是 **inference** API 背后的高性能实现。
 

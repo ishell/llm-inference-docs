@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-07-06-vllm-hpc-ops
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # HPC-Ops：H20 上混长 Decode 的 attention，和小 expert GEMM 的 MoE
 
 英文对照：[en/vllm/blog/performance/hpc-ops.md](../../../../en/vllm/blog/performance/hpc-ops.md)  
 原文：https://vllm.ai/blog/2026-07-06-vllm-hpc-ops  
-2026-07-06。署名 **Tencent Hunyuan AI Infra Team and vLLM Team**。学习笔记；页上 H20 数字不是你的 SLA。Attention [PR #46020](https://github.com/vllm-project/vllm/pull/46020)，MoE [PR #45924](https://github.com/vllm-project/vllm/pull/45924)。Hopper，尤其 **H20**。邻近的 attention backend：[triton-attn.md](../architecture/triton-attn.md)。硬件入口：[hardware-plugin.md](../architecture/hardware-plugin.md)。
+2026-07-06。署名 **Tencent Hunyuan AI Infra Team and vLLM Team**。学习译文，不是官方译本。页上 H20 数字不是你的 SLA。Attention [PR #46020](https://github.com/vllm-project/vllm/pull/46020)，MoE [PR #45924](https://github.com/vllm-project/vllm/pull/45924)。Hopper，尤其 **H20**。邻近的 attention backend：[triton-attn.md](../architecture/triton-attn.md)。硬件入口：[hardware-plugin.md](../architecture/hardware-plugin.md)。
 
 [HPC-Ops](https://github.com/Tencent/hpc-ops) 的 Attention 和 MoE kernel 进 vLLM `main` 当一等 backend。不改引擎源码，也不养长期 fork。Attention 当时只认 Hy3 系；MoE 只认 FP8。不是通用默认，是 Hunyuan 产线 kernel 走 backend 接口进 main。
 
@@ -38,15 +38,15 @@ fetched: 2026-09-04
 
 固定 split-KV 的 Decode：batch 里长短混在一起，总时间被最重的 CTA 钉死，短请求那几只 CTA 先做完就闲着。MoE decode：专家 GEMM 小，周围 gather / launch / HBM 往返更贵——常规路径先把 token 收进 per-expert buffer，每阶段付一次 launch，中间结果在 HBM 里来回跳。
 
-vLLM 已经是快而灵活的 serving 引擎；剩下的延迟和吞吐，看 attention 和 MoE kernel 能不能吞下这种脏流量。HPC-Ops 对着这块来——腾讯大规模生产里炼过的算子库，伺候 Hy3 的同一套 kernel，现在当一等 Attention / MoE backend 进了上游。
+vLLM 已经是快而灵活的 serving 引擎；剩下的延迟和吞吐，看 attention 和 MoE kernel 能不能吞下这种脏流量。HPC-Ops 对着这块来——腾讯大规模生产里炼过的算子库，跑 Hy3 的同一套 kernel，现在当一等 Attention / MoE backend 进了上游。
 
 ## 先说一句 Hy3
 
-Hy3 是腾讯混元给 agentic 执行、编码、长程推理用的 MoE。**295B** 里激活 **21B**。原文还写过：同档里 agent 能力能跟大 **2–3×** 的开源旗舰较劲，并压幻觉——那是模型卡话，这篇不评。底下：**192** expert，top-8 路由，GQA（64 head、8 KV head、head dim 128），**256K** 上下文，**3.8B** MTP 层。发 BF16 和 FP8（Hy3-FP8）。这篇写的是伺候它的 kernel，不是模型卡。
+Hy3 是腾讯混元给 agentic 执行、编码、长程推理用的 MoE。**295B** 里激活 **21B**。原文还写过：同档里 agent 能力能跟大 **2–3×** 的开源旗舰较劲，并压幻觉——那是模型卡话，这篇不评。底下：**192** expert，top-8 路由，GQA（64 head、8 KV head、head dim 128），**256K** 上下文，**3.8B** MTP 层。发 BF16 和 FP8（Hy3-FP8）。这篇写的是跑它的 kernel，不是模型卡。
 
 ## HPC-Ops 进 vLLM
 
-[HPC-Ops](https://github.com/Tencent/hpc-ops) 是混元 AI Infra 的开源算子库：attention、MoE、GEMM、sampling、normalization、通信计算融合；原生 BF16 和 FP8；Python API 打算直接丢进框架。对着 Hopper 拧，尤其 H20。这次上游两只 backend：
+[HPC-Ops](https://github.com/Tencent/hpc-ops) 是混元 AI Infra 的开源算子库：attention、MoE、GEMM、sampling、normalization、通信计算融合；原生 BF16 和 FP8；Python API 打算直接丢进框架。对着 Hopper 优化，尤其 H20。这次上游两只 backend：
 
 | vLLM backend | What it optimizes | Precision | Merged in |
 | --- | --- | --- | --- |
@@ -72,7 +72,7 @@ Decode 每步要对整份 KV 做 attention。16K 上下文大概是刚起步 1K 
 
 三阶段，扁平 persistent 设计，跟着这步 batch 的真实长度分布走，而不是 launch 时写死的 split 政策。
 
-- **Assign。** 轻量 kernel 把每条 KV 切成齐整的 **64-token** tile。总 tile 数 / 可用 CTA 数 = 每 CTA 的 bucket 大小。Tile 按 head-major、batch-minor 填桶；满了就溢到下一只 CTA。长序列按长度比例拆开；短的只贡献几块 tile，独占不了一只 CTA。每 CTA 还有最低工作量地板：总活太少时防止切过细，combine 的税会吃掉调度收益。任务图 **每个 Decode 步算一次**，这一步里每一层 transformer 复用，摊到接近零。
+- **Assign。** 轻量 kernel 把每条 KV 切成齐整的 **64-token** tile。总 tile 数 / 可用 CTA 数 = 每 CTA 的 bucket 大小。Tile 按 head-major、batch-minor 填桶；满了就溢到下一只 CTA。长序列按长度比例拆开；短的只贡献几块 tile，独占不了一只 CTA。每 CTA 还有最低工作量地板：总活太少时防止切过细，combine 的开销会吃掉调度收益。任务图 **每个 Decode 步算一次**，这一步里每一层 transformer 复用，摊到接近零。
 - **Compute and combine。** Persistent grid：每只 CTA 循环自己的 task bin，写出 partial 输出 + log-sum-exp 到 split buffer，碰到 terminator 才停。任务之间不重新 launch。轻量 combine kernel 按 (head, request) 把 per-chunk partial 收成 BF16。
 
 CTA 差不多一起收工；静态长尾 stall 没了。
@@ -89,11 +89,11 @@ QK-Norm、RoPE、KV-cache 写入——FP8 再加 query quant——本来是分�
 
 ## MoE backend：fused 低延迟 FP8 管线
 
-### 难处：小专家 GEMM，以及它周围的税
+### 难处：小专家 GEMM，以及它周围的开销
 
 高吞吐、大 batch 的 MoE 是算力绑，现有 kernel 一般够用。低延迟 Decode 反过来：每个专家只拿到一把 token，GEMM 小、绑内存，tile 数每步还在变，很难在 GPU 上摊匀。
 
-GEMM 周围更添乱。常规路径：路由、gather 进 per-expert HBM buffer、Gate-Up GEMM、activation + quant、Down GEMM、top-k 加权收——gather 先在 HBM 物化一份，每阶段自己付 launch 和中间结果往返。Decode 里 GEMM 已经小，这些税跟 GEMM 叠在一起。
+GEMM 周围更添乱。常规路径：路由、gather 进 per-expert HBM buffer、Gate-Up GEMM、activation + quant、Down GEMM、top-k 加权收——gather 先在 HBM 物化一份，每阶段自己付 launch 和中间结果往返。Decode 里 GEMM 已经小，这些开销跟 GEMM 叠在一起。
 
 ### 办法
 

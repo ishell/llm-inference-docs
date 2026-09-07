@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2024-10-17-spec-decode
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# 投机解码：最多 2.8×，高 QPS 时会反过来咬人
+# 投机解码如何把 vLLM 性能最高抬到约 2.8×
 
 英文对照：[en/vllm/blog/performance/spec-decode.md](../../../../en/vllm/blog/performance/spec-decode.md)  
 原文：https://vllm.ai/blog/2024-10-17-spec-decode  
 2024-10-17。署名 **vLLM Team**。学习译文，不是官方译本。整理自双周 Office Hours。下面的构造函数参数是**当时的**；今日请以 [speculative-decoding.md](../../features/speculative-decoding.md)（`--speculative-config`）为准。V1 的 2025 年 1 月 alpha 把投机解码列成 **V1 尚未支持**；这一篇是 V0 时代的接法。幻灯：[Google 文档](https://docs.google.com/presentation/d/1wUoLmhfX6B7CfXy3o4m-MdodRL26WvY3/edit#slide=id.p1)。录像：[YouTube](https://youtu.be/eVJBFajJRIU)。报名当时走 [Neural Magic community office hours](https://neuralmagic.com/community-office-hours/?utm_campaign=vLLM%20Office%20Hours&utm_source=vllm-blog)。
 
-投机解码让小模型和大模型搭伙，加速吐 token。下文拆开：它在 vLLM 里怎么工作，以及能换来多少性能。
+投机解码让小模型和大模型搭伙，加速生成 token。下文拆开：它在 vLLM 里怎么工作，以及能换来多少性能。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -28,7 +28,7 @@ fetched: 2026-09-05
 
 ## An Introduction to Speculative Decoding
 
-投机解码（[Leviathan et al., 2023](https://arxiv.org/abs/2211.17192)）是砍 token 生成延迟的一把刀。小模型处理简单的预测；大模型核对或改写。加速，但不牺牲准确——相对大模型的分布 **无损**。
+投机解码（[Leviathan et al., 2023](https://arxiv.org/abs/2211.17192)）是压 token 生成延迟的一种方法。小模型处理简单的预测；大模型核对或改写。加速，但不牺牲准确——相对大模型的分布 **无损**。
 
 **为什么延迟可能掉下去？** 传统 LLM 自回归：给一个 prompt，吐 T1、T2、T3，各付一次前向。投机解码把这件事改成：一串提议、一次核对。
 
@@ -90,7 +90,7 @@ Continuous batching 还在：不同请求挤在同一个 batch，吞吐才上得
 
 **图 05–06。** **QPS = 1**，Llama-3-70B，**4×H100**：ShareGPT + draft `turboderp/Qwama-0.5B-Instruct` 最多约 **1.5×**；CNN/DailyMail + n-gram 最多约 **2.8×**。
 
-**高 QPS** 时，提议和核对付的那笔算力，可能反过来咬人——系统已经 **compute-bound**，请求变密，税比礼物重。
+**高 QPS** 时，提议和核对付的那笔算力，可能反过来拖慢系统——它已经 **compute-bound**，请求变密，额外开销盖过收益。
 
 **图 07。** 高 QPS：ShareGPT 大约 **1.4× 变慢**；CNN/DailyMail 大约 **1.8× 变慢**（同一套 70B / 4×H100）。
 
@@ -163,4 +163,4 @@ for output in outputs:
 
 投机解码在 **低 QPS** 上是大便宜。动态长度落地以后，他们希望高 QPS 也能用——延迟下来、效率上去，变成 serving 里一件常开的工具。
 
-这一篇负责把不等式说清楚：**低 QPS 像魔法，高 QPS 像税**——直到提议长度能跟着负载和接受率一起动。这条线后来会长到 DSpark、EAGLE-3、MTP；起点是这里。
+这一篇负责把不等式说清楚：**低 QPS 收益很大，高 QPS 变成额外开销**——直到提议长度能跟着负载和接受率一起动。这条线后来会长到 DSpark、EAGLE-3、MTP；起点是这里。

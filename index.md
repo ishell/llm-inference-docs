@@ -1,6 +1,6 @@
 # LLM 推理笔记
 
-个人学习库，**不是官方译本**。对照 NVIDIA NIM、TensorRT-LLM、AIPerf 与 vLLM 的公开文档，写成学习笔记：指标名、CLI、公式保留英文。vLLM 带日期的博客按原文分节写完；NVIDIA 一侧多为压缩对照。
+个人学习库，**不是官方译本**。对照 NVIDIA NIM、TensorRT-LLM、AIPerf 与 vLLM 的公开文档，写成学习笔记：指标名、CLI、公式保留英文。中文口吻对齐《Crafting Interpreters》中译本（[体例](/zh/STYLE.md)）。vLLM 带日期的博客按原文分节写完；NVIDIA 一侧多为压缩对照。
 
 侧栏按主题排。建议先走这四步：
 

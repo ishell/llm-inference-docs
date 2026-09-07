@@ -1,23 +1,23 @@
 ---
 source: https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/perf_benchmark/perf-analyzer-README.html
 lang: zh
-voice: literary-study
-fetched: 2026-09-01
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Triton Performance Analyzer
 
-测 **Triton 上传统模型**（分类、检测、embedding 这类一次进一次出）性能的 CLI。你改优化策略，它告诉你吞吐和延迟动了没有。
+测 **Triton 上传统模型**（分类、检测、embedding 这类一次进一次出）性能的 CLI。我们改优化策略，它报告吞吐和延迟有没有跟着动。
 
-**LLM / 生成式请用 AIPerf**（旧名 GenAI-Perf）。那把尺子认识 token 和流式。Perf Analyzer 认识的是 infer/sec 和客户端平均 batch 延迟。GenAI-Perf 底下仍会叫它；你不必直接对 GPT 挥这把刀。
+**LLM / 生成式请用 AIPerf**（旧名 GenAI-Perf）。那套工具认 token 和流式。Perf Analyzer 认的是 infer/sec 和客户端平均 batch 延迟。GenAI-Perf 底下仍会调用它；生成式工作不必直接拿 Perf Analyzer 去打 GPT。
 
 官方页对应 Triton 用户指南里一个较旧的点（抓取时目录写 2.65.0；Triton 当前发布号会走得更前）。流程没变。
 
 ## 负载怎么发
 
-- **Concurrency**：维持 N 条在途请求。门口永远站着这么多人。
+- **Concurrency**：维持 N 条在途请求。始终保持这么多并发。
 - **Request rate**：按指定速率连发。
-- **Custom interval**：按你给的间隔序列发。
+- **Custom interval**：按我们给的间隔序列发。
 
 ## 成绩怎么收
 
@@ -73,4 +73,4 @@ perf_analyzer -m simple
 
 输出怎么读、稳态判定的细节，官方让你去「full quick start」。贡献与提问流程在原页底部；需要最小可复现时走 Stack Overflow 那套 MCVE。
 
-把训好的模型从「能 load」调到「能上线」，整条仪式在 `triton-performance-tuning.md`：Perf Analyzer 打基线，Model Analyzer 搜 `config.pbtxt`，再打一遍。
+把训好的模型从「能 load」调到「能上线」，整条流程在 `triton-performance-tuning.md`：Perf Analyzer 打基线，Model Analyzer 搜 `config.pbtxt`，再打一遍。

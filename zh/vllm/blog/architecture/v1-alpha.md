@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-01-27-v1-alpha-release
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # vLLM V1：把核心拆开重装（alpha）
@@ -28,7 +28,7 @@ fetched: 2026-09-05
 
 ### Learning from vLLM V0
 
-一年半里，vLLM 横向很成功：模型、特性、硬件铺得很开。纵向却很难把优化叠在同一条栈上——功能各自生长，合在一起既不干净、也不容易。技术债堆在地基里，于是他们回头拆地基。
+一年半里，vLLM 横向很成功：模型、特性、硬件铺得很开。纵向却很难把优化叠在同一条栈上——功能各自生长，合在一起既不干净、也不容易。技术债堆在底层，于是他们回头重做底层。
 
 ### Goals of V1
 
@@ -41,25 +41,25 @@ fetched: 2026-09-05
 
 重做：调度器、KV cache manager、worker、sampler、API server。
 
-仍与 V0 共用：模型实现、GPU kernel、分布式控制面、一堆工具函数。赌注是：覆盖面和稳定性留给 V0，烧掉 CPU 的那条环自己重写。
+仍与 V0 共用：模型实现、GPU kernel、分布式控制面、一堆工具函数。赌注是：覆盖面和稳定性留给 V0，吃 CPU 的那条环自己重写。
 
 ## What’s New in vLLM V1?
 
 ### 1. Optimized Execution Loop & API Server
 
-vLLM 既是 continuous batching 引擎，也是 OpenAI 兼容的 API server。两次 GPU 前向之间，CPU 管着请求的命：跑 API、调度、准备输入、detokenize、流式回包。GPU 越快，模型前向越短，这些 CPU 活就越丢脸。**Llama-8B on NVIDIA H100**，一步 GPU 可以大约 **5 ms**。这个量级上，tokenization、调度、detokenize、流式都会变成瓶颈。
+vLLM 既是 continuous batching 引擎，也是 OpenAI 兼容的 API server。两次 GPU 前向之间，CPU 管着请求生命周期：跑 API、调度、准备输入、detokenize、流式回包。GPU 越快，模型前向越短，这些 CPU 活就越容易成为瓶颈。**Llama-8B on NVIDIA H100**，一步 GPU 可以大约 **5 ms**。这个量级上，tokenization、调度、detokenize、流式都会变成瓶颈。
 
 [v0.6.0](https://vllm.ai/blog/2024-09-05-perf-update) 已经把 API server 用 **ZeroMQ** 拆到另一进程，让 HTTP 路径和 AsyncLLM 重叠。V1 再往里拆：独立的 `EngineCore` 执行环只跑**调度器 + model executor**；tokenize、多模态预处理、detokenize、流式，与这条核心环重叠，吞吐才能顶上去。
 
 ### 2. Simple & Flexible Scheduler
 
-不再把 Prefill 和 Decode 当成两种物种。用户给的 prompt token 和模型吐出的 token 同一套账。每一步是一份字典：`{request_id: num_tokens}`——这一步每个请求处理多少 token。这张表够通用：chunked prefill、prefix cache、投机解码都能落上去。chunked prefill 无非是：固定 token 预算，动态决定分给谁多少（上图）。
+不再把 Prefill 和 Decode 当成两种互斥的请求。用户给的 prompt token 和模型吐出的 token 同一套账。每一步是一份字典：`{request_id: num_tokens}`——这一步每个请求处理多少 token。这张表够通用：chunked prefill、prefix cache、投机解码都能落上去。chunked prefill 无非是：固定 token 预算，动态决定分给谁多少（上图）。
 
 ### 3. Zero-Overhead Prefix Caching
 
 仍是 **hash** + **LRU**，和 V0 同一套想法。
 
-V0 的病：开了 prefix cache，命中率低时 CPU 开销会让吞吐掉下去，所以**默认关**。V1 把驱逐做成近似常数时间，少造 Python 对象。即便命中率是 0%，prefix cache 也几乎不伤吞吐。
+V0 的问题：开了 prefix cache，命中率低时 CPU 开销会让吞吐掉下去，所以**默认关**。V1 把驱逐做成近似常数时间，少造 Python 对象。即便命中率是 0%，prefix cache 也几乎不伤吞吐。
 
 实验里：命中率 **0%** 时吞吐掉不到 **1%**；命中率高时可以翻几倍。税够小，于是 **默认开**。
 
@@ -101,7 +101,7 @@ ShareGPT。V1 延迟更低，尤其在高 QPS——吞吐先上去，排队才�
 
 ### Looking Forward
 
-这些数字写成起点。新地基是为了让后面的功能便宜地长出来。他们说未来几周还会再发增强。
+这些数字写成起点。新底层是为了让后面的功能便宜地长出来。他们说未来几周还会再发增强。
 
 ## Limitations & Future Work
 
@@ -158,4 +158,4 @@ ShareGPT。V1 延迟更低，尤其在高 QPS——吞吐先上去，排队才�
 - [Kuntai Du](https://github.com/KuntaiDu)：当时正在做 Prefill 分离与 KV 传输。
 - [Simon Mo](https://github.com/simon-mo)、[Zhuohan Li](https://github.com/zhuohan123)：V1 系统设计。
 
-读这一篇，是为了看见 V1 想修的病：CPU 抢 GPU 的时间、功能互斥、prefix cache 不敢默认开。Anatomy 是这座城后来的地图。
+读这一篇，是为了看见 V1 想修的问题：CPU 抢 GPU 的时间、功能互斥、prefix cache 不敢默认开。Anatomy 是后来的结构图。

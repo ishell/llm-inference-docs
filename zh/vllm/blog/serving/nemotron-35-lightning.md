@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-08-10-nemotron-3-5-lightning-vllm
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Nemotron 3.5 Lightning：常开 agent 的小炉子
+# Nemotron 3.5 Lightning：给常开 agent 的 30B/3B hybrid MoE
 
 英文对照：[en/vllm/blog/serving/nemotron-35-lightning.md](../../../../en/vllm/blog/serving/nemotron-35-lightning.md)  
 原文：https://vllm.ai/blog/2026-08-10-nemotron-3-5-lightning-vllm  
-2026-08-10。署名 **NVIDIA Nemotron Team and vLLM Team**。镜像 `vllm/vllm-openai:v0.27.1`。从 [Nemotron 3 Ultra](nemotron-3-ultra.md) **蒸馏**下来；和 [Nano](nemotron-3-nano.md) / [Super](nemotron-3-super.md) 同一套 hybrid 家族。更早的 9B：[Nano 2](nemotron-nano2.md)。多模态亲戚：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。桌上 Spark 的坑：[dgx-spark.md](dgx-spark.md)。Pareto / PinchBench 是页上的演示，不是你的 SLA。
+2026-08-10。署名 **NVIDIA Nemotron Team and vLLM Team**。镜像 `vllm/vllm-openai:v0.27.1`。从 [Nemotron 3 Ultra](nemotron-3-ultra.md) **蒸馏**下来；和 [Nano](nemotron-3-nano.md) / [Super](nemotron-3-super.md) 同一套 hybrid 家族。更早的 9B：[Nano 2](nemotron-nano2.md)。多模态亲戚：[Nano 2 VL](nemotron-nano-vl.md)、[Nano Omni](nemotron-omni.md)。桌上 Spark 的坑：[dgx-spark.md](dgx-spark.md)。Pareto / PinchBench 是页上的演示，不是某一套集群上的 SLA。
 
 角色写死了：前沿模型管编排，这只跑碎步。架构与 Nemotron 3 几乎同构，差在权重和投机栈。**不是新引擎。**
 

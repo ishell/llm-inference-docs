@@ -1,15 +1,15 @@
 ---
 source: https://nvidia.github.io/TensorRT-LLM/performance/performance-tuning-guide/benchmarking-default-performance.html
 lang: zh
-voice: literary-study
-fetched: 2026-08-31
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 第 1 章：先打一条默认基线
 
-在拧任何旋钮之前，先让引擎按默认活一次，留下四个数字：token 吞吐、request 吞吐、TTFT、ITL。后面每一页都在跟这张成绩单吵架。
+在改任何编译期或运行时选项之前，先让引擎按默认跑一次，留下四个数字：token 吞吐、request 吞吐、TTFT、ITL。后面每一页都拿这张成绩单对照。
 
-数字是演示用的。你的卡、你的网、你的 2048/2048 是否真的 2048，都会改写结局。
+数字是演示用的。卡、网、2048/2048 是否真的 2048，都会改写结局。
 
 ## LLM-API：一行里完成转换和建引擎
 
@@ -40,8 +40,8 @@ if __name__ == "__main__":
 多卡走 MPI。因此：
 
 - 入口必须用 `if __name__ == "__main__"`（mpi4py 的规矩）。
-- 有的环境要 `mpirun -n 1 --oversubscribe --allow-run-as-root python quickstart.py`。**`-n 1` 是故意的**：TensorRT-LLM 自己去孵其余 GPU 上的进程。单机多卡通常不必加 `mpirun`；出现 MPI 报错再加。
-- Llama 若 gated：去 Hugging Face 申请，再按他们的 quickstart 在环境里登录。门没开，权重不会自己走进来。
+- 有的环境要 `mpirun -n 1 --oversubscribe --allow-run-as-root python quickstart.py`。**`-n 1` 是故意的**：TensorRT-LLM 自己去拉其余 GPU 上的进程。单机多卡通常不必加 `mpirun`；出现 MPI 报错再加。
+- Llama 若 gated：去 Hugging Face 申请，再按他们的 quickstart 在环境里登录。没申请权限，权重不会自己下来。
 
 保存引擎：
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 1. `convert_checkpoint.py` 把 HF / NeMo 变成 TensorRT-LLM checkpoint（各模型在 `examples/` 下有自己的脚本，Llama 亦然）。
 2. `trtllm-build` 吃 checkpoint，写出引擎。装 `tensorrt_llm` 时这个命令会进来。
 
-具体花样见 NVIDIA/TensorRT-LLM 仓库里该模型的 README。手册后文用 LLM-API 说话；CLI 旗标是同一套旋钮的另一扇门。
+具体花样见 NVIDIA/TensorRT-LLM 仓库里该模型的 README。手册后文用 LLM-API 说话；CLI 旗标是同一套选项的另一条入口。
 
 ## 用 trtllm-bench 量吞吐和延迟
 
@@ -108,7 +108,7 @@ trtllm-bench \
 
 ### 延迟
 
-延迟基准把 batch 钉在 **1**，为了把「一个人说话」测干净。时间会变得很长。例子里 `--num-requests 100 --warmup 10`，案例跑了大约 **一个半小时**。真实迭代用 **10 条** 往往已经够看方向。按你的耐心改 `--num-requests`。
+延迟基准把 batch 钉在 **1**，为了把单请求延迟测干净。时间会变得很长。例子里 `--num-requests 100 --warmup 10`，案例跑了大约 **一个半小时**。真实迭代用 **10 条** 往往已经够看方向。按耐心改 `--num-requests`。
 
 ```bash
 trtllm-bench \
@@ -122,4 +122,4 @@ trtllm-bench \
 
 延迟报表会拆 TTFT、ITL、generation latency 的 MIN/MAX/AVG/P90/P95/P99。Acceptance Rate 在没开 speculative 时是 1.00——没有草稿可拒。
 
-后面每一章，都是在问：能不能让 1564 变大、让 31 ms 变小，而不把第一个字等成一场雨。
+后面每一章，都是在问：能不能让 1564 变大、让 31 ms 变小，而不把 TTFT 拖得很长。

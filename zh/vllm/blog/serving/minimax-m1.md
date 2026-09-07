@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-06-30-minimax-m1
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # MiniMax-M1：Lightning Attention + MoE，当时 Docker 示例还钉 V0
@@ -11,7 +11,7 @@ fetched: 2026-09-04
 原文：https://vllm.ai/blog/2025-06-30-minimax-m1  
 2025-06-30。署名 **MiniMax**。论文：[arXiv:2506.13585](https://arxiv.org/pdf/2506.13585)。456B 总、约 45.9B 激活。后来的 MSA / 1M 亲戚：[minimax-m3.md](minimax-m3.md)。再后来 Omni：[minimax-h3.md](minimax-h3.md)。当时计划进 V1：[v1-alpha.md](../architecture/v1-alpha.md)。PagedAttention 背景：[paged-attention.md](../architecture/paged-attention.md)。架构介绍加当时部署。文内 Docker 钉了 **`VLLM_USE_V1=0`**——**历史**；后来 hybrid allocator 进了 V1。
 
-这篇讲 MiniMax-M1 的 hybrid 架构怎么在 vLLM 里伺候：模型特点、推理难点、当时那条技术路径。
+这篇讲 MiniMax-M1 的 hybrid 架构怎么在 vLLM 里跑：模型特点、推理难点、当时那条技术路径。
 
 本地图（原文版权仍归原站；学习对照用）：
 

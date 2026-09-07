@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2025-04-05-llama4
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Llama 4：Scout 16E / Maverick 128E，iRoPE 1:3，v0.8.3+
 
 英文对照：[en/vllm/blog/serving/llama4.md](../../../../en/vllm/blog/serving/llama4.md)  
 原文：https://vllm.ai/blog/2025-04-05-llama4  
-2025-04-05。署名 **The vLLM Team**。每 token 只激活 **1** expert（17B active）。前身 405B：[llama31.md](llama31.md)。集群 pitch 里点名的 V1：[v1-alpha.md](../architecture/v1-alpha.md)。分布式：[distributed-inference.md](distributed-inference.md)。`VLLM_DISABLE_COMPILE_CACHE=1` 是当时的开工旗。图上的 TPS 是他们的盘子，不是你的 SLA。
+2025-04-05。署名 **The vLLM Team**。每 token 只激活 **1** expert（17B active）。前身 405B：[llama31.md](llama31.md)。集群 pitch 里点名的 V1：[v1-alpha.md](../architecture/v1-alpha.md)。分布式：[distributed-inference.md](distributed-inference.md)。`VLLM_DISABLE_COMPILE_CACHE=1` 是当时的开工旗。图上的 TPS 是他们那次实验的结果，不宜直接当作生产 SLA。
 
 **原文 TL;DR：**
 
@@ -21,7 +21,7 @@ fetched: 2026-09-04
 
 ## Usage guide
 
-[Llama 4 herd](https://ai.meta.com/blog/llama-4-multimodal-intelligence/)：Scout 和 Maverick。装 `v0.8.3` 或更新：`pip install -U vllm`。CLI、[docker](https://docs.vllm.ai/en/latest/deployment/docker.html)、或 Python 的 [`LLM` class](https://docs.vllm.ai/en/latest/getting_started/quickstart.html#offline-batched-inference)。Meta 的 1M 上下文 demo：[llama-cookbook notebook](https://github.com/meta-llama/llama-cookbook/blob/main/getting-started/build_with_llama_4.ipynb)。
+[Llama 4 herd](https://ai.meta.com/blog/llama-4-multimodal-intelligence/)：Scout 和 Maverick。装 `v0.8.3` 或更新：`pip install -U vllm`。CLI、[docker](https://docs.vllm.ai/en/latest/deployment/docker.html)、或 Python 的 LLM 类（[`LLM` class](https://docs.vllm.ai/en/latest/getting_started/quickstart.html#offline-batched-inference)）。Meta 的 1M 上下文 demo：[llama-cookbook notebook](https://github.com/meta-llama/llama-cookbook/blob/main/getting-started/build_with_llama_4.ipynb)。
 
 ### 8× H100
 

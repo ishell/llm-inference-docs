@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-06-16-vllm-sr-fusion-api
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Fusion：面板、法官、合成，但是一条路由决策
 
 英文对照：[en/vllm/blog/serving/semantic-router-fusion.md](../../../../en/vllm/blog/serving/semantic-router-fusion.md)  
 原文：https://vllm.ai/blog/2026-06-16-vllm-sr-fusion-api  
-2026-06-16。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router.md](semantic-router.md)。脊柱：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。MoM：[mom](semantic-router-mom.md)。Looper：[micro-agent](semantic-router-micro-agent.md)。AMD 路由随笔：[semantic-router-amd.md](semantic-router-amd.md)。OpenRouter DRACO 分数是**他们的表**，不是 vLLM-SR 评测。页上说这次发的是 serving primitive；更大的公开质量评测是后续工作。
+2026-06-16。署名 **vLLM Semantic Router Team**。仓库：[vllm-project/semantic-router](https://github.com/vllm-project/semantic-router)。立项：[semantic-router.md](semantic-router.md)。主干：[Iris](semantic-router-iris.md) / [signal-decision](semantic-router-signal.md)。MoM：[mom](semantic-router-mom.md)。Looper：[micro-agent](semantic-router-micro-agent.md)。AMD 路由随笔：[semantic-router-amd.md](semantic-router-amd.md)。OpenRouter DRACO 分数是**他们的表**，不是 vLLM-SR 评测。页上说这次发的是 serving primitive；更大的公开质量评测是后续工作。
 
 Fusion 是策略，不是全局 slug。先抽信号；只有 Fusion 决策才为面板付钱。[OpenRouter 的 Fusion 发布](https://openrouter.ai/blog/announcements/fusion-beats-frontier/) 被当成市场信号：模型面板是活着的 serving 形态——这篇不是在克隆一只托管端点。
 
@@ -71,7 +71,7 @@ OpenRouter 的发布被当成同一套系统想法的公开证明点。在 [DRAC
 
 原则：Fusion 是路由算法，不是全局模型开关。
 
-全局 runtime 配置只登记哪些 model slug 会触发直接 Fusion 执行。Panel、judge、错误策略、模板、runtime 旋钮，都住在 **命中的路由决策** 上——按工作负载。研究路由可能要三家多样 provider。Code-review 路由可能要两只本地专家加一只更强的 synthesis 模型。隐私敏感路由可能把整块面板留在自托管 vLLM backend 上。
+全局 runtime 配置只登记哪些 model slug 会触发直接 Fusion 执行。Panel、judge、错误策略、模板、runtime 配置，都住在 **命中的路由决策** 上——按工作负载。研究路由可能要三家多样 provider。Code-review 路由可能要两只本地专家加一只更强的 synthesis 模型。隐私敏感路由可能把整块面板留在自托管 vLLM backend 上。
 
 ![fusion entry modes](../../../../assets/vllm/blog/serving/semantic-router-fusion/02-fusion-entry-modes.png)
 
@@ -83,7 +83,7 @@ OpenRouter 的发布被当成同一套系统想法的公开证明点。在 [DRAC
 | --- | --- |
 | `model: "vllm-sr/auto"` | 完整信号和决策策略。只有选中的决策用 `algorithm.type: fusion` 才跑 Fusion；否则走命中的非 Fusion 路由。遗留别名 `auto` 和 `MoM` 仍支持。 |
 | `model: "vllm-sr/fusion"` | 同样抽信号，但决策匹配只限能 Fusion 的决策。都不中就给明确的 no-match 错，除非请求自带 panel override。 |
-| `plugins: [{ "id": "fusion", ... }]` | 单次覆盖 judge、panel、以及选中的 runtime 旋钮。没有 Fusion 决策命中、但给了 `analysis_models`，vLLM-SR 会建一次请求范围的 `fusion_direct` 执行。 |
+| `plugins: [{ "id": "fusion", ... }]` | 单次覆盖 judge、panel、以及选中的 runtime 配置。没有 Fusion 决策命中、但给了 `analysis_models`，vLLM-SR 会建一次请求范围的 `fusion_direct` 执行。 |
 
 Fusion looper 一旦跑起来，执行是明示的：
 
@@ -246,7 +246,7 @@ global:
           - vllm-sr/fusion
 ```
 
-按决策的配置拥有路由语义、judge、panel、runtime 旋钮：
+按决策的配置拥有路由语义、judge、panel、runtime 配置：
 
 ```yaml
 routing:

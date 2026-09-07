@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-08-21-isoexec
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # IsoExec：同一份执行合同盖住训练和推理

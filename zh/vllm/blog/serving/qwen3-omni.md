@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-07-01-qwen3-omni-optimization
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Qwen3-Omni：Thinker / Talker / Code2Wav 三截
 
 英文对照：[en/vllm/blog/serving/qwen3-omni.md](../../../../en/vllm/blog/serving/qwen3-omni.md)  
 原文：https://vllm.ai/blog/2026-07-01-qwen3-omni-optimization  
-2026-07-01。署名 **vLLM-Omni Team and Ant Group SCT Team**。不是一只 Decode 环，是 Thinker → Talker → Code2Wav。TTS 工程细节见 [omni-tts.md](omni-tts.md)。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)。Seed-TTS `en` 扫描和 DFX 数字是他们的合同，不是你的 SLA。音频 **TTFP**（第一包音频）和文本 **TTFT** 不是同一只表。
+2026-07-01。署名 **vLLM-Omni Team and Ant Group SCT Team**。不是一只 Decode 环，是 Thinker → Talker → Code2Wav。TTS 工程细节见 [omni-tts.md](omni-tts.md)。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)。Seed-TTS `en` 扫描和 DFX 数字是他们的合同，不是某一套集群上的 SLA。音频 **TTFP**（第一包音频）和文本 **TTFT** 不是同一只表。
 
 `--omni` 会解析默认部署档案。`/v1/chat/completions` 出文本和音频；请求体里 `modalities`：`["text"]` 或 `["text", "audio"]`。三阶段各自 batch + CUDA Graph；async chunk / async omni output 避免等整包；Talker / Code2Wav 可 replica；hot-path 再削逐步开销。并发 64 的扫描（`Qwen3-Omni-30B-A3B-Instruct`）：Batch **2.2** req/s、音频 TTFP **5884 ms**、RTF **1.15** → 叠完 **11.7** req/s、**632 ms**、RTF **0.47**。吞吐最大一跳是 CUDA Graph（约 **4×**）；TTFP 砍得最深的是 async chunk（**2790 → 655 ms**）。yaml 的 `platforms:` 自动合并 CUDA / NPU / ROCm / XPU，不必再加旗标。
 
@@ -99,7 +99,7 @@ Code2Wav  -> codec codes to waveform audio
 | + Async output | Async omni output path | 1 / 1 | 11.3 (+22%) | 631 ms (−4%) | 0.47 (−25%) |
 | + Stage replicas | 2× Talker + 2× Code2Wav | 2 / 2 | 11.7 (+4%) | 632 ms | 0.47 |
 
-**Figure 2。** staged 执行、batch 与 replica、CUDA Graph、async chunk、hot-path。原图注：成绩来自 staged 数据流、阶段 runtime、Decode 热路径一起拧。
+**Figure 2。** staged 执行、batch 与 replica、CUDA Graph、async chunk、hot-path。原图注：成绩来自 staged 数据流、阶段 runtime、Decode 热路径一起调。
 
 ## 一层一层叠
 
@@ -115,7 +115,7 @@ Code2Wav  -> codec codes to waveform audio
 
 ### 2. CUDA Graph：每阶段 Decode 捕获
 
-**Why。** Batch 把占用拉上来了；每步 Decode 仍在付 CPU kernel dispatch。Talker 一句话可能几百步短计算。并发 64，这笔发射税压住 **TPOT**，音频 RTF 过不了实时。
+**Why。** Batch 把占用拉上来了；每步 Decode 仍在付 CPU kernel dispatch。Talker 一句话可能几百步短计算。并发 64，这笔发射开销压住 **TPOT**，音频 RTF 过不了实时。
 
 **Why it works。** 固定算子序列捕获一次，热路径几乎不走 CPU。Decode 形状打进稳定的 `(batch, seq, frames)` 桶；warmup 时记下，热路径重放。每阶段捕获点不同，道理一样。
 
@@ -127,7 +127,7 @@ Thinker 是自回归多模态阶段（`LLM_AR`）。`enforce_eager` 为 false �
 
 #### Stage 1 — Talker: 外层 Decode graph + 编译过的 code predictor
 
-Talker 也在 `enforce_eager: false` 时走 vLLM 外层 CUDA Graph。每步还跑 **code predictor**（短 re-prefill transformer → RVQ codes），内侧路径单独拧：
+Talker 也在 `enforce_eager: false` 时走 vLLM 外层 CUDA Graph。每步还跑 **code predictor**（短 re-prefill transformer → RVQ codes），内侧路径单独调：
 
 - `torch.compile` 融合 5 层 predictor（`dynamic=False`，`epilogue_fusion=False`），RMSNorm/RoPE 仍对齐参考路径，kernel 数下来。
 - CUDA 上默认**不开**第二层手工 CUDA Graph（`use_cuda_graphs=False`）——会和 Talker 的 `CUDAGraphWrapper` 打架。外层 graph + 编译后的内侧 forward 是互补：一张抓住 AR 阶段环，另一张融合 codec 预测那截微 forward。
@@ -147,7 +147,7 @@ self.code2wav.enable_cudagraph(
 
 形状从 connector 读：`codec_chunk_frames`、`codec_left_context_frames`。捕获枚举 async-chunk 和整包 Decode 会撞上的 `(batch, num_quantizers, frames)` 桶，包括 `initial_codec_chunk_frames` 那块更小的第一包。vocoder warmup：捕获前 `precompute_snake_caches()`，SnakeBeta 不要在 graph 里付启动。async-chunk：`chunked_decode_streaming` → `_cudagraph_wrapper.chunked_decode_with_cudagraph`；整包路径形状对上捕获桶就走 batched decode。
 
-**What you gain。** 三阶段都上 graph：req/s **2.2 → 8.6**（+299%），平均音频 TTFP **5884 → 2790 ms**，平均音频 RTF **1.15 → 0.59**。页上把这一跳的大头记在 Thinker 文本生成、Talker codec Decode、Code2Wav vocoder **一起**卸掉发射税。
+**What you gain。** 三阶段都上 graph：req/s **2.2 → 8.6**（+299%），平均音频 TTFP **5884 → 2790 ms**，平均音频 RTF **1.15 → 0.59**。页上把这一跳的大头记在 Thinker 文本生成、Talker codec Decode、Code2Wav vocoder **一起**卸掉发射开销。
 
 ### 3. Async chunk：阶段之间流水交接
 

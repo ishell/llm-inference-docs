@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2025-12-09-intel-autoround-llmc
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # AutoRound × LLM Compressor：W4A16 进 compressed-tensors，vLLM 直接 serve
@@ -15,7 +15,7 @@ fetched: 2026-09-04
 
 论文：[AutoRound (EMNLP 2024)](https://aclanthology.org/2024.findings-emnlp.662.pdf)。代码：[intel/auto-round](https://github.com/intel/auto-round)。
 
-## 他们印的 TL;DR
+## 原文 TL;DR
 
 AutoRound——Intel 那套 tuning-based PTQ——进了 LLM Compressor：
 
@@ -51,7 +51,7 @@ LLM Compressor 已经把量化、剪枝这类压缩原语收成一套。AutoRoun
 
 - 对齐现有 modifier 架构（比如 `GPTQModifier`）
 - 复用顺序校准和 layer-onloading
-- 以后能跟别的 modifier 拼菜谱
+- 以后能跟别的 modifier 拼配方
 - Checkpoint 直接给 vLLM——压缩到部署一条流水线
 
 ## 集成（第一阶段）
@@ -143,7 +143,7 @@ lm_eval --model vllm \
   --batch_size 128
 ```
 
-他们印的表：
+原文的表：
 
 ```
 |Tasks|Version|     Filter     |n-shot|  Metric   |   |Value|   |Stderr|
@@ -154,9 +154,9 @@ lm_eval --model vllm \
 
 页上注明：非确定性，数字会晃。
 
-## 收束和计划
+## 结语和计划
 
-第一阶段：W4A16 端到端，配置简单，Llama / Qwen dense。路线图：FP8、MXFP4、MXFP8、NVFP4；自动 mixed-bit 搜索；MoE 族；跟 LLM Compressor 里别的算法拼更丰富的 multi-modifier 菜谱。
+第一阶段：W4A16 端到端，配置简单，Llama / Qwen dense。路线图：FP8、MXFP4、MXFP8、NVFP4；自动 mixed-bit 搜索；MoE 族；跟 LLM Compressor 里别的算法拼更丰富的 multi-modifier 配方。
 
 想插队：[RFC #1968](https://github.com/vllm-project/llm-compressor/issues/1968)，或 Intel Community。
 

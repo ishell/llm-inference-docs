@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-07-15-inkling
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # TML Inkling：1T 多模，相对位置，短卷积当 KV

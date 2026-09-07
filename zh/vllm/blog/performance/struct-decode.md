@@ -1,11 +1,11 @@
 ---
 source: https://vllm.ai/blog/2025-01-14-struct-decode-intro
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# Structured decoding：给会说话的模型一套不会说错格式的栅栏
+# vLLM 里的 Structured decoding：一篇温和的导读
 
 英文对照：[en/vllm/blog/performance/struct-decode.md](../../../../en/vllm/blog/performance/struct-decode.md)  
 原文：https://vllm.ai/blog/2025-01-14-struct-decode-intro
@@ -17,7 +17,7 @@ fetched: 2026-09-05
 - Structured decoding 管的是输出**格式**，采样仍是采样
 - 当时 vLLM 同时接 [outlines](https://github.com/dottxt-ai/outlines) 和 [XGrammar](https://github.com/mlc-ai/xgrammar)
 - 刚接上的 XGrammar：负载下 TPOT 最多大约 **5×**
-- 当时计划的 V1：性能，以及 **scheduler 级** mask 广播，好让混合 batch 里的普通人不受阻
+- 当时计划的 V1：性能，以及 **scheduler 级** mask 广播，好让混合 batch 里未走 structured decoding 的请求不受阻
 
 [vLLM](https://blog.vllm.ai/2023/06/20/vllm.html) 是高吞吐推理引擎。这篇顺着语言模型的注释史，写到当时 vLLM 里 structured decoding 的现状、刚落地的 [XGrammar](https://github.com/vllm-project/vllm/pull/10785)，以及一份当时还 tentative 的改进路线图。
 
@@ -64,7 +64,7 @@ fetched: 2026-09-05
 
 LLM 擅长这条启发式：给它一坨文本，它会吐出它认为最可能的后续 token。例如一篇维基，它该写出像那篇文章剩下部分的东西。
 
-前提是：输入 prompt 得干净、结构清楚，围着用户真正要的问题。换一种说法：你要特定格式时，LLM 可以很不听话。请它写 JSON——没有栅栏，它可能吐出读得通、却坏掉 JSON 规格的文本。
+前提是：输入 prompt 得干净、结构清楚，围着用户真正要的问题。换一种说法：如果你要特定格式，LLM 可以很不稳定。请它写 JSON——没有约束，它可能吐出读得通、却坏掉 JSON 规格的文本。
 
 Few-shot（「给我这样的 JSON……」）仍是采样，非法 JSON 仍然被允许。为 JSON 单独微调，训练、盯进度、评测都贵，不是人人付得起。
 
@@ -84,14 +84,14 @@ Dottxt 还写过：有时它甚至能[改善](https://blog.dottxt.co/coalescence
 
 技术上，推理引擎可以改下一 token 的概率分布：按 schema 给 token 加 bias（常常是 logit mask）。[outlines](https://github.com/dottxt-ai/outlines) 提出用有限状态机（FSM）做 guided generation（Willard & Louf, 2023）：解码时跟踪当前状态，对非法 token 加 logit bias，滤掉。
 
-在 vLLM 里：把 JSON schema 塞进 **sampling params**（Python SDK 或 HTTP）。
+在 vLLM 里：我们把 JSON schema 塞进 **sampling params**（Python SDK 或 HTTP）。
 
 ### Previous limitations in vLLM
 
-当时 Outlines backend 几处疼：
+当时 Outlines backend 几处限制：
 
 1. **Decode 慢。** FSM 按 token 构造，一步只能转一个状态，因此一步只能解一个 token。
-2. **组 batch 的瓶颈。** 实现严重依赖 logit processor（当时的 [`outlines_logits_processors.py`](https://github.com/vllm-project/vllm/blob/80c751e7f68ade3d4c6391a0f3fce9ce970ddad0/vllm/model_executor/guided_decoding/outlines_logits_processors.py)），落在采样热路径上。组 batch 时，每条请求编 FSM、同步算 mask，**同一 batch 里所有人**都得等 → TTFT 被拖高，吞吐下降。编 FSM 本身就贵，是 TTFT 的大头。HuggingFace 的 [logits-processor zoo](https://huggingface.co/blog/logits-processor-zoo) 是更一般的阀门。
+2. **组 batch 的瓶颈。** 实现严重依赖 logit processor（当时的 [`outlines_logits_processors.py`](https://github.com/vllm-project/vllm/blob/80c751e7f68ade3d4c6391a0f3fce9ce970ddad0/vllm/model_executor/guided_decoding/outlines_logits_processors.py)），落在采样热路径上。组 batch 时，每条请求编 FSM、同步算 mask，**同一 batch 里所有请求**都得等 → TTFT 被拖高，吞吐下降。编 FSM 本身就贵，是 TTFT 的大头。HuggingFace 的 [logits-processor zoo](https://huggingface.co/blog/logits-processor-zoo) 是更一般的阀门。
 3. **CFG 模式的性能。** JSON mode 还算快；CFG 慢很多，偶尔还能[把引擎弄崩](https://github.com/vllm-project/vllm/issues/10081)。
 4. **高级能力接不上。** [Jump-forward decoding](https://lmsys.org/blog/2024-02-05-compressed-fsm/) 当时做不到：它要一次填好已经确定的 k 个 token，logit processor 只看得见**下一个**。
 
@@ -99,7 +99,7 @@ Dottxt 还写过：有时它甚至能[改善](https://blog.dottxt.co/coalescence
 
 [XGrammar](https://github.com/mlc-ai/xgrammar) 用下推自动机（PDA）做 batch constrained decoding。可以把 PDA 想成「一堆 FSM，每坨是一份 context-free grammar (CFG)」。PDA 能递归，一次可以跳多步状态。语法编译还有额外[优化](https://blog.mlc.ai/2024/11/22/achieving-efficient-flexible-portable-structured-generation-with-xgrammar)。
 
-这直接对着**疼点 (1)**：语法编译从 Python 挪到 C，走 `pthread`。也为后来对着**疼点 (4)** 铺路。下面是 XGrammar 对 Outlines 的性能对照（Figure 4–5）：负载下 TPOT 最多大约 **5×**。
+这直接对着**限制 (1)**：语法编译从 Python 挪到 C，走 `pthread`。也为后来对着**限制 (4)** 铺路。下面是 XGrammar 对 Outlines 的性能对照（Figure 4–5）：负载下 TPOT 最多大约 **5×**。
 
 V0 架构里，XGrammar 仍是 [logit processor](https://github.com/vllm-project/vllm/blob/main/vllm/model_executor/guided_decoding/xgrammar_decoding.py)，只是 tokenizer 数据有 cache。成绩令人鼓舞，他们仍觉得还能挖。
 
@@ -109,7 +109,7 @@ V0 架构里，XGrammar 仍是 [logit processor](https://github.com/vllm-project
 - 还不会 **regex**
 - 还不会带 regex pattern 或数值范围的复杂 JSON（[vLLM #10899](https://github.com/vllm-project/vllm/pull/10899)，上游 [xgrammar #106](https://github.com/mlc-ai/xgrammar/pull/106)）
 
-> vLLM 当时默认有一份基本的 XGrammar。知道它伺候不了这条请求，就回落到 Outlines。
+> vLLM 当时默认有一份基本的 XGrammar。知道它处理不了这条请求，就回落到 Outlines。
 >
 > 仓库里还有 lm-format-enforcer。他们测过：某些长上下文测例约束会漏，性能也不如 Outlines 稳。
 
@@ -118,8 +118,8 @@ V0 架构里，XGrammar 仍是 [logit processor](https://github.com/vllm-project
 当时 [v1](https://github.com/vllm-project/vllm/issues/8779) 将至，structured decoding 的 tentative 计划：
 
 1. Guided decoding 升到 **scheduler 级**：
-   - 调度器认得谁在用 structured decoding，就不该挡住同一 batch 里的普通人（对着疼点 **(2)**）。离开热路径。
-   - Jump-forward 也更自然（对着疼点 **(4)**）。
+   - 调度器认得谁在用 structured decoding，就不该挡住同一 batch 里未走 structured decoding 的请求（对着限制 **(2)**）。离开热路径。
+   - Jump-forward 也更自然（对着限制 **(4)**）。
 2. Bitmask **在一个进程里算**，再 **broadcast** 给每个 GPU worker，而不是每个 worker 算一遍。
    - 每条 sample、每个走 guided decoding 的请求，广播 mask 的带宽，当时说要仔细量。
 3. 给**投机解码**和 **tool-use** 同一套底座：
@@ -143,9 +143,9 @@ vLLM 团队、XGrammar 团队，以及 [Aaron Pham (BentoML)](https://github.com
 - Rosenblatt, F. (1958). The perceptron: A probabilistic model for information storage and organization in the brain. *Psychological Review*, *65*(6), 386–408. <https://doi.org/10.1037/h0042519>
 - Rumelhart, D. E., McClelland, J. L., & Group, P. R. (1986). *Parallel Distributed Processing, Volume 1: Explorations in the Microstructure of Cognition: Foundations*. The MIT Press. <https://doi.org/10.7551/mitpress/5236.001.0001>
 - Shortliffe, E. H. (1974). *MYCIN: A Rule-Based Computer Program for Advising Physicians Regarding Antimicrobial Therapy Selection* (Technical Report STAN-CS-74-465). Stanford University.
-- Statistical Machine Translation. (n.d.). *IBM Models*. <http://www2.statmt.org/survey/Topic/IBMModels>
+- Statistical Machine Translation. (n.d.). *IBM Models*. <http://www.statmt.org/survey/Topic/IBMModels>
 - Turing, A. M. (1950). i.—Computing Machinery And Intelligence. *Mind*, *LIX*(236), 433–460. <https://doi.org/10.1093/mind/LIX.236.433>
 - Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L., & Polosukhin, I. (2023). *Attention Is All You Need*. arXiv preprint arXiv:1706.03762
 - Willard, B. T., & Louf, R. (2023). *Efficient Guided Generation for Large Language Models*. arXiv preprint arXiv:2307.09702
 
-Anatomy 里 Structured Output Manager 就是这间房间。功能页：[speculative-decoding.md](../../features/speculative-decoding.md) 管的是「猜字」；这篇管的是「猜的字还得长对形状」。
+Anatomy 里的 Structured Output Manager 就是这块。功能页：[speculative-decoding.md](../../features/speculative-decoding.md) 管的是「猜字」；这篇管的是「猜的字还得长对形状」。

@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2024-07-23-llama31
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Llama 3.1：128K 自动 chunked prefill；405B 单机走 FP8，多机优先 PP
 
 英文对照：[en/vllm/blog/serving/llama31.md](../../../../en/vllm/blog/serving/llama31.md)  
 原文：https://vllm.ai/blog/2024-07-23-llama31  
-2024-07-23。署名 **vLLM Team**。数字是 **早期** 参考，文内自己说几周内会再涨。后继 herd：[llama4.md](llama4.md)。Llama Stack 邻居：[llama-stack.md](llama-stack.md)。分布式：[distributed-inference.md](distributed-inference.md)。1024/128 那条负载是他们的盘子，不是你的 SLA。
+2024-07-23。署名 **vLLM Team**。数字是 **早期** 参考，文内自己说几周内会再涨。后继 herd：[llama4.md](llama4.md)。Llama Stack 邻居：[llama-stack.md](llama-stack.md)。分布式：[distributed-inference.md](distributed-inference.md)。1024/128 那条负载是他们的实验条件，不宜直接当作生产 SLA。
 
 **原文 TL;DR：**
 

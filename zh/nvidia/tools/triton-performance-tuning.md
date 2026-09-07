@@ -1,8 +1,8 @@
 ---
 source: https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/user_guide/performance_tuning.html
 lang: zh
-voice: literary-study
-fetched: 2026-09-01
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Triton：把训好的模型调到能上线
@@ -13,7 +13,7 @@ fetched: 2026-09-01
 
 ## 总流程
 
-1. **后端认不认？** 落在官方支持的 backend 里，按 Quickstart 部署。ONNX Runtime 和 TensorRT 可以 AutoComplete：`config.pbtxt` 不是必须，除非你要显式钉参数。`--log-verbose=1` 会在日志里打印 Triton 内部看到的完整 config。其它 backend 先写 Minimal Model Configuration。
+1. **后端认不认？** 落在官方支持的 backend 里，按 Quickstart 部署。ONNX Runtime 和 TensorRT 可以 AutoComplete：`config.pbtxt` 不是必须，除非我们要显式钉参数。`--log-verbose=1` 会在日志里打印 Triton 内部看到的完整 config。其它 backend 先写 Minimal Model Configuration。
 2. **不在支持列表？** Python Backend 用普通脚本接请求，快，但不一定快。C++ 自定义 backend 更重、通常更快。用 Python 换来的是人时，用 C++ 换来的是延迟。先问这笔买卖值不值。
 3. **能不能推理？** `perf_analyzer -m my_model`。简化输出像：
 
@@ -22,12 +22,12 @@ fetched: 2026-09-01
    ```
 
    这是 sanity：输入对得上、输出回得来。失败且日志说不清时，先对 `config.pbtxt` 的输入输出名字和 dtype；再在原框架里跑一遍。没有自己的脚本就用 Polygraphy（ONNX Runtime / TensorRT / TensorFlow 1.x）。
-4. **「好」是什么？** 吞吐、延迟、GPU 利用率，每个业务自己定。`config.pbtxt` 里能拧的变量很多。模型、配置、用例一变，就再打一遍 Perf Analyzer。
-5. **怎么变好？** Model Analyzer 自动或手动搜 instance 数、dynamic batching、`max_batch_size`。把打赢的 config 拷回模型仓库，再测。backend 私有旋钮（例如 ONNX Runtime 的并行度）不在自动搜索里，用 Manual Configuration Search。更细的优化见 Triton Optimization 文档。
+4. **「好」是什么？** 吞吐、延迟、GPU 利用率，每个业务自己定。`config.pbtxt` 里能改的变量很多。模型、配置、用例一变，就再打一遍 Perf Analyzer。
+5. **怎么变好？** Model Analyzer 自动或手动搜 instance 数、dynamic batching、`max_batch_size`。把打赢的 config 拷回模型仓库，再测。backend 私有选项（例如 ONNX Runtime 的并行度）不在自动搜索里，用 Manual Configuration Search。更细的优化见 Triton Optimization 文档。
 
 ## 另外两件常被问的
 
-**冷启动很慢。** 加载时跑 ModelWarmup，暖好了再标 READY。第一位客人不应承担 JIT 和缓存的学费。
+**冷启动很慢。** 加载时跑 ModelWarmup，暖好了再标 READY。第一个请求不应承担 JIT 和缓存的学费。
 
 **GPU 并没有明显更快。** 官方 backend 多数默认就走 GPU。再往上：Framework Specific Optimizations；或整模转到 TensorRT。若这些都救不了，模型也许更属于 CPU，OpenVINO backend 是那条路。不是所有网络都该被逼着住在 GPU 上。
 
@@ -57,7 +57,7 @@ output: [
 ]
 ```
 
-`max_batch_size: 0` 是因为这个模型把 batch 写死在 dims 第一维。支持动态 batch 的模型，Model Analyzer 才会去拧 `max_batch_size`。
+`max_batch_size: 0` 是因为这个模型把 batch 写死在 dims 第一维。支持动态 batch 的模型，Model Analyzer 才会去调 `max_batch_size`。
 
 起服务（原页容器标签 `26.07`；`-v $PWD:/mnt` 把宿主机当前目录挂进容器）：
 
@@ -117,6 +117,6 @@ cp /mnt/models/densenet_onnx/config.pbtxt /tmp/original_config.pbtxt   # 可选�
 cp ./results/densenet_onnx_config_3/config.pbtxt /mnt/models/densenet_onnx/
 ```
 
-有时最高吞吐和最低延迟不是同一套配置。读完 Analyzer 的报告再选座位，不要只看表头那一行。
+有时最高吞吐和最低延迟不是同一套配置。读完 Analyzer 的报告再选，不要只看表头那一行。
 
-再往后的手工拧法：Model Configuration 与 Optimization 文档。Perf Analyzer 用来确认「拷回去之后，数字确实动了」。
+再往后的手工调法：Model Configuration 与 Optimization 文档。Perf Analyzer 用来确认「拷回去之后，数字确实动了」。

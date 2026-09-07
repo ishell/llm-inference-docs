@@ -1,15 +1,15 @@
 ---
 source: https://docs.nvidia.com/aiperf/getting-started/ai-perf-comprehensive-llm-benchmarking
 lang: zh
-voice: literary-study
-fetched: 2026-09-01
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # AIPerf：五类真实打法
 
-官方综合指南（标为 AIPerf v0.5.0，演示日期 2025-11-13，页上更新 2026-02-02）。演示集群已经拆掉。下面的数字是**官方案例**，用来看曲线长什么样，不是你机器上的成绩。入口见 `aiperf.md`。
+官方综合指南（标为 AIPerf v0.5.0，演示日期 2025-11-13，页上更新 2026-02-02）。演示集群已经拆掉。下面的数字是**官方案例**，用来看曲线长什么样，不是我们机器上的成绩。入口见 `aiperf.md`。
 
-他们当时的靶：Qwen3-0.6B，vLLM v0.11.0，8 路数据并行（8×H200，一卡一副本）。小模型是为了让秒表有东西可写，不是为了崇拜 0.6B。
+他们当时的靶：Qwen3-0.6B，vLLM v0.11.0，8 路数据并行（8×H200，一卡一副本）。小模型是为了让基准有东西可写，不是为了推荐 0.6B。
 
 本地跟一条副本即可：
 
@@ -43,7 +43,7 @@ aiperf profile \
 | 200 | 35,999 | 18,000 | 239 | ~420 ms |
 | 500 | 29,836 | 14,918 | 129 | ~1,129 ms |
 
-TPS/GPU = 合计 TPS / 8。c=200 是这张演示表上 GPU 效率的峰；c=500 两边一起塌——排队吃掉了吞吐，也吃掉了体验。不能同时把「每卡吐多少」和「每个人觉得有多快」拧到最大。选座位：要体验就 10–50；要平衡就 100–200；只看卡账就停在峰，不要越过塌陷。
+TPS/GPU = 合计 TPS / 8。c=200 是这张演示表上 GPU 效率的峰；c=500 两边一起掉——排队吃掉了吞吐，也吃掉了体验。不能同时把「每卡吐多少」和「每个请求觉得有多快」调到最大。选工作点：要体验就 10–50；要平衡就 100–200；只看卡账就停在峰，不要越过塌陷。
 
 ## 2. 默认分位不够时，读 jsonl
 
@@ -73,14 +73,14 @@ Mooncake 公开了 arXiv QA 的生产 trace：到达时刻、ISL/OSL、以及每
 curl -o mooncake_trace.jsonl \
   https://raw.githubusercontent.com/kvcache-ai/Mooncake/refs/heads/main/FAST25-release/arxiv-trace/mooncake_trace.jsonl
 
-# 按原时间戳：测系统能不能跟上当时的门厅
+# 按原时间戳：测系统能不能跟上当时的到达
 aiperf profile ... --input-file mooncake_trace.jsonl \
   --custom-dataset-type mooncake_trace --fixed-schedule --streaming
 
 # 去掉 --fixed-schedule：尽快发，测容量
 ```
 
-他们把前 5 分钟（1765 条）加速 5× 回放约一分钟：ISL 从 890 到 32236，成功率 96%——75 条撞上 Qwen3-0.6B 的 32K 窗。合成 1000→500 不会告诉你这件事。Trace 暴露屋顶；均匀 ISL 只暴露实验室地板。
+他们把前 5 分钟（1765 条）加速 5× 回放约一分钟：ISL 从 890 到 32236，成功率 96%——75 条撞上 Qwen3-0.6B 的 32K 窗。合成 1000→500 不会告诉你这件事。Trace 暴露上限；均匀 ISL 只暴露实验室下限。
 
 ## 4. Goodput：吞吐里有多少还符合 SLA
 
@@ -90,7 +90,7 @@ aiperf profile ... --input-file mooncake_trace.jsonl \
 --goodput "time_to_first_token:370 request_latency:648"
 ```
 
-官方演示：RPS 26.67，goodput 7.43——大约 28% 的请求**同时**满足两条 SLO。平均 TTFT 已经高于 370 ms，中位 latency 高于 648 ms。按吞吐买 38 台机器的人，若改用 goodput，账会变成大约 135 台。忽略 goodput 就是按一个用户正在受苦的数字扩容。
+官方演示：RPS 26.67，goodput 7.43——大约 28% 的请求**同时**满足两条 SLO。平均 TTFT 已经高于 370 ms，中位 latency 高于 648 ms。按吞吐买 38 台机器的人，若改用 goodput，账会变成大约 135 台。忽略 goodput 就是按一个用户正在变慢的数字扩容。
 
 阈值按产品档位改：严（250/500）、演示用的中间档、松（600/2500）。公式见 `aiperf-metrics.md`。
 
@@ -106,11 +106,11 @@ aiperf profile ... --input-file mooncake_trace.jsonl \
 
 ## 附录（同一页上的周边）
 
-- **集群内打**：客户端和副本放同一 K8s，用 ClusterIP。高并发时先塌的常常是客户端端口，不是 GPU。
+- **集群内打**：客户端和副本放同一 K8s，用 ClusterIP。高并发时先耗尽的常常是客户端端口，不是 GPU。
 - **取消**：`--request-cancellation-rate 20 --request-cancellation-delay 0.5`，测连接池和善后。
 - **服务端 Prometheus**：默认可从 `--url` 发现；或 `--server-metrics`。
 - **出图**：`aiperf plot`；`--dashboard` 默认 8050。
-- **合成加速 / 拉长前缀**：`--synthesis-speedup-ratio`、`--synthesis-prefix-len-multiplier` 等，用来受控地折磨 KV。
+- **合成加速 / 拉长前缀**：`--synthesis-speedup-ratio`、`--synthesis-prefix-len-multiplier` 等，用来受控地压 KV。
 - **User-centric**：`--user-centric-rate` + `--num-users` + `--shared-system-prompt-length`，见 `aiperf-load-generator.md`。
 
-官方自己的结论：用例 1 给基线容量；生产能不能上，还要 trace、goodput、时间切片。三件套缺一，你会爱上实验室里那条不会在门厅活下来的曲线。
+官方自己的结论：用例 1 给基线容量；生产能不能上，还要 trace、goodput、时间切片。三件套缺一，会爱上实验室里那条到了生产排队就撑不住的曲线。

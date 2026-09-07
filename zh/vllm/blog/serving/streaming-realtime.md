@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-01-31-streaming-realtime
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # 输入不必一次到齐：StreamingInput 与 `/v1/realtime`
@@ -41,7 +41,7 @@ fetched: 2026-09-05
 - **现场转写** — 话还在说，字已经上屏。
 - **机器人 / embodied AI** — 相机、麦克风、LIDAR；控制动作拖不起。
 
-整段等齐，是这类负载付不起的税。基础设施得增量处理输入，并在输入尚未到齐时就开始生成。
+整段等齐，是这类负载付不起的开销。基础设施得增量处理输入，并在输入尚未到齐时就开始生成。
 
 即便是「必须读完全部输入才能吐第一个输出 token」的老应用，输入一到就往引擎送，对 TTFT 仍可能有好处。vLLM 默认开 [chunked prefill](https://docs.vllm.ai/en/stable/cli/serve/?h=max+num+b#-enable-chunked-prefill-no-enable-chunked-prefill)：\(N\) 个 token 要走 \(N \div M\) 次前向，\(M\) 是 [`max_num_batched_tokens`](https://docs.vllm.ai/en/stable/cli/serve/?h=max+num+b#-max-num-batched-tokens)。若 \(N \div M > 1\)，token 随到随送，**第一次** Prefill 前向可以更早排上。
 
@@ -101,7 +101,7 @@ P(y_i \mid y'_{i-1}, \ldots, y'_0), \qquad y'_k = y_k + x_{k+\delta}.
 
 ### 架构决定 serving 能不能流
 
-vLLM 能伺候许多模型。**真**流式要架构上就是因果的。[Voxtral](https://mistral.ai/news/voxtral) 从训练起就为流式设计，用支持增量的因果 attention。
+vLLM 能服务许多模型。**真**流式要架构上就是因果的。[Voxtral](https://mistral.ai/news/voxtral) 从训练起就为流式设计，用支持增量的因果 attention。
 
 Serving 也得接增量输入。模型能流、服务器却要等齐 prompt，延迟优势就没了。所以 vLLM 在已有的输出流之外，把输入也做成流。
 

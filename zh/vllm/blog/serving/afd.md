@@ -1,17 +1,17 @@
 ---
 source: https://vllm.ai/blog/2026-07-23-vllm-afd-plugin
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# AFD Plugin：Attention 和 FFN 也可以不住在同一栋楼
+# AFD Plugin：Attention 和 FFN 也可以分开部署
 
 英文对照：[en/vllm/blog/serving/afd.md](../../../../en/vllm/blog/serving/afd.md)  
 原文：https://vllm.ai/blog/2026-07-23-vllm-afd-plugin  
 2026-07-23。署名 **AFD Plugin Contributors**。实验性外部插件：https://github.com/vllm-project/afd-plugin。走 `vllm.general_plugins` 和 `--additional-config`，**不改 vLLM 源码**。当时钉在 vLLM **0.19.1**、Python **3.10–3.13**、仅 model runner **v1**。两边都加载**完整权重**。数字是受控实验，不是 SLA。原文自己也说：还需要在更多后端上做大规模测试。
 
-EPD 拆的是视觉编码器；Router 拆的是文本 Prefill/Decode；AFD 拆的是层内 Attention 与专家。三把刀切的不是同一块肉。插件系统：[plugin-system](../architecture/plugin-system.md)；硬件门：[hardware-plugin](../architecture/hardware-plugin.md)；当时还没接的 runner：[mrv2](../architecture/mrv2.md)。
+EPD 拆的是视觉编码器；Router 拆的是文本 Prefill/Decode；AFD 拆的是层内 Attention 与专家。三处切的不是同一层。插件系统：[plugin-system](../architecture/plugin-system.md)；硬件门：[hardware-plugin](../architecture/hardware-plugin.md)；当时还没接的 runner：[mrv2](../architecture/mrv2.md)。
 
 **原文 TL;DR：**
 
@@ -31,7 +31,7 @@ EPD 拆的是视觉编码器；Router 拆的是文本 Prefill/Decode；AFD 拆�
 
 ## Why Attention-FFN Disaggregation?
 
-MoE 推理在每一层 Transformer 里叠了两种脾气相反的活。Attention **有状态**，跟调度和 KV cache 绑在一起；FFN / 专家路径主要是 routed 专家计算和 all-to-all。两条路共用同一套 worker 拓扑，serving 就只能给两种完全不同的需求选**一个**伸缩数字。
+MoE 推理在每一层 Transformer 里叠了两种需求相反的计算。Attention **有状态**，跟调度和 KV cache 绑在一起；FFN / 专家路径主要是 routed 专家计算和 all-to-all。两条路共用同一套 worker 拓扑，serving 就只能给两种完全不同的需求选**一个**伸缩数字。
 
 要把拆开做成能跑的系统，得先回答几道设计题：
 
@@ -72,8 +72,8 @@ MoE 推理在每一层 Transformer 里叠了两种脾气相反的活。Attention
 
 - **Native vLLM serving surface。** 现有用户仍用 `vllm serve` 启动，请求打 OpenAI 兼容口，运行时用 `--additional-config` 配。
 - **GPU 和 NPU 实现。** GPU worker 扩 vLLM v1 类；NPU worker 直接扩 **vLLM-Ascend** 类。共享行为住在配置、拓扑、元数据、connector 合同里，不是跨设备继承。
-- **同步 AFD 伺候 Decode 吞吐。** `P2pNcclAFDConnector` 和 `CAMP2pAFDConnector` 同步交换 Attention activation 和 FFN 输出，让两个角色在吞吐型 Decode 部署里独立伸缩。当时的 graph 路径分别是 CUDA / ACL 上的 `FULL_DECODE_ONLY`。
-- **异步 AFD 伺候 Prefill。** `CAMAsyncAFDConnector` 用 CAM 异步 dispatch / combine，把 Prefill 的 Attention rank 和专家 worker 解开。配上 AFD 管的 MoE ubatch，独立的 Attention / FFN 阶段可以重叠，少卡在流水线里。这条路当时瞄准 **P/D 分离里的 Prefill**，**还不支持 graph**。
+- **同步 AFD 服务 Decode 吞吐。** `P2pNcclAFDConnector` 和 `CAMP2pAFDConnector` 同步交换 Attention activation 和 FFN 输出，让两个角色在吞吐型 Decode 部署里独立伸缩。当时的 graph 路径分别是 CUDA / ACL 上的 `FULL_DECODE_ONLY`。
+- **异步 AFD 服务 Prefill。** `CAMAsyncAFDConnector` 用 CAM 异步 dispatch / combine，把 Prefill 的 Attention rank 和专家 worker 解开。配上 AFD 管的 MoE ubatch，独立的 Attention / FFN 阶段可以重叠，少卡在流水线里。这条路当时瞄准 **P/D 分离里的 Prefill**，**还不支持 graph**。
 - **MoE 模型接入。** 包装注册 DeepSeek V2/V3 家族（含 DeepSeek V3.2）和 GLM MoE DSA。包装把 Attention 和 FFN 计算分开，层实现仍复用上游。
 - **Graph 和 ubatch。** 同步 GPU / NPU connector 支持 Decode-only graph capture。Dual Batch Overlap **恰好两个** ubatch；CAM async 的 Prefill 另有 AFD 管的 MoE ubatch。
 
@@ -81,7 +81,7 @@ MoE 推理在每一层 Transformer 里叠了两种脾气相反的活。Attention
 
 ### Synchronous AFD Decode Throughput with `CAMP2pAFDConnector`
 
-同步 Decode 食谱：[vllm-project/afd-plugin#67](https://github.com/vllm-project/afd-plugin/pull/67)。对照常规 EP64 和基于 `CAMP2pAFDConnector` 的 AFD。模型：DeepSeek-V3.2 **W8A8**，昇腾 **910C**。测的是饱和 Decode 吞吐，不是在线 serving 延迟。
+同步 Decode recipe：[vllm-project/afd-plugin#67](https://github.com/vllm-project/afd-plugin/pull/67)。对照常规 EP64 和基于 `CAMP2pAFDConnector` 的 AFD。模型：DeepSeek-V3.2 **W8A8**，昇腾 **910C**。测的是饱和 Decode 吞吐，不是在线 serving 延迟。
 
 | Deployment | Physical topology | Total dies |
 | --- | --- | ---: |

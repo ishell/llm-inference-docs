@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-02-03-dsr1-gb200-part1
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# DeepSeek-R1 上 GB200：Wide-EP 第二张成绩单
+# DeepSeek-R1 上 GB200：Wide-EP 第二张结果
 
 英文对照：[en/vllm/blog/serving/gb200-wideep.md](../../../../en/vllm/blog/serving/gb200-wideep.md)  
 原文：https://vllm.ai/blog/2026-02-03-dsr1-gb200-part1  
-2026-02-03。署名 **Meta and NVIDIA Team**。接 [Wide-EP](large-scale.md) 的 H200 线（约 **2.2k tok/s/H200**）。数字是当时演示，不是你机器的承诺。
+2026-02-03。署名 **Meta and NVIDIA Team**。接 [Wide-EP](large-scale.md) 的 H200 线（约 **2.2k tok/s/H200**）。数字是当时演示，不宜直接当作你这台机器的承诺。
 
 和 [EPD](epd.md) 分清：这里是 **文本 Prefill/Decode 分拆 + 宽 EP**，不是视觉 encoder 分拆。
 
@@ -17,9 +17,9 @@ fetched: 2026-09-04
 
 ## 引言
 
-H200 那张 Wide-EP 成绩单之后，同一班人接着拧 NVIDIA **GB200**。头条：**26.2K Prefill TPGS**（tokens per GPU second）、**10.1K Decode TPGS**，负载 **2K 输入 / 2K 输出**，DeepSeek 风格 MoE——R1 / V3 / V3.1。采集拓扑：**4 个 Prefill 实例 × 2 张 GB200**，加 **1 个 Decode 实例 × 8 张 GB200**，全都 DP + EP。
+H200 那张 Wide-EP 结果之后，同一班人接着做 NVIDIA **GB200**。头条：**26.2K Prefill TPGS**（tokens per GPU second）、**10.1K Decode TPGS**，负载 **2K 输入 / 2K 输出**，DeepSeek 风格 MoE——R1 / V3 / V3.1。采集拓扑：**4 个 Prefill 实例 × 2 张 GB200**，加 **1 个 Decode 实例 × 8 张 GB200**，全都 DP + EP。
 
-页上点名的新刀：
+页上点名的新优化：
 
 - 低精度（[NVFP4](https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/) GEMM、FP8 GEMM、NVFP4 MoE Dispatch）
 - Kernel fusion（RoPE+Quant+Q write、RoPE+Quant、Concat K）
@@ -144,7 +144,7 @@ EP 度减半，通信税跟着减半。
 - `num_in_group`：每组卸这么多层（每组最后 N 层）
 - `prefetch_step`：提前预取几层
 
-**DeepSeek-R1 Prefill** 他们卸 **每两份 MoE GEMM 权重里的一份**——房子省下来，吞吐他们说仍是满的。
+**DeepSeek-R1 Prefill** 他们卸 **每两份 MoE GEMM 权重里的一份**——显存省下来，吞吐他们说仍是满的。
 
 ![onloading trace](../../../../assets/vllm/blog/serving/gb200-wideep/09-onloading_trace.png)
 
@@ -193,7 +193,7 @@ V1 异步 serving 路径把输出处理（logit、采样、回包）切块。`VL
 - 低精度（NVFP4 GEMM、FP8 GEMM、NVFP4 dispatch）吃 GB200 的 tensor core。
 - Kernel fusion 砍带宽和 launch。
 - Prefill 缩卡 + weight offloading v2：EP 通信降下去，算力仍饱和。
-- Chunking 用环境变量拧——**这一代平台**上的大 batch 税这样砍。
+- Chunking 用环境变量调——**这一代平台**上的大 batch 税这样砍。
 
 ## 团队
 

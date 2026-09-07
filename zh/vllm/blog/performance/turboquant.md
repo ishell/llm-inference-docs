@@ -1,19 +1,19 @@
 ---
 source: https://vllm.ai/blog/2026-05-11-turboquant
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# TurboQuant：KV 再压到 3–4 bit 之前，先读完这篇对照
+# TurboQuant 的精度与性能：一篇较完整的对照
 
 英文对照：[en/vllm/blog/performance/turboquant.md](../../../../en/vllm/blog/performance/turboquant.md)  
 原文：https://vllm.ai/blog/2026-05-11-turboquant  
-2026-05-11。Eldar Kurtić、Michael Goin、Alexandre Marques（Red Hat AI）。数字来自 **vLLM 0.20.2**（commit `6ec9bbec3`）。接在 [FP8 KV](fp8-kvcache.md) 后面读。论文：[TurboQuant](https://arxiv.org/pdf/2504.19874)。当时文档：[quantization/turboquant](https://docs.vllm.ai/en/latest/api/vllm/model_executor/layers/quantization/turboquant/)。
+2026-05-11。Eldar Kurtić、Michael Goin、Alexandre Marques（Red Hat AI）。学习译文，不是官方译本。数字来自 **vLLM 0.20.2**（commit `6ec9bbec3`）。接在 [FP8 KV](fp8-kvcache.md) 后面读。论文：[TurboQuant](https://arxiv.org/pdf/2504.19874)。当时文档：[quantization/turboquant](https://docs.vllm.ai/en/latest/api/vllm/model_executor/layers/quantization/turboquant/)。
 
 ## Introduction
 
-[TurboQuant](https://arxiv.org/pdf/2504.19874) 把 KV 压到 3–4 bit，广告上是一大截 GPU 显存。和 [FP8 KV](https://vllm.ai/blog/fp8-kvcache)（`--kv-cache-dtype fp8`）不一样：FP8 连 **存储和 attention 计算** 都走硬件 FP8 Tensor Core；TurboQuant 只压缩**存储**，算的时候再反量化回 BF16。省的是房间，付的是反量化。精度和速度都从这条裂缝里长出来。
+[TurboQuant](https://arxiv.org/pdf/2504.19874) 把 KV 压到 3–4 bit，广告上是一大截 GPU 显存。和 [FP8 KV](https://vllm.ai/blog/fp8-kvcache)（`--kv-cache-dtype fp8`）不一样：FP8 连 **存储和 attention 计算** 都走硬件 FP8 Tensor Core；TurboQuant 只压缩**存储**，算的时候再反量化回 BF16。省的是显存，付的是反量化。精度和速度都从这条裂缝里长出来。
 
 以前报的数字，多半是小模型、短上下文，KV 量化几乎不被逼到墙角。这篇量了四个模型（稠密和 MoE，**30B 到 200B+**），五套基准：Prefill 偏重的长上下文检索，Decode 偏重的推理。
 
@@ -29,7 +29,7 @@ vllm serve MiniMaxAI/MiniMax-M2.7 --kv-cache-dtype turboquant_4bit_nc
 
 ![llama 70b pareto](../../../../assets/vllm/blog/performance/turboquant/01-llama_70b_pareto.png)
 
-Figure 1：Llama-3.3-70B-Instruct 在 4×H100 上的 Pareto。FP8 压过全场：burst 吞吐比 BF16 高 **2.6×**，KV 容量 **2×**。TurboQuant 各变体都是用吞吐换再多一点房间。
+Figure 1：Llama-3.3-70B-Instruct 在 4×H100 上的 Pareto。FP8 压过全场：burst 吞吐比 BF16 高 **2.6×**，KV 容量 **2×**。TurboQuant 各变体都是用吞吐换再多一点显存。
 
 ![qwen3 30b a3b pareto](../../../../assets/vllm/blog/performance/turboquant/02-qwen3_30b_a3b_pareto.png)
 
@@ -39,7 +39,7 @@ Figure 2：Qwen3-30B-A3B-Instruct-2507 在 2×H100 上。FP8 吞吐打平 BF16�
 
 - **FP8**（`--kv-cache-dtype fp8`）仍是默认：KV 容量大约 **2×**，精度损失可忽略，多数指标打平 BF16，显存紧的 serving 上还明显更好。
 - TurboQuant **`k8v4`** 几乎没有胜过 FP8 的理由：容量大约 **2.4× vs 2×**，吞吐和延迟却稳定变差。
-- TurboQuant **`4bit-nc`** 是 TQ 里最可能用的：KV 紧的时候多一点房间，换中等的精度、延迟、吞吐。边缘、房间极度不够时可以考虑。
+- TurboQuant **`4bit-nc`** 是 TQ 里最可能用的：KV 紧的时候多一点显存，换中等的精度、延迟、吞吐。边缘、显存极度不够时可以考虑。
 - TurboQuant **`k3v4-nc`** 和 **`3bit-nc`**：推理和超长上下文掉得能看见，延迟/吞吐也一并变差。不当生产默认。
 
 ## Experimental Setup
@@ -99,7 +99,7 @@ Figure 6：MiniMax-M2.7 的推理。更大的模型通常更扛量化；狠压�
 
 MiniMax-M2.7（**200B+**）同一套阶梯。FP8 和 TQ `k8v4` 恢复 **>99%**；TQ `4bit-nc` 中等下降；`k3v4-nc` / `3bit-nc` 仍掉，AIME25 和 LiveCodeBench-v6 上可到大约 **8 分**。
 
-**Takeaway：** 狠压的 TQ（`k3v4-nc`、`3bit-nc`）在硬数学和代码上伤得明显。`4bit-nc` 是中等一刀。`k8v4` 打平未量化 BF16。FP8 也打平未量化基线，而且（下面）比任何 TQ 变体都快一截。
+**Takeaway：** 狠压的 TQ（`k3v4-nc`、`3bit-nc`）在硬数学和代码上伤得明显。`4bit-nc` 是中等一档。`k8v4` 打平未量化 BF16。FP8 也打平未量化基线，而且（下面）比任何 TQ 变体都快一截。
 
 ## Performance Results
 
@@ -111,13 +111,13 @@ MiniMax-M2.7（**200B+**）同一套阶梯。FP8 和 TQ `k8v4` 恢复 **>99%**�
 
 ![qwen3 30b a3b latency](../../../../assets/vllm/blog/performance/turboquant/07-qwen3_30b_a3b_latency.png)
 
-Figure 7：Qwen3-30B-A3B-Instruct-2507 相对 BF16 的延迟税。FP8 几乎没有，batch 一大就更看不见。TQ 按变体和 batch，最多大约 **60%**。
+Figure 7：Qwen3-30B-A3B-Instruct-2507 相对 BF16 的延迟开销。FP8 几乎没有，batch 一大就更看不见。TQ 按变体和 batch，最多大约 **60%**。
 
 ![llama 70b latency](../../../../assets/vllm/blog/performance/turboquant/08-llama_70b_latency.png)
 
 Figure 8：Llama-3.3-70B-Instruct。FP8 可忽略；TQ **10–68%**。
 
-FP8 在两个模型、所有 batch 上都几乎不加延迟——attention 本身走 FP8 Tensor Core，没有反量化这一拍。TQ 全都加得出来：Qwen3-30B 大约 **10–60%**；Llama-3.3-70B 大约 **10–68%**。70B 上 TQ 的税还随 batch **变大**——想用来扛并发的人最不想看见的方向。低 bit 存着、算前再反量化回 BF16，摸到的 KV 越多，这一拍越贵。
+FP8 在两个模型、所有 batch 上都几乎不加延迟——attention 本身走 FP8 Tensor Core，没有反量化这一拍。TQ 全都加得出来：Qwen3-30B 大约 **10–60%**；Llama-3.3-70B 大约 **10–68%**。70B 上 TQ 的开销还随 batch **变大**——想用来扛并发的人最不想看见的方向。低 bit 存着、算前再反量化回 BF16，摸到的 KV 越多，这一拍越贵。
 
 ### Throughput
 
@@ -135,7 +135,7 @@ FP8 在两台上打平 BF16。TQ 全部严格低于 BF16：Qwen3-30B 从 **80%**
 
 ### Serving Speed
 
-`vllm bench serve`。合成输入 **1024**、输出 **512**；测量 **300** 条，warmup **5** 条。请求速率 **2**、**8**、以及 `inf`（能发多快发多快）。看 **TPOT**（Time Per Output Token——Decode 有多快）和 **P99 TTFT**（Time To First Token——请求多久才开始吐字）。
+`vllm bench serve`。合成输入 **1024**、输出 **512**；测量 **300** 条，warmup **5** 条。请求速率 **2**、**8**、以及 `inf`（能发多快发多快）。看 **TPOT**（Time Per Output Token——Decode 有多快）和 **P99 TTFT**（Time To First Token——请求多久才开始出第一个 token）。
 
 ![qwen3 30b a3b serve](../../../../assets/vllm/blog/performance/turboquant/11-qwen3_30b_a3b_serve.png)
 
@@ -145,7 +145,7 @@ Figure 11：Qwen3-30B-A3B-Instruct-2507 的 serving TPOT。
 
 Figure 12：Llama-3.3-70B-Instruct 的 serving TPOT。
 
-TPOT 和延迟、吞吐是同一张脸：FP8 在每个速率上跟上或超过 BF16；TQ 给每个 token 加税，负载越大税越重。Llama-70B burst 时，FP8 几乎比 BF16 快 **2×**；TQ 变体慢 **1.5× 到 2.5×**。
+TPOT 和延迟、吞吐是同一张脸：FP8 在每个速率上跟上或超过 BF16；TQ 给每个 token 加开销，负载越大开销越重。Llama-70B burst 时，FP8 几乎比 BF16 快 **2×**；TQ 变体慢 **1.5× 到 2.5×**。
 
 ![qwen3 30b a3b ttft](../../../../assets/vllm/blog/performance/turboquant/13-qwen3_30b_a3b_ttft.png)
 
@@ -153,11 +153,11 @@ Figure 13：Qwen3-30B-A3B-Instruct-2507 的 P99 TTFT。
 
 ![llama 70b ttft](../../../../assets/vllm/blog/performance/turboquant/14-llama_70b_ttft.png)
 
-Figure 14：Llama-3.3-70B-Instruct 的 P99 TTFT。burst 时 BF16 的 TTFT 冲到大约 **17 s**（KV 饱和、门口排队）；TurboQuant 压在 **3.5 s** 内；FP8 在 **1.5 s** 内（正文写大约 **1.3 s**）。
+Figure 14：Llama-3.3-70B-Instruct 的 P99 TTFT。burst 时 BF16 的 TTFT 冲到大约 **17 s**（KV 饱和、请求排队）；TurboQuant 压在 **3.5 s** 内；FP8 在 **1.5 s** 内（正文写大约 **1.3 s**）。
 
-Qwen3-30B 在 2×H100 上 KV 还比较宽敞，FP8 的 TTFT 每个速率都打平 BF16。TQ 一直更慢，burst 时可到 **2×**。Llama-3.3-70B 在 4×H100 上 KV 房间窄，burst 时 BF16 的 P99 TTFT 冲到大约 **17 s**——KV 满了，新请求只能在门口等。TQ 各变体都压在 **3.5 s** 内，大约 **5×**：压缩后的 KV 让更多在飞的请求不用排队。FP8 仍是最低 TTFT，大约 **1.3 s**，也稳赢所有 TQ。
+Qwen3-30B 在 2×H100 上 KV 还比较宽敞，FP8 的 TTFT 每个速率都打平 BF16。TQ 一直更慢，burst 时可到 **2×**。Llama-3.3-70B 在 4×H100 上 KV 余量窄，burst 时 BF16 的 P99 TTFT 冲到大约 **17 s**——KV 满了，新请求只能排队。TQ 各变体都压在 **3.5 s** 内，大约 **5×**：压缩后的 KV 让更多在飞的请求不用排队。FP8 仍是最低 TTFT，大约 **1.3 s**，也稳赢所有 TQ。
 
-**Takeaway：** 吞吐和每 token 延迟上，TQ 稳定不如 BF16 和 FP8。可是 serving 一旦被显存卡住，KV 压缩能挡住饱和，burst 时的 TTFT 相对 BF16 会好看一截。这才是 TQ 的卖点：**用每 token 的速度，换「请求不会在门口排队」**。两边都要的话，FP8 已经把这件事做了：吞吐打平或超过 BF16，延迟税可忽略，burst TTFT 还明显更好。
+**Takeaway：** 吞吐和每 token 延迟上，TQ 稳定不如 BF16 和 FP8。可是 serving 一旦被显存卡住，KV 压缩能挡住饱和，burst 时的 TTFT 相对 BF16 会好看一截。这才是 TQ 的卖点：**用每 token 的速度，换「请求不会在队列里堆着」**。两边都要的话，FP8 已经把这件事做了：吞吐打平或超过 BF16，延迟开销可忽略，burst TTFT 还明显更好。
 
 ## Key Findings and Recommendations
 
@@ -165,7 +165,7 @@ Qwen3-30B 在 2×H100 上 KV 还比较宽敞，FP8 的 TTFT 每个速率都打�
 
 **TurboQuant `k8v4` 几乎没有胜过 FP8 的理由。** 容量只多到 **2.4× vs 2×**，吞吐和延迟却稳定变差。
 
-**TurboQuant `4bit-nc` 是用房间换吞吐的那一档。** KV 容量最高大约 **3.4×**（Qwen 的 Pareto 图上，TQ 各变体一起看能到 **3.7×**），多数基准上精度大约掉 **1–4 分**。显存紧、burst TTFT 的改善盖过其他指标的恶化时，才值得。上线前要在**目标负载**上自己验精度。
+**TurboQuant `4bit-nc` 是用显存换吞吐的那一档。** KV 容量最高大约 **3.4×**（Qwen 的 Pareto 图上，TQ 各变体一起看能到 **3.7×**），多数基准上精度大约掉 **1–4 分**。显存紧、burst TTFT 的改善盖过其他指标的恶化时，才值得。上线前要在**目标负载**上自己验精度。
 
 **没有彻底验证，不要用 `k3v4-nc` 和 `3bit-nc`。** 硬数学和代码上精度可掉到 **20 分**。反量化步骤也更绕，不当生产默认。
 

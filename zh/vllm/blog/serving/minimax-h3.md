@@ -1,8 +1,8 @@
 ---
 source: https://vllm.ai/blog/2026-09-01-minimax-h3-production-serving
 lang: zh
-voice: literary-study
-fetched: 2026-09-05
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # MiniMax H3：先把整条栈削薄，再让 FastH3 比播放还快
@@ -11,13 +11,13 @@ fetched: 2026-09-05
 原文：https://vllm.ai/blog/2026-09-01-minimax-h3-production-serving  
 2026-09-01。署名 **vLLM-Omni Team**。两段故事：先把完整 MiniMax H3 serving 栈的开销削掉，再接入 FastVideo 的四步 **FastH3**，让整份 MP4 在播放结束前就交出来。文中的 **real-time** 只指这条完整响应合同——**不是**流式送达，**也不是**第一帧。同一条 Omni 线：[vllm-omni.md](vllm-omni.md)、[omni-layerwise-offload.md](omni-layerwise-offload.md)、[omni-diffusion-cache.md](omni-diffusion-cache.md)。文本亲戚：[minimax-m3.md](minimax-m3.md)。页上嵌的 MP4 / 证据片不镜像；SVG 与 SAGE 示意图收进本地。
 
-一次请求要穿过很大的 Qwen3-VL encoder、长序列音视频联合 DiT、各自独立的 video / audio VAE、设备与进程边界，最后才是 H.264/AAC 封装。只拧 DiT，别处的等待还在。[vLLM-Omni](https://github.com/vllm-project/vllm-omni) 因此从整条常驻流水线下手：attention 与通信、融合 DiT 算子、并行 VAE、紧凑出图、并行 MP4。[FastVideo](https://github.com/hao-ai-lab/FastVideo) 的 [FastH3](https://haoailab.com/blogs/fasth3-preview/) 再打剩下那个最大项——把 49 次 DiT 前向换成 4 次。
+一次请求要穿过很大的 Qwen3-VL encoder、长序列音视频联合 DiT、各自独立的 video / audio VAE、设备与进程边界，最后才是 H.264/AAC 封装。只优化 DiT，别处的等待还在。[vLLM-Omni](https://github.com/vllm-project/vllm-omni) 因此从整条常驻流水线下手：attention 与通信、融合 DiT 算子、并行 VAE、紧凑出图、并行 MP4。[FastVideo](https://github.com/hao-ai-lab/FastVideo) 的 [FastH3](https://haoailab.com/blogs/fasth3-preview/) 再打剩下那个最大项——把 49 次 DiT 前向换成 4 次。
 
 八卡 B300 上，FastH3 把一份 **10.125 秒** 的完整 MP4 做到 **8.678–8.710 秒**。Base H3 那条 dense BF16、50 个 sigma / 49 次 DiT 前向的对照：Diffusers 客户端 **82.239 s** / **151.699 GiB** HBM，vLLM-Omni **56.917 s** / **128.232 GiB**——延迟低 **30.8%**，**1.445×**。文中把这条叫 **lossless**：不靠量化、稀疏 attention、少步数；**不**等于逐 bit 相同。两条证据车道的 SHA、prompt、seed、制品不同，**禁止**用一条除另一条。`RTF_client = T_client / T_media`，`T_media = max(T_video, T_audio)`，过关是 `RTF_client <= 1.0`。FastH3 + DLO **不支持**；FastH3 + 分离 encoder **尚未合格**。
 
 ## 1. 为什么 H3 serving 是整系统的事
 
-一次请求要穿过很大的 Qwen3-VL encoder、长序列音视频联合 DiT、各自独立的 video / audio VAE、设备与进程边界，最后才是 H.264/AAC 封装。只拧 DiT，别处的等待还在。
+一次请求要穿过很大的 Qwen3-VL encoder、长序列音视频联合 DiT、各自独立的 video / audio VAE、设备与进程边界，最后才是 H.264/AAC 封装。只优化 DiT，别处的等待还在。
 
 ```text
 request -> encoder -> joint audio/video DiT -> video + audio VAEs
@@ -70,7 +70,7 @@ FastH3 保留校验过的视频 / 音频流时长，定义 `T_media = max(T_vide
 
 `RTF_client <= 1.0` 才算完整响应 real-time。媒体检查失败、缺音频、OOM、加速器错误、意外回退——该 profile **立刻停**，不再重复计量。
 
-其他硬件只算 **菜谱覆盖**，不是另一张结果矩阵：[H200 与数据中心 CUDA](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md)、[RTX PRO 5000](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-RTX-PRO-5000.md)、[RTX 4090](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-4090.md)、[RTX 5090](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-5090.md)、[GB10](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-Spark-GB10.md)、[ROCm](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md#amd-rocm-gfx942--gfx950)（`gfx942` / `gfx950`）。
+其他硬件只算 **recipe 覆盖**，不是另一张结果矩阵：[H200 与数据中心 CUDA](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md)、[RTX PRO 5000](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-RTX-PRO-5000.md)、[RTX 4090](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-4090.md)、[RTX 5090](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-5090.md)、[GB10](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-Spark-GB10.md)、[ROCm](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md#amd-rocm-gfx942--gfx950)（`gfx942` / `gfx950`）。
 
 ## 3. vLLM-Omni 的整系统优化
 
@@ -111,7 +111,7 @@ Base H3 车道保住发布的 BF16 权重、50 个 sigma、dense attention。优
 | Diffusers | - | - | - | - | - | **82.239** | 151.699 |
 | vLLM-Omni | **54.246** | 0.057 | 51.800 / 1.057 | 0.952 / 0.055 | 1.528 | **56.917** | 128.232 |
 
-页上嵌了 model-card 样片和 vLLM-Omni baseline 的 MP4，这里不镜像。lossless 只保证加速不靠量化 / 稀疏 attention / 缓存复用 / 少步；不同 kernel 和浮点归约顺序仍可能拧扩散轨迹。这些改进削的是去噪 **周围** 的税。FastH3 再把循环本身从 49 次砍到 4 次。
+页上嵌了 model-card 样片和 vLLM-Omni baseline 的 MP4，这里不镜像。lossless 只保证加速不靠量化 / 稀疏 attention / 缓存复用 / 少步；不同 kernel 和浮点归约顺序仍可能改变扩散轨迹。这些改进削的是去噪 **周围** 的税。FastH3 再把循环本身从 49 次砍到 4 次。
 
 ## 4. 把通用 H3 serving 架构撑开
 
@@ -139,7 +139,7 @@ H3 的 Qwen3-VL encoder 权重 BF16 大约 **51.5 GB**。[Disaggregated encoder]
 
 ![Encoder 与 diffusion 分离](../../../../assets/vllm/blog/serving/minimax-h3/04-h3-encoder-disaggregation.svg)
 
-**Figure 4。** encoder 与 diffusion 各自扩容。合并后的单机菜谱经编排器回传 conditioning，diffusion 仍 inline；**不**配置 OmniConnector。跨节点 SHM/RDMA 还在 [RFC #5707](https://github.com/vllm-project/vllm-omni/issues/5707)。
+**Figure 4。** encoder 与 diffusion 各自扩容。合并后的单机 recipe 经编排器回传 conditioning，diffusion 仍 inline；**不**配置 OmniConnector。跨节点 SHM/RDMA 还在 [RFC #5707](https://github.com/vllm-project/vllm-omni/issues/5707)。
 
 ### 4.3 可选量化与 attention 加速
 
@@ -183,7 +183,7 @@ H3 的 Qwen3-VL encoder 权重 BF16 大约 **51.5 GB**。[Disaggregated encoder]
 | Skip-Softmax | Off | threshold 0.05；disabled until 0.97 | 50.029 s | **1.084x** | 0.0917 |
 | SAGE + Skip-Softmax | 同上 SAGE | 同上 Skip-Softmax | 43.867 s | **1.237x** | 0.3750 |
 
-测到的 Skip-Softmax 对画质偏 **保守**。阈值抬高、或让更多去噪步启用，可以拿质量换速度。旋钮在 [TRTLLM attention guide](https://github.com/vllm-project/vllm-omni/blob/main/docs/user_guide/diffusion/attention_backends/trtllm.md)。
+测到的 Skip-Softmax 对画质偏 **保守**。阈值抬高、或让更多去噪步启用，可以拿质量换速度。相关旗标见 [TRTLLM attention guide](https://github.com/vllm-project/vllm-omni/blob/main/docs/user_guide/diffusion/attention_backends/trtllm.md)。
 
 #### Cache-DiT
 
@@ -193,7 +193,7 @@ H3 的 Qwen3-VL encoder 权重 BF16 大约 **51.5 GB**。[Disaggregated encoder]
 
 | 组合 | 本文口径 |
 |---|---|
-| Base H3 + DLO | 维护中的 H3 菜谱支持；拓扑仍要本地合格 |
+| Base H3 + DLO | 维护中的 H3 recipe 支持；拓扑仍要本地合格 |
 | Base H3 + DLO + online FP8 | 支持，含 AllGather（[#6279](https://github.com/vllm-project/vllm-omni/pull/6279)）；性能和质量仍要本地合格 |
 | Base H3 + 分离 encoder | 已合并的单机路径 |
 | FastH3 + DLO | **不支持**：FastH3 在 `load_weights()` 里融合，offload 装的是另一条主机权重路径 |
@@ -323,7 +323,7 @@ Profiler 计时来自另一次插桩；延迟主张跟 **clean E2E**。
 | 已验证的最低 T2VA 完整响应延迟 | 第 6 节那条专用 FastH3 服务 |
 | 主机内存驱动的塞得下，或 encoder 独立扩容 | Base H3 的 DLO 或分离-encoder 车道；本地合格 |
 
-报告过的 FastH3 profile **不要** 跟 DLO、VSA、量化、cache 策略、别的 Ulysses 传输、encoder 分离混用，除非重新做正确性 / 质量 / 内存 / 延迟合格。活的兼容表：[issue #5700](https://github.com/vllm-project/vllm-omni/issues/5700)——它可能落后于已合并实现。选生产组合前核对链接 PR 和维护中的菜谱。
+报告过的 FastH3 profile **不要** 跟 DLO、VSA、量化、cache 策略、别的 Ulysses 传输、encoder 分离混用，除非重新做正确性 / 质量 / 内存 / 延迟合格。维护中的兼容表：[issue #5700](https://github.com/vllm-project/vllm-omni/issues/5700)——它可能落后于已合并实现。选生产组合前核对链接 PR 和维护中的 recipe。
 
 许可证：[MiniMax H3 Community License Agreement](https://huggingface.co/MiniMaxAI/MiniMax-H3/blob/main/LICENSE)。商业和托管服务运营方应把属地、署名、营收、可接受使用、防护条款交给律师看。
 
@@ -389,7 +389,7 @@ vllm serve "$H3_MODEL" --omni \
 - [FastH3 四步 adapter](https://huggingface.co/FastVideo/FastVideo-FastH3-4-step-Preview-v1-LoRA)
 - [MiniMax H3 模型](https://huggingface.co/MiniMaxAI/MiniMax-H3)
 - [Diffusers MiniMax H3 pipeline](https://huggingface.co/docs/diffusers/v0.40.0/api/pipelines/minimax_h3)
-- [MiniMax H3 serving 菜谱](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md)
+- [MiniMax H3 serving recipe](https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3.md)
 - [Distributed Layerwise Offload](https://vllm.ai/blog/2026-08-17-distributed-layerwise-offload)
 - [特性兼容跟踪](https://github.com/vllm-project/vllm-omni/issues/5700)
 - [分块输出流水线 RFC](https://github.com/vllm-project/vllm-omni/issues/6872)

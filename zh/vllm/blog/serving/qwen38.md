@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-08-12-qwen3.8
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
 # Qwen3.8-2.4T：Max 级开权，引擎不用换骨架
 
 英文对照：[en/vllm/blog/serving/qwen38.md](../../../../en/vllm/blog/serving/qwen38.md)  
 原文：https://vllm.ai/blog/2026-08-12-qwen3.8  
-2026-08-12。署名 **vLLM Team and Inferact**。数字是演示。Qwen 家第一次把 Qwen-Max 级开出来：`Qwen3.8-2.4T-A95B`。骨架仍是 Qwen 3.5——512 expert 的稀疏 MoE，92 层里每 4 层一次 full attention，其余 69 层 linear attention。**不是新引擎。** 前身 hybrid：[qwen3-next.md](qwen3-next.md)。GDN + P/D 后续：[qwen35-25k-tps.md](qwen35-25k-tps.md)。GSM8K / AIME25 是页上的核对，不是你的 SLA。
+2026-08-12。署名 **vLLM Team and Inferact**。数字是演示。Qwen 家第一次把 Qwen-Max 级开出来：`Qwen3.8-2.4T-A95B`。骨架仍是 Qwen 3.5——512 expert 的稀疏 MoE，92 层里每 4 层一次 full attention，其余 69 层 linear attention。**不是新引擎。** 前身 hybrid：[qwen3-next.md](qwen3-next.md)。GDN + P/D 后续：[qwen35-25k-tps.md](qwen35-25k-tps.md)。GSM8K / AIME25 是页上的核对，不是某一套集群上的 SLA。
 
 **Figure（social preview；未抓图；按页上路径）。** 原文 `/assets/figures/2026-08-12-qwen3.8/social-preview.png`。
 

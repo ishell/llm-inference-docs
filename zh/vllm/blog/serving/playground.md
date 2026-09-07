@@ -1,15 +1,15 @@
 ---
 source: https://vllm.ai/blog/2026-01-02-introducing-vllm-playground
 lang: zh
-voice: literary-study
-fetched: 2026-09-04
+voice: book-zh
+fetched: 2026-09-06
 ---
 
-# vLLM Playground：容器里点一下起 server，CLI 仍是同一套旋钮
+# vLLM Playground：容器里点一下起 server，CLI 仍是同一套旗标
 
 英文对照：[en/vllm/blog/serving/playground.md](../../../../en/vllm/blog/serving/playground.md)  
 原文：https://vllm.ai/blog/2026-01-02-introducing-vllm-playground  
-2026-01-02。**micytao**（社区项目，不是 vLLM 核心仓）。GitHub：[micytao/vllm-playground](https://github.com/micytao/vllm-playground)。PyPI：[vllm-playground](https://pypi.org/project/vllm-playground/)。Apache-2.0。当时镜像钉 **v0.11.0**。**不**替代 `vllm serve`——是 **140+** 旋钮上的表单。GuideLLM 亲戚：[deeplearning-ai-course.md](deeplearning-ai-course.md)。韩国场提到：[korea-meetup-2026.md](korea-meetup-2026.md)。
+2026-01-02。**micytao**（社区项目，不是 vLLM 核心仓）。GitHub：[micytao/vllm-playground](https://github.com/micytao/vllm-playground)。PyPI：[vllm-playground](https://pypi.org/project/vllm-playground/)。Apache-2.0。当时镜像钉 **v0.11.0**。**不**替代 `vllm serve`——是 **140+** 项配置上的表单。GuideLLM 亲戚：[deeplearning-ai-course.md](deeplearning-ai-course.md)。韩国场提到：[korea-meetup-2026.md](korea-meetup-2026.md)。
 
 本地图（原文版权仍归原站；学习对照用）：
 
@@ -23,7 +23,7 @@ fetched: 2026-09-04
 
 ## 为什么要它
 
-CLI + 容器 + 一片旗林。Playground 的卖点：
+CLI + 容器 + 一片旗标。Playground 的卖点：
 
 - **Zero setup** — 容器自己拉，不必手装 vLLM
 - **一键** 起停、换模型、改配置

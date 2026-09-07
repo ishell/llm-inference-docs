@@ -1,7 +1,7 @@
 # vLLM 博客
 
 - 必读短表（含最佳顺序）：[MUST-READ.md](MUST-READ.md)
-- 旋钮对照：[FLAG-MAP.md](FLAG-MAP.md)
+- 旗标对照：[FLAG-MAP.md](FLAG-MAP.md)
 - 机器可读全表（英文）：[en/vllm/blog/CATALOG.md](../../../en/vllm/blog/CATALOG.md)  
   来源 https://vllm.ai/llms.txt · 索引 https://vllm.ai/blog · RSS https://vllm.ai/blog/rss.xml
 
