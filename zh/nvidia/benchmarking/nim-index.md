@@ -1,0 +1,20 @@
+---
+source: https://docs.nvidia.com/nim/benchmarking/llm/latest/index.html
+lang: zh
+voice: book-zh
+fetched: 2026-09-06
+---
+
+# NIM LLM 压测手册（目录）
+
+书名：*A Comprehensive Guide to NIM LLM Latency-Throughput Benchmarking*（2.0.0）。
+
+本地章节：
+
+| 章 | 文件 |
+|---|---|
+| Overview | [nim-01-overview.md](nim-01-overview.md) |
+| Metrics | [nim-02-metrics.md](nim-02-metrics.md) |
+| Parameters | [nim-03-parameters.md](nim-03-parameters.md) |
+| Using AIPerf | [nim-04-aiperf.md](nim-04-aiperf.md) |
+| LoRA | [nim-05-lora.md](nim-05-lora.md) |
