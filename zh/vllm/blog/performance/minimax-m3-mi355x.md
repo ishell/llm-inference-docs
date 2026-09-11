@@ -19,7 +19,7 @@ InferenceX 上 MiniMax-M3 在 MI355X 的公开数字：
 
 - 并发 32，固定拓扑 MXFP8 标准 serving：**109.1 → 342.4** output tokens/s/GPU，day-0 的 **3.14×**。Median TTFT **1.46 → 0.67** s。Mean TPOT **69.1 → 22.1** ms。
 - 并发 128，同一条 TP4/EP1 四卡路径：**297.8 → 623.7** output tokens/s/GPU，**2.09×**。Median TTFT **3.53 → 1.54** s。Mean TPOT **100.7 → 48.8** ms。
-- MXFP4 先在同一份 TP4/EP1 四卡契约、并发 128 上从 **212.1 → 716.8** output tokens/s/GPU。后来的 TP2/EP1 到 **943.5** output tokens/s/GPU，比那份 TP4 检查点高 **31.6%**，是最初每 GPU 数字的 **4.45×**。
+- MXFP4 先在同一份 TP4/EP1 四卡契约、并发 128 上从 **212.1 → 716.8** output tokens/s/GPU。后来的 TP2/EP1 到 **943.5** output tokens/s/GPU，比那份 TP4 检查点高 <strong>31.6%</strong>，是最初每 GPU 数字的 **4.45×**。
 - EAGLE3 投机解码：TP4/EP1、并发 128 上 **682.4** output tokens/s/GPU。
 - P/D 分离并重调 Prefill/Decode 拓扑：并发 512 上 **6,370.5** total tokens/s/GPU，median TTFT **1.32** s。
 
@@ -49,7 +49,7 @@ MiniMax M3 有 60 层 decoder；57 层用稀疏 MoE 和稀疏 attention。1K tok
 
 Kernel 跑在张量并行、head 复制、padding、token routing 之后的局部 M、N、K 上。TP8 时 MiniMax M3 的 64 个 query head 切成每 rank 八个，四个 KV head 和四个 index head 则复制成每 rank 一个。融合 QKV 投影因此看见局部 **N=1536**——不是全局 N 除以八。
 
-Prefill 和 Decode 的 M 也不一样。Prefill 一次处理许多 token；Decode 常常只有几行。[vLLM #45725](https://github.com/vllm-project/vllm/pull/45725) 把 launcher 拆成大 M / 小 M 两档，TP8 8K/1K 输出吞吐提高 **7.8%–9.4%**。[vLLM #46117](https://github.com/vllm-project/vllm/pull/46117) 再按完整局部形状选 tile：更窄的 N tile 在 Decode 里露出更多独立工作；更大的 K 步减少循环次数。Prefill 在 M 已经提供足够并行时用更宽的 tile。
+Prefill 和 Decode 的 M 也不一样。Prefill 一次处理许多 token；Decode 常常只有几行。[vLLM #45725](https://github.com/vllm-project/vllm/pull/45725) 把 launcher 拆成大 M / 小 M 两档，TP8 8K/1K 输出吞吐提高 <strong>7.8%–9.4%</strong>。[vLLM #46117](https://github.com/vllm-project/vllm/pull/46117) 再按完整局部形状选 tile：更窄的 N tile 在 Decode 里露出更多独立工作；更大的 K 步减少循环次数。Prefill 在 M 已经提供足够并行时用更宽的 tile。
 
 ![local shape](../../../../assets/vllm/blog/performance/minimax-m3-mi355x/03-local-shape-tile-selection.svg)
 
@@ -69,7 +69,7 @@ Prefill 和 Decode 的 M 也不一样。Prefill 一次处理许多 token；Decod
 
 更大的结构收益是 shared expert。原先每一层稀疏 MoE 都把它当一条单独的 dense MLP 跑：gate/up、激活、down、中间存储、再加回去。数学必须有。单独那条路径不必有。
 
-[vLLM #46545](https://github.com/vllm-project/vllm/pull/46545) 把 shared expert 接到 routed expert 表上，每个 token 都选中它。Grouped GEMM 于是把 routed 和 shared 一起做。输出吞吐在并发 1 提高 **30.2%**，并发 128 提高 **5.6%**——这就是 launch 被摊掉的样子。
+[vLLM #46545](https://github.com/vllm-project/vllm/pull/46545) 把 shared expert 接到 routed expert 表上，每个 token 都选中它。Grouped GEMM 于是把 routed 和 shared 一起做。输出吞吐在并发 1 提高 <strong>30.2%</strong>，并发 128 提高 <strong>5.6%</strong>——这就是 launch 被摊掉的样子。
 
 ![shared expert](../../../../assets/vllm/blog/performance/minimax-m3-mi355x/04-shared-expert-fusion.svg)
 
@@ -77,13 +77,13 @@ Prefill 和 Decode 的 M 也不一样。Prefill 一次处理许多 token；Decod
 
 AITER 路径在 [vLLM #46474](https://github.com/vllm-project/vllm/pull/46474) 做了同一件事。[vLLM #46184](https://github.com/vllm-project/vllm/pull/46184)，背后是 [AITER #3811](https://github.com/ROCm/aiter/pull/3811)，把 MXFP8 权重和 scale 的重排挪到模型加载。AITER 带着从 1 到 32768 token、以及 TP4 / TP8 产出的局部中间宽度上调过的 MoE 配置。布局转换做一次；serving 循环吃准备好的形式。
 
-投机解码：原来的 MSA indexer 为每个投机 token 起一个 workgroup。[vLLM #45743](https://github.com/vllm-project/vllm/pull/45743) 改成每个请求一个 workgroup，把所有 draft 位置一起处理，复用 key 的加载。它还去掉了一个正的 score scale——只要 top-k 顺序，同一个正常数去乘每一个分数改不了顺序。Index kernel 最多快 **48.9%**；端到端 serving 在 PR 测试里大约快 **3.3%**（Amdahl）。
+投机解码：原来的 MSA indexer 为每个投机 token 起一个 workgroup。[vLLM #45743](https://github.com/vllm-project/vllm/pull/45743) 改成每个请求一个 workgroup，把所有 draft 位置一起处理，复用 key 的加载。它还去掉了一个正的 score scale——只要 top-k 顺序，同一个正常数去乘每一个分数改不了顺序。Index kernel 最多快 <strong>48.9%</strong>；端到端 serving 在 PR 测试里大约快 <strong>3.3%</strong>（Amdahl）。
 
 ## 3. 哪些字节在搬？
 
 稀疏 attention 减的是 attention 数学，加的是控制面：给块打分、选 top-k、把逻辑块映射到物理页、把元数据交给 attention kernel。
 
-[vLLM #47269](https://github.com/vllm-project/vllm/pull/47269)：相邻稀疏层常常选出几乎同一批块。打开 index sharing 之后，一层算出 top-k，后面的层复用。Mean TPOT 在并发 1 大约掉 **10%**，高并发大约掉 **4%**。
+[vLLM #47269](https://github.com/vllm-project/vllm/pull/47269)：相邻稀疏层常常选出几乎同一批块。打开 index sharing 之后，一层算出 top-k，后面的层复用。Mean TPOT 在并发 1 大约掉 <strong>10%</strong>，高并发大约掉 <strong>4%</strong>。
 
 跳过选择器只做了一半。融合投影仍在产 index Q/K、做归一化、套 RoPE、写 index cache。[vLLM #47287](https://github.com/vllm-project/vllm/pull/47287) 让复用决定对那个融合 kernel 可见，用不到的生产者分支在编译时消掉。
 
@@ -93,7 +93,7 @@ AITER 路径在 [vLLM #46474](https://github.com/vllm-project/vllm/pull/46474) �
 
 **图注（原文 Figure 5）。** 每个选中的 128-token 块先落到物理块，再展开成八条 16-token 页表项。AITER 通过现有 KV 分配上的视图来读；重建的只有表。
 
-TP4、并发 256，隔离 A/B 里输出吞吐 MXFP4 **+6.93%**、MXFP8 **+5.56%**。
+TP4、并发 256，隔离 A/B 里输出吞吐 MXFP4 <strong>+6.93%</strong>、MXFP8 <strong>+5.56%</strong>。
 
 **Benchmark 边界：** InferenceX 固定 8K/1K 的评审政策**排除**了跨层 index 复用，因为它减少架构工作。固定形状菜谱用了页适配器，**没用** top-k 复用。AgentX 在它的负载规则下打开复用。不要把固定契约曲线记到它没跑过的工作上。
 
@@ -141,7 +141,7 @@ EAGLE3 加上 draft 模型、多 token 验收、接受行为，以及第二套 a
 
 请求级 index 批处理之后，[InferenceX #2107](https://github.com/SemiAnalysisAI/InferenceX/pull/2107) 发现 target 的 attention-backend 设置并没有配到 draft。在投机配置里钉死 `TRITON_ATTN`，避开了 draft 更慢的回退。
 
-[vLLM #47984](https://github.com/vllm-project/vllm/pull/47984) 把 AITER 稀疏 paged attention 从单 token Decode 扩到多 token 验收。它把压平的每一行 query 映回请求和局部投机位置，复用现有页表 builder，并保住单 token 快路径。TP4 测试里输出吞吐 MXFP4 **+8.32%**、MXFP8 **+7.90%**，接受率没有实质变化。
+[vLLM #47984](https://github.com/vllm-project/vllm/pull/47984) 把 AITER 稀疏 paged attention 从单 token Decode 扩到多 token 验收。它把压平的每一行 query 映回请求和局部投机位置，复用现有页表 builder，并保住单 token 快路径。TP4 测试里输出吞吐 MXFP4 <strong>+8.32%</strong>、MXFP8 <strong>+7.90%</strong>，接受率没有实质变化。
 
 合在一起：并发 128 上单独那条 **682.4** output tok/s/GPU 的 EAGLE3 结果。
 
@@ -181,9 +181,9 @@ Mean TPOT 从 **31.26** 走到 **54.60** ms。这不是矛盾：加上的 Prefil
 
 服务指标：
 
-- 理论 prefix-cache 命中率：**96.7%**
-- 实际 GPU cache 命中率：**92.1%**
-- GPU KV-cache 使用：**88.5%**
+- 理论 prefix-cache 命中率：<strong>96.7%</strong>
+- 实际 GPU cache 命中率：<strong>92.1%</strong>
+- GPU KV-cache 使用：<strong>88.5%</strong>
 - GPU KV 容量：**6,264,960** token
 
 到这里，再做一个 GEMM 不一定是下一个项目。**4.6** 个百分点的 cache 实现缺口，加上已经贴近容量的工作点，把注意力引向前缀对齐、准入和驱逐、调度、offload。这是一次运行上的观察，还不是优化声明。下一轮 agent 优化拿它当基线。

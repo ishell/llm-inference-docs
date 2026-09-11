@@ -9,7 +9,7 @@ fetched: 2026-09-11
 
 英文对照：[en/vllm/blog/serving/agentx.md](../../../../en/vllm/blog/serving/agentx.md)  
 原文：https://vllm.ai/blog/2026-09-08-vllm-agentx  
-2026-09-08。署名 **vLLM Team and Inferact**。学习译文，不是官方译本。Benchmark：[SemiAnalysis AgentX](https://newsletter.semianalysis.com/p/agentx-inferencexv3-does-cuda-moat)。看板：[InferenceX](https://inferencex.semianalysis.com/inference)。Harness：[SemiAnalysisAI/agentx-harness](https://github.com/SemiAnalysisAI/agentx-harness)。2026 年 5 月邻居：[mooncake.md](mooncake.md)。DCP：[dcp.md](../performance/dcp.md)。Kimi K3：[kimi-k3.md](kimi-k3.md)。DeepSeek V4：[../architecture/deepseek-v4.md](../architecture/deepseek-v4.md)。MiniMax M3：[minimax-m3.md](minimax-m3.md)，AMD 后续 [../performance/minimax-m3-mi355x.md](../performance/minimax-m3-mi355x.md)。页上的交互控件（会话滑块、packed KV 切换、可悬停 Pareto）不收；静态图留下。站点 JS 不抄。
+2026-09-08。署名 **vLLM Team and Inferact**。学习译文，不是官方译本。Benchmark：[SemiAnalysis AgentX](https://newsletter.semianalysis.com/p/agentx-inferencexv3-does-cuda-moat)。看板：[InferenceX](https://inferencex.semianalysis.com/inference)。Harness：[SemiAnalysisAI/agentx-harness](https://github.com/SemiAnalysisAI/agentx-harness)。2026 年 5 月邻居：[mooncake.md](mooncake.md)。DCP：[dcp.md](../performance/dcp.md)。Kimi K3：[kimi-k3.md](kimi-k3.md)。DeepSeek V4：[deepseek-v4.md](../architecture/deepseek-v4.md)。MiniMax M3：[minimax-m3.md](minimax-m3.md)，AMD 后续 [minimax-m3-mi355x.md](../performance/minimax-m3-mi355x.md)。页上的交互控件（会话滑块、packed KV 切换、可悬停 Pareto）不收；静态图留下。站点 JS 不抄。
 
 **页上的 TL;DR。** Agent 流量已经是 vLLM 的主要负载之一：多轮会话、长上下文、大量前缀复用。工作叠在三层：KV cache、并行 / kernel / 调度、以及 P/D 配比。AgentX 上：DeepSeek V4 Pro 最高 **130K** total tokens per GPU-second；MiniMax M3 的 interactivity 最高 **376** tokens/s。DeepSeek V4 Pro、MiniMax M3、Kimi K3 相对 Opus 5 API 定价有 **14.6×–106×** 的 serving 成本优势（表在下面）。比的是 serving 成本，**不是**模型质量。
 
@@ -21,7 +21,7 @@ fetched: 2026-09-11
 
 ## 再看一眼 Agent 负载长什么样
 
-[5 月 Mooncake 那篇](https://vllm.ai/blog/2026-05-06-mooncake-store) 之后，Agent 流量占比还在长。到 2026 年 6 月，[OpenAI 报过](https://openai.com/signals/enterprise-data/) 企业客户里 Codex 贡献了 Codex 与 ChatGPT 合计输出 token 的 **64%**。
+[5 月 Mooncake 那篇](https://vllm.ai/blog/2026-05-06-mooncake-store) 之后，Agent 流量占比还在长。到 2026 年 6 月，[OpenAI 报过](https://openai.com/signals/enterprise-data/) 企业客户里 Codex 贡献了 Codex 与 ChatGPT 合计输出 token 的 <strong>64%</strong>。
 
 这从两根轴压 serving： **成本**（固定硬件预算里能同时跑多少 agent）和 **延迟**（每个 agent 走过 reasoning 和工具循环有多快）。优化的是整条延迟–成本前沿。
 
@@ -29,8 +29,8 @@ AgentX 用真实的 agent 写代码痕迹搭起来：
 
 - **跑得久、多轮。** 每段会话中位 **43** 轮。
 - **上下文长、输出短。** 输入中位 **142K** token，输出中位 **444** token。
-- **前缀大量复用。** Prefix-cache 命中率高于 **96%**。
-- **Subagent 很多。** **44%** 的会话至少有一个 subagent；在那些会话里，subagent rollout 中位 **四个**。
+- **前缀大量复用。** Prefix-cache 命中率高于 <strong>96%</strong>。
+- **Subagent 很多。** <strong>44%</strong> 的会话至少有一个 subagent；在那些会话里，subagent rollout 中位 **四个**。
 
 每一轮把最新的工具结果接到已经攒起来的上下文上，再整段送回模型，所以输入一直在长，每轮只多一小段新 Prefill，请求里几乎全是引擎已经见过的前缀。Subagent 从那段上下文分叉，或从头开始；结果再并回父会话。原页 Figure 2 是可滑动的会话浏览器——不收。
 
@@ -94,7 +94,7 @@ vLLM 的 hybrid KV cache 管理器用 **统一的内存页** 当分配单位，�
 
 DCP 的代价是额外通信。KV 按序列切开，每一层 MLA Decode 都要在 attention 前 gather query，之后再做部分输出归约。
 
-他们用 **对称内存缓冲** 绕开 NCCL，对端 GPU 可以直接从里面 load / store。Query 直接 multicast 进 attention kernel 消费的缓冲。每个 GPU 再把部分 attention 输出和 log-sum-exp（LSE）统计写进对端的接收槽；每个 rank 用 online softmax 在本地合并。GPU 到 GPU 的写和计算融进同一批 kernel，相对默认 DCP8，每层延迟大约少 **13%**。
+他们用 **对称内存缓冲** 绕开 NCCL，对端 GPU 可以直接从里面 load / store。Query 直接 multicast 进 attention kernel 消费的缓冲。每个 GPU 再把部分 attention 输出和 log-sum-exp（LSE）统计写进对端的接收槽；每个 rank 用 online softmax 在本地合并。GPU 到 GPU 的写和计算融进同一批 kernel，相对默认 DCP8，每层延迟大约少 <strong>13%</strong>。
 
 ![DCP symmetric memory](../../../../assets/vllm/blog/serving/agentx/05-k3-dcp-symmem.gif)
 
@@ -128,7 +128,7 @@ DCP 对 V4 没有对 Kimi K3 那么有效（见下面的苦教训）。DEP 让 a
 
 **图注（原文 Figure 9）。** Prefill 队列里的头阻塞，一个 rank 的会话视图。左：没有 chunk 上限，长 Prefill 占满预算。右：512-token 上限，短轮每一步都能进来，更早开始 Decode。
 
-`--long-prefill-token-threshold` 限制一条请求每步最多排多少 token。**512** token 的阈值让长 Prefill 给短轮留位置。DeepSeek V4 Pro 在 B300 上：每 GPU-second 的总 token（TPGS）最多 **+93%**，P90 interactivity 大约 **2.3×**。代价是这条长请求自己的 TTFT 变高。对 TTFT 敏感的部署应该把阈值开大。
+`--long-prefill-token-threshold` 限制一条请求每步最多排多少 token。**512** token 的阈值让长 Prefill 给短轮留位置。DeepSeek V4 Pro 在 B300 上：每 GPU-second 的总 token（TPGS）最多 <strong>+93%</strong>，P90 interactivity 大约 **2.3×**。代价是这条长请求自己的 TTFT 变高。对 TTFT 敏感的部署应该把阈值开大。
 
 ##### 对齐 DEP 的 Prefill 节奏
 
@@ -152,8 +152,8 @@ MoE 的 all-to-all 强迫各 rank 齐步走，一个 rank 在做 Prefill 就会�
 
 瓶颈移向长上下文 attention、投机解码和通信。这里点名的 kernel 全部开源；有些已经被其它开源引擎收走。
 
-- MiniMax M3：[CuteDSL 长上下文 indexer](https://github.com/vllm-project/vllm/pull/48582) 在 GB300 上报的 indexer 延迟按形状大约好 **3%–31%**。上游的 MSA top-k：最坏情况 kernel 最多 **4×**，AgentX 端到端吞吐大约 **7%**。投机验收路径：中等 batch 的 Decode 在报告测试里大约 **20%**。
-- Kimi K3：[GEMM 和 reduce-scatter 融合](https://github.com/vllm-project/vllm/pull/52079) 改善序列并行通信；[latent-tail MoE 融合](https://github.com/vllm-project/vllm/pull/53152) 把端到端延迟大约压 **5%**。
+- MiniMax M3：[CuteDSL 长上下文 indexer](https://github.com/vllm-project/vllm/pull/48582) 在 GB300 上报的 indexer 延迟按形状大约好 <strong>3%–31%</strong>。上游的 MSA top-k：最坏情况 kernel 最多 **4×**，AgentX 端到端吞吐大约 <strong>7%</strong>。投机验收路径：中等 batch 的 Decode 在报告测试里大约 <strong>20%</strong>。
+- Kimi K3：[GEMM 和 reduce-scatter 融合](https://github.com/vllm-project/vllm/pull/52079) 改善序列并行通信；[latent-tail MoE 融合](https://github.com/vllm-project/vllm/pull/53152) 把端到端延迟大约压 <strong>5%</strong>。
 - DeepSeek V4：MXFP4 MoE 和 HCA 压缩（[#43584](https://github.com/vllm-project/vllm/pull/43584)、[#44230](https://github.com/vllm-project/vllm/pull/44230)）；[多 stream C4A](https://github.com/vllm-project/vllm/pull/42925)；[基于 cluster 的 top-k](https://github.com/vllm-project/vllm/pull/43008)。
 
 ## 性能：先为 Agent 设计，并且可以公开核对
@@ -186,7 +186,7 @@ Serving 成本和 Opus 5 比：
 
 Opus 5 算法：cached input × **$0.50/M** + uncached input × **$5/M** + output × **$25/M**。假定 **完美的理论** cache 命中率；不含 cache-write 费用和长上下文溢价——这对 Opus 偏保守、也偏有利。比的是 serving 成本，不是质量。
 
-优势来自 Agent 流量的定义性质：理论 cache 命中率 **>96%**。vLLM 在和上表相同的设置里，把这份复用变成 serving 效率。
+优势来自 Agent 流量的定义性质：理论 cache 命中率 <strong>>96%</strong>。vLLM 在和上表相同的设置里，把这份复用变成 serving 效率。
 
 DeepSeek V4 Pro：大约 **28 美元** / 小时的 GB300 TCO，对上 Opus 5 大约 **2926 美元**——即便把 cache-read 价用在每一个理论上可复用的 token 上。
 

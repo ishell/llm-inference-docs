@@ -8,7 +8,7 @@ fetched: 2026-09-11
 
 Chinese: [zh/vllm/blog/serving/agentx.md](../../../../zh/vllm/blog/serving/agentx.md)
 
-2026-09-08. **vLLM Team and Inferact**. Study extract, not an official reprint. Benchmark: [SemiAnalysis AgentX](https://newsletter.semianalysis.com/p/agentx-inferencexv3-does-cuda-moat). Dashboard: [InferenceX](https://inferencex.semianalysis.com/inference). Harness: [SemiAnalysisAI/agentx-harness](https://github.com/SemiAnalysisAI/agentx-harness). May 2026 sibling: [mooncake.md](mooncake.md). DCP: [dcp.md](../performance/dcp.md). Kimi K3: [kimi-k3.md](kimi-k3.md). DeepSeek V4: [../architecture/deepseek-v4.md](../architecture/deepseek-v4.md). MiniMax M3: [minimax-m3.md](minimax-m3.md), AMD follow-up [../performance/minimax-m3-mi355x.md](../performance/minimax-m3-mi355x.md). Page interactive embeds (session slider, packed-KV toggle, hover Pareto) not mirrored; static figures kept. Site JS not copied.
+2026-09-08. **vLLM Team and Inferact**. Study extract, not an official reprint. Benchmark: [SemiAnalysis AgentX](https://newsletter.semianalysis.com/p/agentx-inferencexv3-does-cuda-moat). Dashboard: [InferenceX](https://inferencex.semianalysis.com/inference). Harness: [SemiAnalysisAI/agentx-harness](https://github.com/SemiAnalysisAI/agentx-harness). May 2026 sibling: [mooncake.md](mooncake.md). DCP: [dcp.md](../performance/dcp.md). Kimi K3: [kimi-k3.md](kimi-k3.md). DeepSeek V4: [deepseek-v4.md](../architecture/deepseek-v4.md). MiniMax M3: [minimax-m3.md](minimax-m3.md), AMD follow-up [minimax-m3-mi355x.md](../performance/minimax-m3-mi355x.md). Page interactive embeds (session slider, packed-KV toggle, hover Pareto) not mirrored; static figures kept. Site JS not copied.
 
 **TL;DR (page):** Agentic traffic is a major vLLM load: multi-turn sessions, long contexts, heavy prefix reuse. Coordinated work across KV cache, parallelism/kernels/scheduling, and P/D ratio. On AgentX: up to **130K** total tokens per GPU-second on DeepSeek V4 Pro; interactivity up to **376** tokens/s on MiniMax M3. Across DeepSeek V4 Pro, MiniMax M3, and Kimi K3: **14.6×–106×** serving-cost advantage versus Opus 5 API pricing (tables below). Comparison is serving cost, **not** model quality.
 
@@ -20,7 +20,7 @@ Chinese: [zh/vllm/blog/serving/agentx.md](../../../../zh/vllm/blog/serving/agent
 
 ## Characterizing agentic workloads
 
-Since the [May Mooncake post](https://vllm.ai/blog/2026-05-06-mooncake-store), agentic share has grown. As of June 2026, [OpenAI reported](https://openai.com/signals/enterprise-data/) that Codex generated **64%** of combined Codex and ChatGPT output tokens among enterprise customers.
+Since the [May Mooncake post](https://vllm.ai/blog/2026-05-06-mooncake-store), agentic share has grown. As of June 2026, [OpenAI reported](https://openai.com/signals/enterprise-data/) that Codex generated <strong>64%</strong> of combined Codex and ChatGPT output tokens among enterprise customers.
 
 That stresses two axes: **cost** (how many concurrent agents fit a fixed hardware budget) and **latency** (how fast each agent moves through reasoning and tool cycles). Optimize the latency–cost frontier as a whole.
 
@@ -28,8 +28,8 @@ AgentX is built from real agentic coding traces:
 
 - **Long-running, multi-turn sessions.** Median **43** turns per session.
 - **Long contexts with short outputs.** Median input **142K** tokens, median output **444** tokens.
-- **Extensive prefix reuse.** Prefix-cache hit rate above **96%**.
-- **Subagent-heavy traffic.** **44%** of sessions contain at least one subagent; median **four** subagent rollouts among those sessions.
+- **Extensive prefix reuse.** Prefix-cache hit rate above <strong>96%</strong>.
+- **Subagent-heavy traffic.** <strong>44%</strong> of sessions contain at least one subagent; median **four** subagent rollouts among those sessions.
 
 Each turn appends the latest tool result to the accumulated context and sends the whole thing back, so input keeps growing while each turn adds only a short new prefill, and almost all of the request is a prefix the engine has already seen. Subagents fork from that context or start fresh; results join back into the parent. The original page has an interactive session explorer (Figure 2) — not mirrored.
 
@@ -93,7 +93,7 @@ Axes: TP, DP, EP, PP, CP. Optimum depends on architecture, topology, workload, l
 
 DCP cost: extra communication. Sequence-sharded KV means every MLA decode layer needs a query gather before attention and a partial-output reduction after.
 
-They bypass NCCL with **symmetric-memory buffers** that peer GPUs load from and store to directly. Queries are multicast into buffers consumed by attention kernels. Each GPU writes partial attention outputs and log-sum-exp (LSE) statistics into peers' receive slots; each rank merges locally with online softmax. GPU-to-GPU writes fuse with compute in the same kernels, cutting latency by about **13%** per layer versus default DCP8.
+They bypass NCCL with **symmetric-memory buffers** that peer GPUs load from and store to directly. Queries are multicast into buffers consumed by attention kernels. Each GPU writes partial attention outputs and log-sum-exp (LSE) statistics into peers' receive slots; each rank merges locally with online softmax. GPU-to-GPU writes fuse with compute in the same kernels, cutting latency by about <strong>13%</strong> per layer versus default DCP8.
 
 ![DCP symmetric memory](../../../../assets/vllm/blog/serving/agentx/05-k3-dcp-symmem.gif)
 
@@ -127,7 +127,7 @@ Default chunked-prefill scheduler is FIFO. One long prefill can claim the entire
 
 **Figure 9.** Head-of-line blocking, session view of one rank. Left: no chunk cap, a long prefill claims the whole budget. Right: 512-token cap, short turns join every step and begin decoding sooner.
 
-`--long-prefill-token-threshold` caps how many tokens one request may schedule per step. With a **512**-token threshold, a long prefill leaves room for short turns. DeepSeek V4 Pro on B300s: total tokens per GPU-second (TPGS) up to **+93%**, P90 interactivity roughly **2.3×**. Trade-off: higher TTFT for the long request itself. TTFT-sensitive deployments should use a larger threshold.
+`--long-prefill-token-threshold` caps how many tokens one request may schedule per step. With a **512**-token threshold, a long prefill leaves room for short turns. DeepSeek V4 Pro on B300s: total tokens per GPU-second (TPGS) up to <strong>+93%</strong>, P90 interactivity roughly **2.3×**. Trade-off: higher TTFT for the long request itself. TTFT-sensitive deployments should use a larger threshold.
 
 ##### Align DEP prefill schedule cadence
 
@@ -151,8 +151,8 @@ More GPUs or disaggregation will not automatically improve the frontier. Prefill
 
 Bottlenecks shift toward long-context attention, speculative decoding, and communication. All kernels named here are open source; some already adopted by other engines.
 
-- MiniMax M3: [CuteDSL long-context indexer](https://github.com/vllm-project/vllm/pull/48582) improves reported GB300 indexer latency by roughly **3%–31%** depending on shape. Upstreamed MSA top-k: up to **4×** worst-case kernel, about **7%** AgentX end-to-end throughput. Speculative-verification path: about **20%** medium-batch decode in reported tests.
-- Kimi K3: [GEMM and reduce-scatter fusion](https://github.com/vllm-project/vllm/pull/52079) for sequence-parallel communication; [latent-tail MoE fusion](https://github.com/vllm-project/vllm/pull/53152) reduces end-to-end latency by roughly **5%**.
+- MiniMax M3: [CuteDSL long-context indexer](https://github.com/vllm-project/vllm/pull/48582) improves reported GB300 indexer latency by roughly <strong>3%–31%</strong> depending on shape. Upstreamed MSA top-k: up to **4×** worst-case kernel, about <strong>7%</strong> AgentX end-to-end throughput. Speculative-verification path: about <strong>20%</strong> medium-batch decode in reported tests.
+- Kimi K3: [GEMM and reduce-scatter fusion](https://github.com/vllm-project/vllm/pull/52079) for sequence-parallel communication; [latent-tail MoE fusion](https://github.com/vllm-project/vllm/pull/53152) reduces end-to-end latency by roughly <strong>5%</strong>.
 - DeepSeek V4: MXFP4 MoE and HCA compression ([#43584](https://github.com/vllm-project/vllm/pull/43584), [#44230](https://github.com/vllm-project/vllm/pull/44230)); [multi-stream C4A](https://github.com/vllm-project/vllm/pull/42925); [cluster-based top-k](https://github.com/vllm-project/vllm/pull/43008).
 
 ## Performance: agentic-first, openly verifiable
@@ -185,7 +185,7 @@ Serving cost versus Opus 5:
 
 Opus 5 calc: cached input × **$0.50/M** + uncached input × **$5/M** + output × **$25/M**. Assumes a **perfect theoretical** cache hit rate; excludes cache-write charges and long-context premiums — conservative and favorable to Opus. Serving cost, not quality.
 
-Advantage comes from agentic traffic's defining property: theoretical cache hit rate **>96%**. vLLM turns that reuse into serving efficiency under the same settings as the table.
+Advantage comes from agentic traffic's defining property: theoretical cache hit rate <strong>>96%</strong>. vLLM turns that reuse into serving efficiency under the same settings as the table.
 
 DeepSeek V4 Pro: about **$28**/hour GB300 TCO versus about **$2,926** on Opus 5 even after applying the cache-read price to every theoretically reusable token.
 

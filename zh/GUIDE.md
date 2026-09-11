@@ -7,7 +7,7 @@ fetched: 2026-09-06
 
 # 怎么读这份笔记
 
-这里收集已经公开的 LLM **推理**资料，写成对照笔记，方便以后查阅。覆盖两块：NVIDIA 一侧（NIM、TensorRT-LLM、AIPerf / GenAI-Perf、Triton），以及 vLLM 一侧（文档页、`vllm serve` 性能相关旗标、带日期的博客）。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。完整对照表在 [总目录](../README.md)。中文体例见 [STYLE.md](STYLE.md)。
+这里收集已经公开的 LLM **推理**资料，写成对照笔记，方便以后查阅。覆盖两块：NVIDIA 一侧（NIM、TensorRT-LLM、AIPerf / GenAI-Perf、Triton），以及 vLLM 一侧（文档页、`vllm serve` 性能相关旗标、带日期的博客）。网页版：[https://ishell.github.io/llm-inference-docs/](https://ishell.github.io/llm-inference-docs/)。完整对照表在 <a href="#/directory">总目录</a>。中文体例见 [STYLE.md](STYLE.md)。
 
 **不是官方译本，也不是教材。** 原页版权仍归原站。篇幅和版权都不允许把 HTML 原样搬进来。中文按《Crafting Interpreters》中译本那类书面语来写：完整句子、用「我们」讲解，但不改公式、不改 CLI、不改指标名。NVIDIA 一侧多为压缩对照；vLLM 带日期的博客按原文分节写完（数字、API、caveat 都在）。文件头的 `source:` 指向原文；`en/` 是英文摘录或抓取，和 `zh/` 成对。
 

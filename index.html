@@ -57,6 +57,13 @@
         border: 1px solid #d6d0c4;
         background: #fff;
       }
+      .markdown-section table {
+        width: 100%;
+      }
+      .markdown-section th,
+      .markdown-section td {
+        overflow-wrap: break-word;
+      }
       .markdown-section pre,
       .markdown-section code {
         font-family: "IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
@@ -80,7 +87,7 @@
       }
       .note-meta a {
         font-weight: 500;
-        word-break: break-all;
+        overflow-wrap: anywhere;
       }
     </style>
   </head>
@@ -131,10 +138,27 @@
               });
               return { attrs: attrs, body: content.slice(m[0].length) };
             }
-            hook.beforeEach(function (content) {
-              var parsed = parseFrontMatter(content);
-              vm.frontmatter = parsed.attrs;
-              return parsed.body;
+            hook.beforeEach(function (content, next) {
+              var path = String((vm.route && vm.route.path) || "").replace(
+                /^\//,
+                ""
+              );
+              function apply(text) {
+                var parsed = parseFrontMatter(text);
+                vm.frontmatter = parsed.attrs;
+                next(parsed.body);
+              }
+              // Docsify remaps the /README route to homepage. Serve the
+              // GitHub README as #/directory instead.
+              if (path === "directory" || path === "directory.md") {
+                fetch("README.md")
+                  .then(function (r) {
+                    return r.text();
+                  })
+                  .then(apply);
+                return;
+              }
+              apply(content);
             });
             hook.afterEach(function (html) {
               var fm = vm.frontmatter || {};
@@ -158,6 +182,16 @@
                 });
               }
               return meta + html;
+            });
+            hook.doneEach(function () {
+              document.querySelectorAll("a").forEach(function (a) {
+                if (
+                  a.textContent.trim() === "总目录" &&
+                  a.getAttribute("href") === "#/README"
+                ) {
+                  a.setAttribute("href", "#/directory");
+                }
+              });
             });
           },
         ],

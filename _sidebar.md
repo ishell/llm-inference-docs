@@ -2,7 +2,7 @@
   - [首页](/index.md)
   - [怎么读](/zh/GUIDE.md)
   - [中文体例](/zh/STYLE.md)
-  - [总目录](/README.md)
+  - <a href="#/directory">总目录</a>
   - [必读博客](/zh/vllm/blog/MUST-READ.md)
   - [旗标对照](/zh/vllm/blog/FLAG-MAP.md)
 - NVIDIA · 压测
@@ -191,5 +191,5 @@
   - [vllm.ai 网站：活动从 GitHub PR 挪走，代码仓专心合代码](/zh/vllm/blog/serving/vllm-ai-website.md)
   - [vLLM-Omni：文本之外的流水线](/zh/vllm/blog/serving/vllm-omni.md)
 - 英文对照
-  - [English README](/README.md)
+  - <a href="#/directory">English README</a>
   - [CATALOG](/en/vllm/blog/CATALOG.md)

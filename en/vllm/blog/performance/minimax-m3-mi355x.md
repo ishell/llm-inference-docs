@@ -18,7 +18,7 @@ Public InferenceX numbers for MiniMax-M3 on MI355X:
 
 - Concurrency 32, fixed-topology MXFP8 standard serving: **109.1 → 342.4** output tokens/s/GPU, **3.14×** the day-0 result. Median TTFT **1.46 → 0.67** s. Mean TPOT **69.1 → 22.1** ms.
 - Concurrency 128, same TP4/EP1 four-GPU path: **297.8 → 623.7** output tokens/s/GPU, **2.09×**. Median TTFT **3.53 → 1.54** s. Mean TPOT **100.7 → 48.8** ms.
-- MXFP4 first rose from **212.1 → 716.8** output tokens/s/GPU at concurrency 128 under the same TP4/EP1 four-GPU contract. A later TP2/EP1 result reached **943.5** output tokens/s/GPU, **31.6%** above that TP4 checkpoint and **4.45×** the initial per-GPU result.
+- MXFP4 first rose from **212.1 → 716.8** output tokens/s/GPU at concurrency 128 under the same TP4/EP1 four-GPU contract. A later TP2/EP1 result reached **943.5** output tokens/s/GPU, <strong>31.6%</strong> above that TP4 checkpoint and **4.45×** the initial per-GPU result.
 - EAGLE3 speculative decoding: **682.4** output tokens/s/GPU at concurrency 128 on TP4/EP1.
 - P/D disaggregation, retuned prefill/decode topology: **6,370.5** total tokens/s/GPU at concurrency 512 with **1.32** s median TTFT.
 
@@ -48,7 +48,7 @@ MiniMax M3 has 60 decoder layers; 57 use sparse MoE and sparse attention. For a 
 
 Kernels run on local M, N, and K after tensor parallelism, head replication, padding, and token routing. At TP8, MiniMax M3's 64 query heads shard to eight per rank, while its four KV and four index heads replicate to one per rank. The fused QKV projection therefore sees local **N=1536** — not global N divided by eight.
 
-Prefill and decode also arrive with different M. Prefill processes many tokens at once; decode often has only a few rows. [vLLM #45725](https://github.com/vllm-project/vllm/pull/45725) split the launcher into large-M and small-M regimes, improving TP8 8K/1K output throughput by **7.8%–9.4%**. [vLLM #46117](https://github.com/vllm-project/vllm/pull/46117) then selected tiles from the full local shape: narrower N tiles exposed more independent work in decode; a larger K step reduced loop iterations. Prefill used wider tiles when M already supplied enough parallelism.
+Prefill and decode also arrive with different M. Prefill processes many tokens at once; decode often has only a few rows. [vLLM #45725](https://github.com/vllm-project/vllm/pull/45725) split the launcher into large-M and small-M regimes, improving TP8 8K/1K output throughput by <strong>7.8%–9.4%</strong>. [vLLM #46117](https://github.com/vllm-project/vllm/pull/46117) then selected tiles from the full local shape: narrower N tiles exposed more independent work in decode; a larger K step reduced loop iterations. Prefill used wider tiles when M already supplied enough parallelism.
 
 ![local shape](../../../../assets/vllm/blog/performance/minimax-m3-mi355x/03-local-shape-tile-selection.svg)
 
@@ -68,7 +68,7 @@ The first easy-to-miss cost was launch overhead. The day-0 recipe ran eagerly. [
 
 The larger structural win was the shared expert. Originally every sparse-MoE layer ran it as a separate dense MLP: gate/up, activation, down, intermediate storage, and addition. The math was required. The separate path was not.
 
-[vLLM #46545](https://github.com/vllm-project/vllm/pull/46545) appended the shared expert to the routed expert table and selected it for every token. Grouped GEMMs then handled routed and shared experts together. Output throughput improved **30.2%** at concurrency 1 and **5.6%** at concurrency 128 — launch amortization.
+[vLLM #46545](https://github.com/vllm-project/vllm/pull/46545) appended the shared expert to the routed expert table and selected it for every token. Grouped GEMMs then handled routed and shared experts together. Output throughput improved <strong>30.2%</strong> at concurrency 1 and <strong>5.6%</strong> at concurrency 128 — launch amortization.
 
 ![shared expert](../../../../assets/vllm/blog/performance/minimax-m3-mi355x/04-shared-expert-fusion.svg)
 
@@ -76,13 +76,13 @@ The larger structural win was the shared expert. Originally every sparse-MoE lay
 
 The AITER path applied the same idea in [vLLM #46474](https://github.com/vllm-project/vllm/pull/46474). [vLLM #46184](https://github.com/vllm-project/vllm/pull/46184), backed by [AITER #3811](https://github.com/ROCm/aiter/pull/3811), moved MXFP8 weight and scale reshuffling to model load. AITER carries tuned MoE configurations from 1 to 32,768 tokens and for the local intermediate widths produced by TP4 and TP8. Layout conversion happens once; the serving loop consumes the prepared form.
 
-Speculative decoding: the original MSA indexer launched one workgroup per speculative token. [vLLM #45743](https://github.com/vllm-project/vllm/pull/45743) launched one workgroup per request and processed all draft positions together, reusing key loads. It also removed a positive score scale because only top-k order matters. The index kernel improved by as much as **48.9%**; end-to-end serving improved by about **3.3%** in the PR tests (Amdahl).
+Speculative decoding: the original MSA indexer launched one workgroup per speculative token. [vLLM #45743](https://github.com/vllm-project/vllm/pull/45743) launched one workgroup per request and processed all draft positions together, reusing key loads. It also removed a positive score scale because only top-k order matters. The index kernel improved by as much as <strong>48.9%</strong>; end-to-end serving improved by about <strong>3.3%</strong> in the PR tests (Amdahl).
 
 ## 3. Which bytes move?
 
 Sparse attention reduces attention math but adds a control plane: score blocks, select top-k, map logical blocks to physical pages, pass metadata to the attention kernel.
 
-[vLLM #47269](https://github.com/vllm-project/vllm/pull/47269): adjacent sparse layers often selected nearly the same blocks. With index sharing, one layer computes top-k and later layers reuse it. Mean TPOT fell by about **10%** at concurrency 1 and about **4%** at high concurrency.
+[vLLM #47269](https://github.com/vllm-project/vllm/pull/47269): adjacent sparse layers often selected nearly the same blocks. With index sharing, one layer computes top-k and later layers reuse it. Mean TPOT fell by about <strong>10%</strong> at concurrency 1 and about <strong>4%</strong> at high concurrency.
 
 Skipping the selector was only half. The fused projection still produced index Q/K, normalized them, applied RoPE, and wrote the index cache. [vLLM #47287](https://github.com/vllm-project/vllm/pull/47287) made reuse visible to that fused kernel so the unused producer branch is compiled away.
 
@@ -92,7 +92,7 @@ The same PR integrated AITER sparse paged attention across a layout mismatch. Mi
 
 **Figure 5.** Each selected 128-token block resolves to a physical block, then expands into eight 16-token page entries. AITER reads them through a view of the existing KV allocation; only the table is rebuilt.
 
-At TP4, concurrency 256, the PR improved output throughput by **6.93%** for MXFP4 and **5.56%** for MXFP8 in isolated A/B.
+At TP4, concurrency 256, the PR improved output throughput by <strong>6.93%</strong> for MXFP4 and <strong>5.56%</strong> for MXFP8 in isolated A/B.
 
 **Benchmark boundary:** InferenceX's fixed 8K/1K review policy **excluded** cross-layer index reuse because it reduces architecture work. The fixed-shape recipe uses the page adapter but **not** top-k reuse. AgentX enables reuse under its workload rules. Do not credit the fixed-contract curve with work it did not run.
 
@@ -140,7 +140,7 @@ EAGLE3 adds a draft model, multi-token verification, acceptance behavior, and a 
 
 After request-level index batching, [InferenceX #2107](https://github.com/SemiAnalysisAI/InferenceX/pull/2107) found that the target's attention-backend setting did not configure the draft. Pinning `TRITON_ATTN` inside the speculative config avoided the draft's slower fallback.
 
-[vLLM #47984](https://github.com/vllm-project/vllm/pull/47984) extended AITER sparse paged attention from one-token decode to multi-token verification. It maps each flattened query row back to its request and local speculative position, reuses the existing page-table builder, and preserves the one-token fast path. TP4 tests improved output throughput by **8.32%** (MXFP4) and **7.90%** (MXFP8) without materially changing acceptance.
+[vLLM #47984](https://github.com/vllm-project/vllm/pull/47984) extended AITER sparse paged attention from one-token decode to multi-token verification. It maps each flattened query row back to its request and local speculative position, reuses the existing page-table builder, and preserves the one-token fast path. TP4 tests improved output throughput by <strong>8.32%</strong> (MXFP4) and <strong>7.90%</strong> (MXFP8) without materially changing acceptance.
 
 Together: the separate **682.4** output tok/s/GPU EAGLE3 result at concurrency 128.
 
@@ -180,9 +180,9 @@ Fixed 8K/1K is for controlled comparisons. Agentic coding is not fixed-shape: lo
 
 Service metrics:
 
-- Theoretical prefix-cache hit rate: **96.7%**
-- Realized GPU cache hit rate: **92.1%**
-- GPU KV-cache use: **88.5%**
+- Theoretical prefix-cache hit rate: <strong>96.7%</strong>
+- Realized GPU cache hit rate: <strong>92.1%</strong>
+- GPU KV-cache use: <strong>88.5%</strong>
 - GPU KV capacity: **6,264,960** tokens
 
 At this point another GEMM is not automatically the next project. The **4.6**-point cache-realization gap and the near-capacity operating point point at prefix alignment, admission and eviction, scheduling, and offload. Observations from one run, not yet an optimization claim. Baseline for the next agentic round.
