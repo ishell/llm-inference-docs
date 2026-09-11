@@ -9,7 +9,7 @@ fetched: 2026-09-06
 
 NVIDIA AIPerf 是客户端生成式基准工具，报告 TTFT、ITL、TPS、RPS。任何 OpenAI 兼容推理服务都能打，包括 NVIDIA NIM。下面用 Llama-3 走一遍——官网上的性能数字，就是用类似流程测出来的。
 
-工具手册（安装、公式、调度、五种打法）在 `../tools/`：`aiperf.md`、`aiperf-metrics.md`、`aiperf-load-generator.md`、`aiperf-comprehensive.md`。指标定义见「指标」；参数见「参数与实践」。
+工具手册（安装、公式、调度、五种打法）在 `../tools/`：[aiperf.md](../tools/aiperf.md)、[aiperf-metrics.md](../tools/aiperf-metrics.md)、[aiperf-load-generator.md](../tools/aiperf-load-generator.md)、[aiperf-comprehensive.md](../tools/aiperf-comprehensive.md)。指标定义见「指标」；参数见「参数与实践」。
 
 
 ## 用 NIM 起一个 OpenAI 兼容的 Llama-3 服务

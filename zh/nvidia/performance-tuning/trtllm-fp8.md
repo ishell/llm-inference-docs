@@ -7,7 +7,7 @@ fetched: 2026-09-07
 
 # 第 5 章：FP8 量化
 
-把模型从 FP16/BF16 降到 FP8（或 int8），通常吞吐会涨、延迟会掉。税是质量。许多线上系统靠量化活着，但「可以接受」必须我们自己验收，没有人能替我们签字。背景仍是 「mastering-llm-techniques.md」。
+把模型从 FP16/BF16 降到 FP8（或 int8），通常吞吐会涨、延迟会掉。税是质量。许多线上系统靠量化活着，但「可以接受」必须我们自己验收，没有人能替我们签字。背景仍是 [mastering-llm-techniques.md](mastering-llm-techniques.md)。
 
 FP8 需要算力 **> 8.9**：Ada、Hopper、Blackwell 以及更后面的卡。再往前的架构，这项功能不可用。
 

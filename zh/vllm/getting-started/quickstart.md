@@ -8,7 +8,7 @@ fetched: 2026-09-06
 # Quickstart — vLLM
 
 英文对照：[en/vllm/getting-started/quickstart.md](../../../en/vllm/getting-started/quickstart.md)  
-调优顺序：`../optimization/optimization.md`。`vllm serve` 的性能相关旗标：`serve.md`（整页 CLI 不搬）。
+调优顺序：[optimization.md](../optimization/optimization.md)。`vllm serve` 的性能相关旗标：[serve.md](serve.md)（整页 CLI 不搬）。
 
 Linux；Python **3.10–3.13**。NVIDIA GPU 官方推荐 `uv`：
 
@@ -114,4 +114,4 @@ vllm serve Qwen/Qwen2.5-1.5B-Instruct --attention-backend FLASH_ATTN
 
 页上点名的选项：NVIDIA CUDA 上 `FLASH_ATTN` / `FLASHINFER`；ROCm 上 `TRITON_ATTN`、`ROCM_ATTN`、`ROCM_AITER_FA`、`ROCM_AITER_UNIFIED_ATTN`、`TRITON_MLA`、`ROCM_AITER_MLA`、`ROCM_AITER_TRITON_MLA`；Intel XPU 上 `FLASH_ATTN`、`TRITON_ATTN`、`TRITON_MLA`、`XPU_MLA_SPARSE`、`TORCH_SDPA`、`TURBOQUANT`。**没有**预编译的带 FlashInfer 的 vLLM 轮子，要先按 [FlashInfer 文档](https://docs.flashinfer.ai/) 或仓库 `docker/Dockerfile` 装。选错 backend 会表现为 ITL 变差或直接起不来，先看启动日志里实际加载的是哪一个。
 
-下一步不是再抄一遍 CLI，而是 `optimization.md` 的调优顺序：CPU 核 → `-O*` → `max_num_batched_tokens` → 并行与 cache。
+下一步不是再抄一遍 CLI，而是 [optimization.md](../optimization/optimization.md) 的调优顺序：CPU 核 → `-O*` → `max_num_batched_tokens` → 并行与 cache。

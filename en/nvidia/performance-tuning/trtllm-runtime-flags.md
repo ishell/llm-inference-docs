@@ -66,7 +66,7 @@ kv_cache_config = KvCacheConfig(free_gpu_memory_fraction=0.95)
 llm = LLM(model="...", tensor_parallel_size=8, kv_cache_config=kv_cache_config)
 ```
 
-Block reuse / host offload / salting: `trtllm-kvcache.md`.
+Block reuse / host offload / salting: [trtllm-kvcache.md](trtllm-kvcache.md).
 
 ## `max_attention_window_size`
 

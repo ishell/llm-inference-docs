@@ -51,7 +51,7 @@ Rule of thumb (almost the TRT-LLM sentence):
 
 ## Super-linear KV rooms
 
-2 GPUs is not 2×. After the split, KV room per GPU can grow **faster than linear**, so batches can grow (better locality, higher util). Figure in the post: **TP=1 → TP=2**, KV blocks ~**13.9×**, token throughput ~**3.9×** — not 2×. Same story as PagedAttention: what you buy first is rooms. `optimization.md` says the same under preemption: raise `tensor_parallel_size` so KV fits; weigh it against sync cost.
+2 GPUs is not 2×. After the split, KV room per GPU can grow **faster than linear**, so batches can grow (better locality, higher util). Figure in the post: **TP=1 → TP=2**, KV blocks ~**13.9×**, token throughput ~**3.9×** — not 2×. Same story as PagedAttention: what you buy first is rooms. [optimization.md](../../optimization/optimization.md) says the same under preemption: raise `tensor_parallel_size` so KV fits; weigh it against sync cost.
 
 ## Extra inference headaches
 

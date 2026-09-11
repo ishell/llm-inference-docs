@@ -55,4 +55,4 @@ YAML: `--config` → see `configuration/serve_args` in the docs.
 | `-cc` / `--compilation-config` | torch.compile + cudagraph (`-cc.mode=3`) |
 | `--speculative-config` / `--spec-method` | ngram, EAGLE, MTP, … |
 
-Tune in the order given in `../optimization/optimization.md` (CPU cores → `-O*` → `max_num_batched_tokens` → parallelism). Do not dump every flag from the 80k generated page into a sweep.
+Tune in the order given in [optimization.md](../optimization/optimization.md) (CPU cores → `-O*` → `max_num_batched_tokens` → parallelism). Do not dump every flag from the 80k generated page into a sweep.

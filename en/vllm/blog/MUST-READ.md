@@ -8,7 +8,7 @@ fetched: 2026-08-31
 
 Full machine list: [`CATALOG.md`](CATALOG.md). Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
-Knob map: [FLAG-MAP.md](FLAG-MAP.md) (`optimization.md` flags → these posts).
+Knob map: [FLAG-MAP.md](FLAG-MAP.md) ([optimization.md](../optimization/optimization.md) flags → these posts).
 
 **Best order:** launch → Anatomy → V1 → MRV2 → (optional DeepSpeed notes) → v0.6 CPU → spec decode → FP8 KV → production CI → distributed sharding → production-stack → AIBrix → Router → encoder disagg → wide-EP → Mooncake → Elastic EP.
 

@@ -54,4 +54,4 @@ fetched: 2026-09-06
 | `-cc` | torch.compile + cudagraph |
 | `--speculative-config` / `--spec-method` | ngram、EAGLE、MTP… |
 
-调优顺序见 `../optimization/optimization.md`。不要把生成页里几百个旗标全拿去扫。
+调优顺序见 [optimization.md](../optimization/optimization.md)。不要把生成页里几百个旗标全拿去扫。

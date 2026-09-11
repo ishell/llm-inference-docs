@@ -11,7 +11,7 @@ fetched: 2026-09-06
 
 官方案例贯穿全书：**Llama-3.3-70B**，**4×H100-SXM-80GB**（NVLink），ISL/OSL **2048/2048**。数字是内部测试，用来说明方向，不是我们机器上的成绩。环境、SKU、互联、负载一变，成绩单就会改。
 
-先读同目录 `mastering-llm-techniques.md`：prefill / decode、inflight batching、TP / PP、量化。不识这四样，旗标只是一排没有说明的开关。
+先读同目录 [mastering-llm-techniques.md](mastering-llm-techniques.md)：prefill / decode、inflight batching、TP / PP、量化。不识这四样，旗标只是一排没有说明的开关。
 
 ## 怎么读（官方目录）
 

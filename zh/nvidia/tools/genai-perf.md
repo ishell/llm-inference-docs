@@ -9,7 +9,7 @@ fetched: 2026-09-06
 
 英文对照：[en/nvidia/tools/genai-perf.md](../../../en/nvidia/tools/genai-perf.md)
 
-官方横幅：**正在停更。** 新项目用 AIPerf（`aiperf.md`）。命令几乎同构，概念仍适用。NIM Performance 页面上的老数字，有一批就是用这套流程测出来的。换工具，不要换尺子。
+官方横幅：**正在停更。** 新项目用 AIPerf（[aiperf.md](aiperf.md)）。命令几乎同构，概念仍适用。NIM Performance 页面上的老数字，有一批就是用这套流程测出来的。换工具，不要换尺子。
 
 客户端打已经起来的生成式服务：output token throughput、TTFT、TTST、ITL、request throughput。服务必须先活着。支持 OpenAI chat/completions、Triton TensorRT-LLM backend；也可用自定义前端或 Jinja2 payload 打自家 API。自定义前端更自由，Jinja2 只改信封。
 
@@ -27,7 +27,7 @@ docker run -it --net=host --gpus=all \
 genai-perf --help
 ```
 
-它底下仍会叫 Perf Analyzer。LLM 看这一页；非生成式看 `perf-analyzer.md`。
+它底下仍会叫 Perf Analyzer。LLM 看这一页；非生成式看 [perf-analyzer.md](perf-analyzer.md)。
 
 ## 最小例子：Triton 上的 GPT-2
 
@@ -120,4 +120,4 @@ GPU 遥测（功耗、利用率、显存、温度、时钟、ECC、NVLink、PCIe
 
 音频相关旗标（时长、wav/mp3、采样率、声道）给音频模型；LLM 主线用不到。
 
-完整 CLI 仍在原页。新工作请把同一组概念接到 `aiperf.md`。
+完整 CLI 仍在原页。新工作请把同一组概念接到 [aiperf.md](aiperf.md)。

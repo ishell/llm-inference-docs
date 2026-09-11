@@ -9,7 +9,7 @@ fetched: 2026-09-06
 
 GenAI-Perf 的后继。客户端生成式基准：对着已经起来的推理服务发请求，把 TTFT、ITL、TPS、RPS、goodput 打成一张表。尺子在客户端；服务必须先活着。
 
-NIM 实操走 `../benchmarking/nim-04-aiperf.md`。调度旗标见 `aiperf-load-generator.md`。公式见 `aiperf-metrics.md`。五类真实场景见 `aiperf-comprehensive.md`。整页 CLI 不搬，官方在 https://docs.nvidia.com/aiperf/reference/command-line-options 。
+NIM 实操走 [nim-04-aiperf.md](../benchmarking/nim-04-aiperf.md)。调度旗标见 [aiperf-load-generator.md](aiperf-load-generator.md)。公式见 [aiperf-metrics.md](aiperf-metrics.md)。五类真实场景见 [aiperf-comprehensive.md](aiperf-comprehensive.md)。整页 CLI 不搬，官方在 https://docs.nvidia.com/aiperf/reference/command-line-options 。
 
 仓库：https://github.com/ai-dynamo/aiperf  
 文档站：https://docs.nvidia.com/aiperf/
@@ -108,4 +108,4 @@ OpenAI：chat、completions、embeddings、audio、images。NIM embeddings / ran
 - 配置非法时，进程可能挂住。杀掉，查配置。
 - 热身和正式成绩分开。warmup 不计入成绩。
 
-从 GenAI-Perf 迁过来：命令几乎同构（`profile`、`--streaming`、concurrency / request-rate）。新项目用 AIPerf。概念（空首包不算 TTFT、ITL 不含 TTFT）还在，公式以 `aiperf-metrics.md` 为准。
+从 GenAI-Perf 迁过来：命令几乎同构（`profile`、`--streaming`、concurrency / request-rate）。新项目用 AIPerf。概念（空首包不算 TTFT、ITL 不含 TTFT）还在，公式以 [aiperf-metrics.md](aiperf-metrics.md) 为准。

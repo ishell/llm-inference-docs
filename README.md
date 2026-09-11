@@ -98,7 +98,7 @@ assets/                     # 正文图（与 zh/en 相对路径对齐）
 | features | [speculative-decoding](zh/vllm/features/speculative-decoding.md) | https://docs.vllm.ai/en/stable/features/speculative_decoding/ | 学习译文 |
 | features | [v1-guide](zh/vllm/features/v1-guide.md) | https://docs.vllm.ai/en/stable/usage/v1_guide/ | 学习译文 |
 | blog | [MUST-READ](zh/vllm/blog/MUST-READ.md) | https://vllm.ai/blog · https://vllm.ai/blog/rss.xml | 必读 + 本地链接 |
-| blog | [FLAG-MAP](zh/vllm/blog/FLAG-MAP.md) | `optimization.md` 旗标 → 博客 | 对照表 |
+| blog | [FLAG-MAP](zh/vllm/blog/FLAG-MAP.md) | [optimization.md](zh/vllm/optimization/optimization.md) 旗标 → 博客 | 对照表 |
 | blog | [CATALOG](en/vllm/blog/CATALOG.md) | https://vllm.ai/llms.txt | 全表（英文） |
 | blog / architecture | [paged-attention](zh/vllm/blog/architecture/paged-attention.md) | https://vllm.ai/blog/2023-06-20-vllm | 学习译文 |
 | blog / architecture | [vs-deepspeed](zh/vllm/blog/architecture/vs-deepspeed.md) | https://vllm.ai/blog/2023-11-14-notes-vllm-vs-deepspeed | 学习译文 |
@@ -166,8 +166,8 @@ assets/                     # 正文图（与 zh/en 相对路径对齐）
 
 1. [zh/GUIDE.md](zh/GUIDE.md)
 2. [zh/nvidia/benchmarking/blog-01-fundamental-concepts.md](zh/nvidia/benchmarking/blog-01-fundamental-concepts.md)
-3. `nim-01` → `nim-02` → `nim-03` → `nim-04-aiperf`
-4. 尺子本身：[zh/nvidia/tools/aiperf.md](zh/nvidia/tools/aiperf.md) → `aiperf-metrics.md` → `aiperf-load-generator.md` → `aiperf-comprehensive.md`（传统 Triton 模型再读 Perf Analyzer + Triton 调优）
+3. [nim-01](zh/nvidia/benchmarking/nim-01-overview.md) → [nim-02](zh/nvidia/benchmarking/nim-02-metrics.md) → [nim-03](zh/nvidia/benchmarking/nim-03-parameters.md) → [nim-04-aiperf](zh/nvidia/benchmarking/nim-04-aiperf.md)
+4. 尺子本身：[zh/nvidia/tools/aiperf.md](zh/nvidia/tools/aiperf.md) → [aiperf-metrics.md](zh/nvidia/tools/aiperf-metrics.md) → [aiperf-load-generator.md](zh/nvidia/tools/aiperf-load-generator.md) → [aiperf-comprehensive.md](zh/nvidia/tools/aiperf-comprehensive.md)（传统 Triton 模型再读 Perf Analyzer + Triton 调优）
 5. [zh/vllm/optimization/optimization.md](zh/vllm/optimization/optimization.md) 与 [zh/vllm/getting-started/serve.md](zh/vllm/getting-started/serve.md)
 6. [zh/vllm/blog/MUST-READ.md](zh/vllm/blog/MUST-READ.md)（主线 → 第二–五波机制；其余 CATALOG 按需）
 

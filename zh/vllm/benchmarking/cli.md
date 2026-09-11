@@ -12,7 +12,7 @@ fetched: 2026-09-06
 
 这一页的定位官方写得很清楚：偏 **功能回归 / 特性评测**。生产 serving 他们更推荐 **GuideLLM**（进度条、自动报告；数据集、请求格式、流量形态更灵活）。`vllm bench serve` 仍是仓库里自带的客户端。NVIDIA 系列用 AIPerf 打同一类 OpenAI 兼容接口。指标名字接近，**公式仍可能不同，不要直接横比数字。**
 
-网格搜 `max-num-seqs` × `max-num-batched-tokens` 见 `auto-tune.md`。
+网格搜 `max-num-seqs` × `max-num-batched-tokens` 见 [auto-tune.md](auto-tune.md)。
 
 ## 在线：先起服务再打
 
@@ -110,4 +110,4 @@ vllm bench throughput \
 
 多模态离线要用 `--backend vllm-chat`，否则 image token 计数会少。Sonnet 数据集官方已标 deprecated，例子里还在用。
 
-同页后半还有 structured output、embedding、reranker、多模态 processor 等特性评测入口——那是回归测试，不是生产 SLA 的主路径。生产数字请回到 AIPerf 或 GuideLLM，并用 `/metrics`（`../metrics/production-metrics.md`）解释为什么客户端看到那样的 TTFT。
+同页后半还有 structured output、embedding、reranker、多模态 processor 等特性评测入口——那是回归测试，不是生产 SLA 的主路径。生产数字请回到 AIPerf 或 GuideLLM，并用 `/metrics`（[production-metrics.md](../metrics/production-metrics.md)）解释为什么客户端看到那样的 TTFT。

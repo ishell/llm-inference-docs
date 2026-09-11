@@ -123,7 +123,7 @@ mm_processor_cache_type = "shm"
 
 User Guide 见上。原文还说：不只 LLM 推理，凡是 IPC cache 能少传重复数据的地方，这套 store 都能用。
 
-`optimization.md` 多写了一条博客正文没展开的运维边界：API server 横向扩展会关掉这条 **IPC cache**（它要 API 与 engine 一对一）；processor cache 本身不受影响。
+[optimization.md](../../optimization/optimization.md) 多写了一条博客正文没展开的运维边界：API server 横向扩展会关掉这条 **IPC cache**（它要 API 与 engine 一对一）；processor cache 本身不受影响。
 
 ## 致谢
 

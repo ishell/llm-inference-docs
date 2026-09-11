@@ -11,7 +11,7 @@ fetched: 2026-09-06
 原文：https://vllm.ai/blog/2025-08-20-torch-compile  
 2025-08-20。Luka Govedič（Red Hat）、Richard Zou（Meta）、Addie Stevens（Red Hat）、Kaichao You（Tsinghua）、Michael Goin（Red Hat）、Saša Zelenović（Red Hat）。学习译文，不是官方译本。
 
-这篇从双周 office hours 整理：Red Hat 主办，vLLM committer 与 Berkeley 团队一起开。每场：近况、嘉宾深潜、开放 Q&A。[隔周四加入](https://red.ht/office-hours)，美东 2:00 PM / 美西 11:00 AM，Google Meet；录像和幻灯片事后上 [YouTube playlist](https://www.youtube.com/playlist?list=PLbMP1JcGBmSHxp4-lubU5WYmJ9YgAQcf3)。`optimization.md` 里的 `-O0`～`-O3`、`--enforce-eager`，底下就是这篇。
+这篇从双周 office hours 整理：Red Hat 主办，vLLM committer 与 Berkeley 团队一起开。每场：近况、嘉宾深潜、开放 Q&A。[隔周四加入](https://red.ht/office-hours)，美东 2:00 PM / 美西 11:00 AM，Google Meet；录像和幻灯片事后上 [YouTube playlist](https://www.youtube.com/playlist?list=PLbMP1JcGBmSHxp4-lubU5WYmJ9YgAQcf3)。[optimization.md](../../optimization/optimization.md) 里的 `-O0`～`-O3`、`--enforce-eager`，底下就是这篇。
 
 快的 LLM 推理，要在各种硬件、负载、规模上把模型跑得狠。狠，往往意味着手写 kernel，每一种模型、每一家平台付一次税。**torch.compile** 是 PyTorch 的 JIT：自动吐出优化过的 kernel，不必在所有硬件上手调。
 

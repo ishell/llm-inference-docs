@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # vLLM auto_tune.sh
 
-In-tree script: grid-search `max-num-seqs` × `max-num-batched-tokens` for the highest throughput that still lives inside optional constraints (P99 e2e, prefix-cache hit rate). It tunes the batch knobs that `optimization.md` places before TP/DP, not the shard count.
+In-tree script: grid-search `max-num-seqs` × `max-num-batched-tokens` for the highest throughput that still lives inside optional constraints (P99 e2e, prefix-cache hit rate). It tunes the batch knobs that [optimization.md](../optimization/optimization.md) places before TP/DP, not the shard count.
 
 Do **not** put the substring `vllm` in the script path. The script runs `pkill -f vllm` and will kill itself. Use `tmux` / `screen`; this takes a long time.
 
@@ -77,4 +77,4 @@ bash batch_auto_tune.sh runs_config.json [gs://bucket/path]
 
 Keys match the variables above (lowercase; the script uppercases them). It **rewrites the JSON in place**: `run_id`, `status` (`SUCCESS` / `FAILURE` / `WARNING_NO_RESULT_FILE`), `results`, optional `gcs_results`.
 
-auto_tune finds a cell for this machine, this ISL/OSL, this SLA. Change the GPU or the context and the grid is void. Treat the winner as a starting point for the two flags in `serve.md`, not as eternal truth.
+auto_tune finds a cell for this machine, this ISL/OSL, this SLA. Change the GPU or the context and the grid is void. Treat the winner as a starting point for the two flags in [serve.md](../getting-started/serve.md), not as eternal truth.

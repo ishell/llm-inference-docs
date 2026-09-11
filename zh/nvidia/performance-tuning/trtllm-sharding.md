@@ -7,7 +7,7 @@ fetched: 2026-09-06
 
 # 第 4 章：怎么切卡
 
-大模型常常塞不进一张 GPU，必须切开。切法会改写成绩单。这一页帮我们在 **tensor parallelism（TP）**、**pipeline parallelism（PP）**，或两者混用之间做选择。不熟这两个词，先回 `mastering-llm-techniques.md`。学习图，不是官方原图。
+大模型常常塞不进一张 GPU，必须切开。切法会改写成绩单。这一页帮我们在 **tensor parallelism（TP）**、**pipeline parallelism（PP）**，或两者混用之间做选择。不熟这两个词，先回 [mastering-llm-techniques.md](mastering-llm-techniques.md)。学习图，不是官方原图。
 
 ![Pipeline parallelism](../../../assets/nvidia/performance-tuning/trtllm-sharding/zh/01-pipeline.png)
 

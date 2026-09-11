@@ -11,7 +11,7 @@ Official: https://docs.vllm.ai/en/stable/benchmarking/cli/
 
 The page’s own framing: this CLI is mainly **feature / regression evaluation**. For production vLLM servers they recommend **GuideLLM** (live progress, auto reports; more flexible datasets, request shapes, and traffic). `vllm bench serve` is still the in-tree client. NVIDIA’s stack uses AIPerf against the same OpenAI-compatible mouth. Names look alike; **formulas may differ — do not rank numbers across tools.**
 
-Grid search of `max-num-seqs` × `max-num-batched-tokens`: `auto-tune.md`.
+Grid search of `max-num-seqs` × `max-num-batched-tokens`: [auto-tune.md](auto-tune.md).
 
 ## Online: serve, then hit
 
@@ -109,4 +109,4 @@ vllm bench throughput \
 
 Multimodal offline needs `--backend vllm-chat` or image tokens are under-counted. Sonnet is marked deprecated and still used in the example.
 
-The rest of the official page (structured output, embedding, reranker, multimodal processor) is feature regression, not the production-SLA path. Production numbers belong on AIPerf or GuideLLM; explain client TTFT with `/metrics` (`../metrics/production-metrics.md`).
+The rest of the official page (structured output, embedding, reranker, multimodal processor) is feature regression, not the production-SLA path. Production numbers belong on AIPerf or GuideLLM; explain client TTFT with `/metrics` ([production-metrics.md](../metrics/production-metrics.md)).

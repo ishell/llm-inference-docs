@@ -7,7 +7,7 @@ fetched: 2026-09-06
 
 # AIPerf：五类真实打法
 
-官方综合指南（标为 AIPerf v0.5.0，演示日期 2025-11-13，页上更新 2026-02-02）。演示集群已经拆掉。下面的数字是**官方案例**，用来看曲线长什么样，不是我们机器上的成绩。入口见 `aiperf.md`。
+官方综合指南（标为 AIPerf v0.5.0，演示日期 2025-11-13，页上更新 2026-02-02）。演示集群已经拆掉。下面的数字是**官方案例**，用来看曲线长什么样，不是我们机器上的成绩。入口见 [aiperf.md](aiperf.md)。
 
 他们当时的靶：Qwen3-0.6B，vLLM v0.11.0，8 路数据并行（8×H200，一卡一副本）。小模型是为了让基准有东西可写，不是为了推荐 0.6B。
 
@@ -92,7 +92,7 @@ aiperf profile ... --input-file mooncake_trace.jsonl \
 
 官方演示：RPS 26.67，goodput 7.43——大约 28% 的请求**同时**满足两条 SLO。平均 TTFT 已经高于 370 ms，中位 latency 高于 648 ms。按吞吐买 38 台机器的人，若改用 goodput，账会变成大约 135 台。忽略 goodput 就是按一个用户正在变慢的数字扩容。
 
-阈值按产品档位改：严（250/500）、演示用的中间档、松（600/2500）。公式见 `aiperf-metrics.md`。
+阈值按产品档位改：严（250/500）、演示用的中间档、松（600/2500）。公式见 [aiperf-metrics.md](aiperf-metrics.md)。
 
 ## 5. 时间切片：平均值会把冷启动藏起来
 
@@ -111,6 +111,6 @@ aiperf profile ... --input-file mooncake_trace.jsonl \
 - **服务端 Prometheus**：默认可从 `--url` 发现；或 `--server-metrics`。
 - **出图**：`aiperf plot`；`--dashboard` 默认 8050。
 - **合成加速 / 拉长前缀**：`--synthesis-speedup-ratio`、`--synthesis-prefix-len-multiplier` 等，用来受控地压 KV。
-- **User-centric**：`--user-centric-rate` + `--num-users` + `--shared-system-prompt-length`，见 `aiperf-load-generator.md`。
+- **User-centric**：`--user-centric-rate` + `--num-users` + `--shared-system-prompt-length`，见 [aiperf-load-generator.md](aiperf-load-generator.md)。
 
 官方自己的结论：用例 1 给基线容量；生产能不能上，还要 trace、goodput、时间切片。三件套缺一，会爱上实验室里那条到了生产排队就撑不住的曲线。

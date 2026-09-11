@@ -7,7 +7,7 @@ fetched: 2026-09-06
 
 # Benchmarking — NVIDIA NIM 产品页
 
-NIM for LLMs 产品文档里的短入口（抓取时产品版本标 2.0.11）。它不教怎么打命令。完整流程在同目录 `nim-01`～`nim-05`；尺子本身在 `../tools/aiperf.md`。
+NIM for LLMs 产品文档里的短入口（抓取时产品版本标 2.0.11）。它不教怎么打命令。完整流程在同目录 `nim-01`～`nim-05`；尺子本身在 [aiperf.md](../tools/aiperf.md)。
 
 生成式应用铺开以后，钱花在「用户还愿意等、还愿意看」的前提下，每秒能完成多少请求。**精度达标之前不要谈成本。** 本页不覆盖 accuracy。
 
@@ -23,4 +23,4 @@ NIM for LLMs 产品文档里的短入口（抓取时产品版本标 2.0.11）。
 
 只做负载测试，我们看不出模型本身够不够快。只做性能基准，真实高峰到来时系统可能先撑不住。官方要求**两端都做**。这一页只把我们推向 Benchmarking Guide。
 
-Important 框原话方向：要学怎么打 LLM，去 **NIM for LLMs Benchmarking Guide**。本地就是 `nim-01-overview.md` 起那一组。
+Important 框原话方向：要学怎么打 LLM，去 **NIM for LLMs Benchmarking Guide**。本地就是 [nim-01-overview.md](nim-01-overview.md) 起那一组。

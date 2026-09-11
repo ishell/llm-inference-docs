@@ -10,7 +10,7 @@ Defaults are solid. Extra performance comes from the knobs in this handbook plus
 
 Case study throughout: **Llama-3.3-70B**, **4×H100-SXM-80GB** (NVLink), ISL/OSL **2048/2048**. Numbers are internal demos, not a forecast for your box.
 
-Prereqs (prefill/decode, inflight batching, TP/PP, quantization): `mastering-llm-techniques.md`.
+Prereqs (prefill/decode, inflight batching, TP/PP, quantization): [mastering-llm-techniques.md](mastering-llm-techniques.md).
 
 ## Official TOC (local notes)
 

@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # AIPerf Metrics
 
-The official Metrics Reference is grouped by **computation phase**, not by “what the user felt.” NIM guide chapter 2 (`../benchmarking/nim-02-metrics.md`) is the same ruler in prose. This note adds formulas, preconditions, and why the two throughputs must not be compared.
+The official Metrics Reference is grouped by **computation phase**, not by “what the user felt.” NIM guide chapter 2 ([nim-02-metrics.md](../benchmarking/nim-02-metrics.md)) is the same ruler in prose. This note adds formulas, preconditions, and why the two throughputs must not be compared.
 
 Streaming metrics require `--streaming`, a token-producing endpoint, and at least one **non-empty** chunk. An empty first packet is not the first word.
 

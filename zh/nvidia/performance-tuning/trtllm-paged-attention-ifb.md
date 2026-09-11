@@ -35,7 +35,7 @@ fetched: 2026-09-06
 
 GPU 喜欢更大的矩阵乘——把 `max_num_tokens` 适度抬高，利用率会升。过了饱和点，TTFT 和端到端延迟都会开始涨。目标：够高以吃满算力，不够高到打穿 SLO（TTFT / TPOT）。
 
-怎么扫这两个上限，见 `trtllm-max-batch.md`。
+怎么扫这两个上限，见 [trtllm-max-batch.md](trtllm-max-batch.md)。
 
 ## Chunked context（chunked prefill）
 
@@ -52,6 +52,6 @@ GPU 喜欢更大的矩阵乘——把 `max_num_tokens` 适度抬高，利用率�
 每层一份 KV。
 
 - **Contiguous：** 形状 `[max_batch_size * max_beam_width, 2, num_heads, max_seqlen, hidden_dim_per_head]`。短序列按最长位来预留，浪费显存。即使后来生成会慢慢贴近上限，前面许多步都在为空位付钱。
-- **Paged：** cache manager 按块分配、回收。Python 示意是 tensorrt_llm.runtime.KVCacheManager；生产走 C++ Batch Manager。结构细节见 `trtllm-kvcache.md`。
+- **Paged：** cache manager 按块分配、回收。Python 示意是 tensorrt_llm.runtime.KVCacheManager；生产走 C++ Batch Manager。结构细节见 [trtllm-kvcache.md](trtllm-kvcache.md)。
 
 调度示意图、以及「务必开 paged context attention」的理由，与第 3 章相同：chunking 让长 prompt 的第一块就能进场，`max_num_tokens` 不必再当最长 prompt 的上限。

@@ -72,4 +72,4 @@ Remote: `-u host:8000`. Concurrency sweeps use `--concurrency-range` on the Trit
 
 How to read the output and the stability rule: official “full quick start.” Contributing and questions are at the bottom of that README; use an MCVE when you need code help.
 
-Taking a trained model from “it loads” to “it can ship” is `triton-performance-tuning.md`: Perf Analyzer baseline, Model Analyzer search of `config.pbtxt`, then measure again.
+Taking a trained model from “it loads” to “it can ship” is [triton-performance-tuning.md](triton-performance-tuning.md): Perf Analyzer baseline, Model Analyzer search of `config.pbtxt`, then measure again.

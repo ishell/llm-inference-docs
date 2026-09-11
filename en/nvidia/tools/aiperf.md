@@ -8,7 +8,7 @@ fetched: 2026-09-01
 
 Successor to GenAI-Perf. Client-side generative-AI benchmark: it sends load at an already-running inference server and reports TTFT, ITL, TPS, RPS, and goodput. The ruler lives on the client; the server must already be up.
 
-NIM walkthrough: `../benchmarking/nim-04-aiperf.md`. Load flags: `aiperf-load-generator.md`. Formulas: `aiperf-metrics.md`. Five worked scenarios: `aiperf-comprehensive.md`. Full CLI is not copied here — see https://docs.nvidia.com/aiperf/reference/command-line-options
+NIM walkthrough: [nim-04-aiperf.md](../benchmarking/nim-04-aiperf.md). Load flags: [aiperf-load-generator.md](aiperf-load-generator.md). Formulas: [aiperf-metrics.md](aiperf-metrics.md). Five worked scenarios: [aiperf-comprehensive.md](aiperf-comprehensive.md). Full CLI is not copied here — see https://docs.nvidia.com/aiperf/reference/command-line-options
 
 Repo: https://github.com/ai-dynamo/aiperf  
 Docs: https://docs.nvidia.com/aiperf/
@@ -107,4 +107,4 @@ After a run: `aiperf plot`. `--dashboard` serves an interactive UI on `localhost
 - Invalid config can hang the process. Kill it and check flags.
 - Warmup is separate from scored traffic.
 
-Migrating from GenAI-Perf: commands are nearly isomorphic (`profile`, `--streaming`, concurrency / request-rate). New work uses AIPerf. Empty first chunks still do not count as TTFT; ITL still excludes TTFT. Formulas live in `aiperf-metrics.md`.
+Migrating from GenAI-Perf: commands are nearly isomorphic (`profile`, `--streaming`, concurrency / request-rate). New work uses AIPerf. Empty first chunks still do not count as TTFT; ITL still excludes TTFT. Formulas live in [aiperf-metrics.md](aiperf-metrics.md).

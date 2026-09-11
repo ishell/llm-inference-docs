@@ -9,7 +9,7 @@ fetched: 2026-09-06
 
 官方页是一张兼容性矩阵：哪些旗标能一起用，哪些会当场报错。调度决定这场基准测到的是哪种到达过程。选错模式，测到的往往不是模型，而是我们自己发明的到达过程。
 
-入口与安装见 `aiperf.md`。公式见 `aiperf-metrics.md`。
+入口与安装见 [aiperf.md](aiperf.md)。公式见 [aiperf-metrics.md](aiperf-metrics.md)。
 
 ## 四种发请求的方式
 

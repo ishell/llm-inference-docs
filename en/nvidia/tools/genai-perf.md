@@ -8,7 +8,7 @@ fetched: 2026-09-01
 
 Chinese study note: [zh/nvidia/tools/genai-perf.md](../../../zh/nvidia/tools/genai-perf.md)
 
-Official banner: **being phased out.** New work uses AIPerf (`aiperf.md`). Commands are nearly isomorphic; the concepts still apply. Some numbers on older NIM Performance pages were taken with this ritual. Change the tool; do not change the ruler.
+Official banner: **being phased out.** New work uses AIPerf ([aiperf.md](aiperf.md)). Commands are nearly isomorphic; the concepts still apply. Some numbers on older NIM Performance pages were taken with this ritual. Change the tool; do not change the ruler.
 
 Client-side load against an already-running generative server: output token throughput, TTFT, TTST, ITL, request throughput. The server must already be up. Supports OpenAI chat/completions and Triton’s TensorRT-LLM backend; custom frontends or Jinja2 payloads for private APIs. Custom frontends are more flexible; Jinja2 only changes the envelope.
 
@@ -26,7 +26,7 @@ docker run -it --net=host --gpus=all \
 genai-perf --help
 ```
 
-It still calls Perf Analyzer underneath. LLMs: this page. Classic non-generative models: `perf-analyzer.md`.
+It still calls Perf Analyzer underneath. LLMs: this page. Classic non-generative models: [perf-analyzer.md](perf-analyzer.md).
 
 ## Minimal example: GPT-2 on Triton
 
@@ -119,4 +119,4 @@ Stability: last three windows, max/min within the percentage for both infer/s an
 
 Audio flags (duration, wav/mp3, sample rate, channels) are for audio models.
 
-Full CLI remains on the official page. New work should attach the same concepts to `aiperf.md`.
+Full CLI remains on the official page. New work should attach the same concepts to [aiperf.md](aiperf.md).

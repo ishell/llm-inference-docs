@@ -99,7 +99,7 @@ llm = LLM(
 kv_cache_config = KvCacheConfig(max_tokens=<number of tokens>)
 ```
 
-更细的块复用、卸载、盐值隔离，在邻居页 `trtllm-kvcache.md`。
+更细的块复用、卸载、盐值隔离，在邻居页 [trtllm-kvcache.md](trtllm-kvcache.md)。
 
 ## Maximum attention window
 

@@ -8,7 +8,7 @@ fetched: 2026-08-31
 
 Stores past K/V so decode does not recompute them. Also: cross-request reuse, host offload, prioritized eviction, variable windows, MQA/GQA.
 
-Runtime page (`trtllm-runtime-flags.md`) only sets how much memory and sliding window. This page is the structure.
+Runtime page ([trtllm-runtime-flags.md](trtllm-runtime-flags.md)) only sets how much memory and sliding window. This page is the structure.
 
 ## Blocks
 

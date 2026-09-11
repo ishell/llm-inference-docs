@@ -9,7 +9,7 @@ fetched: 2026-09-07
 
 生成阶段不必重复计算已经算过的 K/V。TensorRT-LLM 的 KV 还支持**跨请求复用**，以及卸载、带优先级的驱逐。它认得不同的 attention 窗口，也认得 MQA / GQA。
 
-运行时那一页（「trtllm-runtime-flags.md」）只调「给 KV 多少显存」和 sliding window。这一页是同一套系统的结构说明。
+运行时那一页（[trtllm-runtime-flags.md](trtllm-runtime-flags.md)）只调「给 KV 多少显存」和 sliding window。这一页是同一套系统的结构说明。
 
 ## 块池
 

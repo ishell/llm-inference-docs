@@ -6,7 +6,7 @@ fetched: 2026-08-31
 
 # Deciding Model Sharding Strategy
 
-If the model does not fit on one GPU, how you shard it matters. Primer: `mastering-llm-techniques.md` (TP vs PP).
+If the model does not fit on one GPU, how you shard it matters. Primer: [mastering-llm-techniques.md](mastering-llm-techniques.md) (TP vs PP).
 
 
 Local figures (copyright remains with the original site; study copies):

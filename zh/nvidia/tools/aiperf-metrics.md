@@ -7,7 +7,7 @@ fetched: 2026-09-06
 
 # AIPerf 指标
 
-官方 Metrics Reference 按**计算阶段**排，不是按「我们关心什么用户体验」排。NIM 手册第 2 章（`../benchmarking/nim-02-metrics.md`）是同一套尺子的说明版。这里补公式、前提、以及两套吞吐为什么不能横比。
+官方 Metrics Reference 按**计算阶段**排，不是按「我们关心什么用户体验」排。NIM 手册第 2 章（[nim-02-metrics.md](../benchmarking/nim-02-metrics.md)）是同一套尺子的说明版。这里补公式、前提、以及两套吞吐为什么不能横比。
 
 流式指标一律要求：`--streaming`、会吐 token 的 endpoint、至少一包**非空**内容。空首包不算第一个 token。
 

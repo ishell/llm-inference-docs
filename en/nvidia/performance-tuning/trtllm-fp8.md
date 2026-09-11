@@ -6,7 +6,7 @@ fetched: 2026-08-31
 
 # FP8 Quantization
 
-Lower precision (FP8 / int8) usually raises throughput and cuts latency. Quality can drop — always check. Needs compute capability **> 8.9** (Ada, Hopper, Blackwell+). Primer: `mastering-llm-techniques.md`. Case-study numbers are illustrative.
+Lower precision (FP8 / int8) usually raises throughput and cuts latency. Quality can drop — always check. Needs compute capability **> 8.9** (Ada, Hopper, Blackwell+). Primer: [mastering-llm-techniques.md](mastering-llm-techniques.md). Case-study numbers are illustrative.
 
 ## Enable
 

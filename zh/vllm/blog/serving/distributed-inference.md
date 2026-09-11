@@ -41,7 +41,7 @@ TP 还有一件训练里不那么显眼、推理里却致命的副作用：MLA �
 
 吞吐有时不是「2 张卡 = 2×」。切开以后每卡给 KV 的空位涨得比线性快，batch 才能长大。文中图：TP=1 → TP=2，KV block 大约 **13.9×**，token 吞吐大约 **3.9×**——不是 2×。这是 PagedAttention 立项时那句「KV 才是容量」在多卡上的回声：权重切开腾出来的，首先是 KV 空间。
 
-「optimization.md」里抢占那段说同一件事：频繁 preemption 时可以增大 `tensor_parallel_size`，让 KV 有地方放。收益和通信税要自己称。
+[optimization.md](../../optimization/optimization.md) 里抢占那段说同一件事：频繁 preemption 时可以增大 `tensor_parallel_size`，让 KV 有地方放。收益和通信税要自己称。
 
 ## 推理还多出来的麻烦
 

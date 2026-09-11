@@ -122,7 +122,7 @@ mm_processor_cache_type = "shm"
 
 User Guide section linked above. The post also claims the store is useful **beyond** LLM inference wherever IPC caching would skip redundant transfers.
 
-`optimization.md` adds an operational caveat not spelled out in the blog body: API-server scale-out turns this **IPC cache** off (it wants a 1:1 API ↔ engine pairing); the processor cache itself stays.
+[optimization.md](../../optimization/optimization.md) adds an operational caveat not spelled out in the blog body: API-server scale-out turns this **IPC cache** off (it wants a 1:1 API ↔ engine pairing); the processor cache itself stays.
 
 ## Acknowledgments
 

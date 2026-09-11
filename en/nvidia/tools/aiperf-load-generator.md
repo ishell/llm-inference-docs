@@ -8,7 +8,7 @@ fetched: 2026-09-01
 
 The official page is a compatibility matrix: which flags work together, which raise immediately. Scheduling is the personality of the run. Pick the wrong mode and you measure your invented arrival process, not the model.
 
-Install and architecture: `aiperf.md`. Formulas: `aiperf-metrics.md`.
+Install and architecture: [aiperf.md](aiperf.md). Formulas: [aiperf-metrics.md](aiperf-metrics.md).
 
 ## Four ways to issue requests
 

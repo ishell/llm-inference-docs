@@ -12,8 +12,8 @@ This is the table of contents. Local copies:
 
 | Chapter | File |
 |---|---|
-| Overview | `nim-01-overview.md` |
-| Metrics | `nim-02-metrics.md` |
-| Parameters | `nim-03-parameters.md` |
-| Using AIPerf | `nim-04-aiperf.md` |
-| LoRA | `nim-05-lora.md` |
+| Overview | [nim-01-overview.md](nim-01-overview.md) |
+| Metrics | [nim-02-metrics.md](nim-02-metrics.md) |
+| Parameters | [nim-03-parameters.md](nim-03-parameters.md) |
+| Using AIPerf | [nim-04-aiperf.md](nim-04-aiperf.md) |
+| LoRA | [nim-05-lora.md](nim-05-lora.md) |

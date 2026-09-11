@@ -9,7 +9,7 @@ fetched: 2026-09-06
 
 英文对照：[en/nvidia/benchmarking/blog-02-genai-perf-and-nim.md](../../../en/nvidia/benchmarking/blog-02-genai-perf-and-nim.md)
 
-**今天请用 AIPerf。** GenAI-Perf 已停更，命令几乎同构；NIM 手册第 4 章是 AIPerf 版：`nim-04-aiperf.md`。本篇保留官方当时的 GenAI-Perf 流程，因为 NIM Performance 页面上那些数字，就是用这套流程测出来的。换工具，不要换尺子的定义。
+**今天请用 AIPerf。** GenAI-Perf 已停更，命令几乎同构；NIM 手册第 4 章是 AIPerf 版：[nim-04-aiperf.md](nim-04-aiperf.md)。本篇保留官方当时的 GenAI-Perf 流程，因为 NIM Performance 页面上那些数字，就是用这套流程测出来的。换工具，不要换尺子的定义。
 
 第 1 篇讲 TTFT 从提交到第一个非空 token 意味着什么。本篇把 Llama 3.1 8B Instruct 用 NIM 拉起来，让基准真正跑起来。
 

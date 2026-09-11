@@ -6,7 +6,7 @@ fetched: 2026-09-01
 
 # AIPerf: five real workloads
 
-Official comprehensive guide (labeled AIPerf v0.5.0; demo 2025-11-13, page updated 2026-02-02). The demo cluster is gone. Numbers below are **their case study**, not your hardware. Start from `aiperf.md`.
+Official comprehensive guide (labeled AIPerf v0.5.0; demo 2025-11-13, page updated 2026-02-02). The demo cluster is gone. Numbers below are **their case study**, not your hardware. Start from [aiperf.md](aiperf.md).
 
 Their target: Qwen3-0.6B, vLLM v0.11.0, 8-way data parallel (8×H200, one GPU per replica). The small model exists so the stopwatch has something to write, not as a model to worship.
 
@@ -91,7 +91,7 @@ Same sped-up trace, plus:
 
 Their demo: 26.67 RPS vs 7.43 goodput — about 28% of requests met **both** SLOs. Mean TTFT already sat above 370 ms; median latency above 648 ms. Sizing 38 machines from raw throughput becomes ~135 from goodput. Ignoring goodput is buying GPUs against a number users are already suffering under.
 
-Change thresholds by product tier. Formulas: `aiperf-metrics.md`.
+Change thresholds by product tier. Formulas: [aiperf-metrics.md](aiperf-metrics.md).
 
 ## 5. Time slices: averages hide cold start
 
@@ -110,6 +110,6 @@ Slices <5s jitter; >60s smear. Typical 10–30s. To hunt leaks: `--benchmark-dur
 - **Prometheus**: auto-discovered from `--url`, or `--server-metrics`.
 - **Plots**: `aiperf plot`; `--dashboard` on 8050.
 - **Trace synthesis**: `--synthesis-speedup-ratio`, `--synthesis-prefix-len-multiplier`, … to torture KV on purpose.
-- **User-centric**: `--user-centric-rate` + `--num-users` + `--shared-system-prompt-length` — see `aiperf-load-generator.md`.
+- **User-centric**: `--user-centric-rate` + `--num-users` + `--shared-system-prompt-length` — see [aiperf-load-generator.md](aiperf-load-generator.md).
 
 The guide’s own close: use case 1 is baseline capacity; production still needs traces, goodput, and time slices. Miss one and you will fall in love with a lab curve that does not survive the lobby.

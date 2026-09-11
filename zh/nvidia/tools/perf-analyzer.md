@@ -73,4 +73,4 @@ perf_analyzer -m simple
 
 输出怎么读、稳态判定的细节，官方让你去「full quick start」。贡献与提问流程在原页底部；需要最小可复现时走 Stack Overflow 那套 MCVE。
 
-把训好的模型从「能 load」调到「能上线」，整条流程在 `triton-performance-tuning.md`：Perf Analyzer 打基线，Model Analyzer 搜 `config.pbtxt`，再打一遍。
+把训好的模型从「能 load」调到「能上线」，整条流程在 [triton-performance-tuning.md](triton-performance-tuning.md)：Perf Analyzer 打基线，Model Analyzer 搜 `config.pbtxt`，再打一遍。

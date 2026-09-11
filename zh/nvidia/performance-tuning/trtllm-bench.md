@@ -7,7 +7,7 @@ fetched: 2026-09-06
 
 # trtllm-bench：手册里的基准工具
 
-英文全文抓取：[en/nvidia/performance-tuning/trtllm-bench.md](../../../en/nvidia/performance-tuning/trtllm-bench.md)（官方页很长，含 LoRA、多模态、Medusa 低延迟引擎）。这一页是中文导读：怎么用这套工具去配合调优手册。手册第 1 章已经用它打过 70B 基线。博客实操见 `blog-03-tensorrt-llm.md`。
+英文全文抓取：[en/nvidia/performance-tuning/trtllm-bench.md](../../../en/nvidia/performance-tuning/trtllm-bench.md)（官方页很长，含 LoRA、多模态、Medusa 低延迟引擎）。这一页是中文导读：怎么用这套工具去配合调优手册。手册第 1 章已经用它打过 70B 基线。博客实操见 [blog-03-tensorrt-llm.md](blog-03-tensorrt-llm.md)。
 
 官方声明：这套 CLI **仍在演进，API 可能破**。它想让我们更容易复现他们 Performance Overview 上的数字。全部基准都走 **in-flight batching**。
 

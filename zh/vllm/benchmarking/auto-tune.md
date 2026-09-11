@@ -7,7 +7,7 @@ fetched: 2026-09-06
 
 # vLLM auto_tune.sh
 
-仓库脚本：在 `max-num-seqs` × `max-num-batched-tokens` 网格上找吞吐最高、还能满足约束的那一格。可选约束：P99 e2e 延迟、前缀缓存命中率。它调的是 `optimization.md` 里排在并行之前的那组 batch 参数，不是 TP/DP。
+仓库脚本：在 `max-num-seqs` × `max-num-batched-tokens` 网格上找吞吐最高、还能满足约束的那一格。可选约束：P99 e2e 延迟、前缀缓存命中率。它调的是 [optimization.md](../optimization/optimization.md) 里排在并行之前的那组 batch 参数，不是 TP/DP。
 
 路径里**不要出现 `vllm` 这个词**。脚本会 `pkill -f vllm`，连调参自己一起杀掉。我们用 `tmux` / `screen`，这件事会跑很久。
 
@@ -78,4 +78,4 @@ bash batch_auto_tune.sh runs_config.json [gs://bucket/path]
 
 键名对应上面的变量（小写，脚本会转成大写环境变量）。跑完会**原地改**这份 JSON：补 `run_id`、`status`（`SUCCESS` / `FAILURE` / `WARNING_NO_RESULT_FILE`）、`results`、可选 `gcs_results`。
 
-auto_tune 找到的是这一台机器、这一组 ISL/OSL、这一条 SLA 上的格子。换卡、换上下文，网格作废。把它的赢家当作 `serve.md` 里那两个旗标的起点，而不是永远的真理。
+auto_tune 找到的是这一台机器、这一组 ISL/OSL、这一条 SLA 上的格子。换卡、换上下文，网格作废。把它的赢家当作 [serve.md](../getting-started/serve.md) 里那两个旗标的起点，而不是永远的真理。

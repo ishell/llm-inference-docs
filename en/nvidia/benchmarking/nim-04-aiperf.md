@@ -8,7 +8,7 @@ fetched: 2026-08-30
 
 NVIDIA AIPerf is a client-side generative AI benchmarking tool that reports TTFT, ITL, TPS, RPS, and related metrics. It works with any OpenAI-compatible inference service, including NVIDIA NIM. This section walks through benchmarking a Llama-3 model with AIPerf.
 
-Tool notes (install, formulas, scheduling, five workloads) live in `../tools/`: `aiperf.md`, `aiperf-metrics.md`, `aiperf-load-generator.md`, `aiperf-comprehensive.md`. For metric definitions, see Metrics. For parameter guidance, see Parameters and Best Practices.
+Tool notes (install, formulas, scheduling, five workloads) live in `../tools/`: [aiperf.md](../tools/aiperf.md), [aiperf-metrics.md](../tools/aiperf-metrics.md), [aiperf-load-generator.md](../tools/aiperf-load-generator.md), [aiperf-comprehensive.md](../tools/aiperf-comprehensive.md). For metric definitions, see Metrics. For parameter guidance, see Parameters and Best Practices.
 
 
 Local figures (copyright remains with the original site; study copies):

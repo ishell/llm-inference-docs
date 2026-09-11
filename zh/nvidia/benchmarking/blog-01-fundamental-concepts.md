@@ -41,7 +41,7 @@ Token 是 LLM 的最小处理单位。很多主流模型大约 1 token ≈ 0.75 
 
 **Streaming** 边生成边把 token 块推给用户，聊天体感更快。非流式则整段生成完再返回。
 
-更深的背景：[Mastering LLM Techniques: Inference Optimization](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/)（本地导读在 `../performance-tuning/mastering-llm-techniques.md`）。
+更深的背景：[Mastering LLM Techniques: Inference Optimization](https://developer.nvidia.com/blog/mastering-llm-techniques-inference-optimization/)（本地导读在 [mastering-llm-techniques.md](../performance-tuning/mastering-llm-techniques.md)）。
 
 ## 指标
 

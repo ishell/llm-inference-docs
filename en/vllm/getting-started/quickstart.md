@@ -7,7 +7,7 @@ fetched: 2026-09-04
 # Quickstart — vLLM
 
 Chinese: [zh/vllm/getting-started/quickstart.md](../../../zh/vllm/getting-started/quickstart.md)  
-Knob order: `../optimization/optimization.md`. Perf-related `vllm serve` flags: `serve.md` (the generated CLI page is not copied).
+Knob order: [optimization.md](../optimization/optimization.md). Perf-related `vllm serve` flags: [serve.md](serve.md) (the generated CLI page is not copied).
 
 Linux; Python **3.10–3.13**. Official NVIDIA path uses `uv`:
 
@@ -113,4 +113,4 @@ vllm serve Qwen/Qwen2.5-1.5B-Instruct --attention-backend FLASH_ATTN
 
 Named options on the page: NVIDIA CUDA `FLASH_ATTN` / `FLASHINFER`; ROCm `TRITON_ATTN`, `ROCM_ATTN`, `ROCM_AITER_FA`, `ROCM_AITER_UNIFIED_ATTN`, `TRITON_MLA`, `ROCM_AITER_MLA`, `ROCM_AITER_TRITON_MLA`; Intel XPU `FLASH_ATTN`, `TRITON_ATTN`, `TRITON_MLA`, `XPU_MLA_SPARSE`, `TORCH_SDPA`, `TURBOQUANT`. There are **no** prebuilt vLLM wheels that already contain FlashInfer — install it first ([FlashInfer docs](https://docs.flashinfer.ai/) or repo `docker/Dockerfile`). A wrong backend shows up as worse ITL or a failed start — read which one the log actually loaded.
 
-Next is not more CLI: `optimization.md` (CPU cores → `-O*` → `max_num_batched_tokens` → parallelism and cache).
+Next is not more CLI: [optimization.md](../optimization/optimization.md) (CPU cores → `-O*` → `max_num_batched_tokens` → parallelism and cache).

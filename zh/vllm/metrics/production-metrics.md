@@ -8,7 +8,7 @@ fetched: 2026-09-06
 # 生产指标 — vLLM
 
 英文对照：[en/vllm/metrics/production-metrics.md](../../../en/vllm/metrics/production-metrics.md)  
-这些名字是**怎么算出来的**：`design-metrics.md`。客户端测到的延迟（AIPerf / `vllm bench serve`）在服务进程之外；`/metrics` 是服务端自己报的。两套数字可以对不齐，要对公式，不要只看都叫 TTFT。
+这些名字是**怎么算出来的**：[design-metrics.md](design-metrics.md)。客户端测到的延迟（AIPerf / `vllm bench serve`）在服务进程之外；`/metrics` 是服务端自己报的。两套数字可以对不齐，要对公式，不要只看都叫 TTFT。
 
 OpenAI 兼容 API server 在 `/metrics` 暴露 Prometheus。
 

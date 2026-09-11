@@ -6,7 +6,7 @@ fetched: 2026-08-31
 
 # Paged Attention, IFB, and Request Scheduling
 
-Same machinery as handbook chapter 3 (`trtllm-max-batch.md`), written as a feature page. Figures stay on the official HTML.
+Same machinery as handbook chapter 3 ([trtllm-max-batch.md](trtllm-max-batch.md)), written as a feature page. Figures stay on the official HTML.
 
 
 Local figures (copyright remains with the original site; study copies):
@@ -39,7 +39,7 @@ Current constraint: in the packed tensor, **context sequences must appear before
 
 Do not size `max_num_tokens` to the longest prompt: real prompts are shorter, and IFB generation contributes at most `beam_width` tokens per step. A realistic value leaves memory for KV. Raise it for GPU math; past saturation, TTFT and e2e latency suffer. Meet SLO (TTFT / TPOT), then stop.
 
-Sweep recipe: `trtllm-max-batch.md`.
+Sweep recipe: [trtllm-max-batch.md](trtllm-max-batch.md).
 
 ## Chunked context (chunked prefill)
 
@@ -50,4 +50,4 @@ Split the prompt across iterations so leftover token budget mixes with decode. N
 One cache per transformer layer.
 
 - **Contiguous:** `[max_batch_size * max_beam_width, 2, num_heads, max_seqlen, hidden_dim_per_head]` — short sequences pay for the full seat.
-- **Paged:** a cache manager hands out blocks (`tensorrt_llm.runtime.KVCacheManager`; production is C++ Batch Manager). See `trtllm-kvcache.md`.
+- **Paged:** a cache manager hands out blocks (`tensorrt_llm.runtime.KVCacheManager`; production is C++ Batch Manager). See [trtllm-kvcache.md](trtllm-kvcache.md).
