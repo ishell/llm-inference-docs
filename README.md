@@ -4,7 +4,7 @@
 
 建议从网页首页或下面的阅读顺序读起。怎么把压测、性能测试和调优串起来，见 [zh/GUIDE.md](zh/GUIDE.md)。
 
-目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是官方译本。vLLM 博客全表在 [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md)；带日期的 **129 篇都有中英学习译文**（按原文分节写完，不是压缩 stub）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。NVIDIA 一侧仍是压缩对照，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
+目录里的官方 URL **几乎都有本地笔记**，但不是全文下载、也不是官方译本。vLLM 博客全表在 [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md)；带日期的 **134 篇都有中英学习译文**（按原文分节写完，不是压缩 stub）。[必读列表](zh/vllm/blog/MUST-READ.md) 只排主线 + 机制波次，不必按 CATALOG 逐篇读。`vllm serve` 只摘了性能相关旗标。NVIDIA 一侧仍是压缩对照，篇幅往往短于英文网页。版权也不允许把官方页面原样搬进来。
 
 - `en/` 英文（抓取或摘录）
 - `zh/` 中文（全译、摘译或导读；文件头 `source:` 是原文。书面语、用「我们」讲解，见 [zh/STYLE.md](zh/STYLE.md)。）
@@ -160,7 +160,7 @@ assets/                     # 正文图（与 zh/en 相对路径对齐）
 | blog / serving | [semantic-router](zh/vllm/blog/serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router | 学习译文 |
 | blog / serving | [semantic-router-iris](zh/vllm/blog/serving/semantic-router-iris.md) | https://vllm.ai/blog/2026-01-05-vllm-sr-iris | 学习译文 |
 | blog / serving | [vllm-omni](zh/vllm/blog/serving/vllm-omni.md) | https://vllm.ai/blog/2025-11-30-vllm-omni | 学习译文 |
-| blog | [其余 129 篇](zh/vllm/blog/README.md) | [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md) | 学习译文（按原文分节）；全表见博客 README |
+| blog | [其余 134 篇](zh/vllm/blog/README.md) | [en/vllm/blog/CATALOG.md](en/vllm/blog/CATALOG.md) | 学习译文（按原文分节）；全表见博客 README |
 
 ## 建议阅读顺序
 

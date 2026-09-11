@@ -9,7 +9,7 @@ fetched: 2026-09-06
 
 英文对照：[en/vllm/blog/architecture/hardware-plugin.md](../../../../en/vllm/blog/architecture/hardware-plugin.md)  
 原文：https://vllm.ai/blog/2025-05-12-hardware-plugin  
-2025-05-12。署名 **The Ascend Team on vLLM**。原文没有机制图（只有 logo，本地不搬）。Hardware Pluggable RFC：[issue #11162](https://github.com/vllm-project/vllm/issues/11162)，自 **2024 年 12 月** 起和昇腾一起做。落地仓库：[vllm-ascend](https://github.com/vllm-project/vllm-ascend)、[vllm-spyre](https://github.com/vllm-project/vllm-spyre)。更宽的插件故事是半年后的 [plugin-system](plugin-system.md)。
+2025-05-12。署名 **The Ascend Team on vLLM**。原文没有机制图（只有 logo，本地不搬）。Hardware Pluggable RFC：[issue #11162](https://github.com/vllm-project/vllm/issues/11162)，自 **2024 年 12 月** 起和昇腾一起做。落地仓库：[vllm-ascend](https://github.com/vllm-project/vllm-ascend)、[vllm-spyre](https://github.com/vllm-project/vllm-spyre)。更宽的插件故事是半年后的 [plugin-system](plugin-system.md)。Tenstorrent mesh 案例：[tt-plugin.md](tt-plugin.md)。
 
 RFC 要办的事：硬件用**解耦**的方式进 vLLM——快、按模块长，而不是在主干上打补丁。
 

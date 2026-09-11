@@ -5,7 +5,7 @@
 - Full machine table: [CATALOG.md](CATALOG.md) from https://vllm.ai/llms.txt  
   Hub: https://vllm.ai/blog · RSS: https://vllm.ai/blog/rss.xml
 
-Dated CATALOG posts **129/129** have Chinese + English study notes (section-complete extracts, not official HTML). Tag pages / RSS are not articles.
+Dated CATALOG posts **134/134** have Chinese + English study notes (section-complete extracts, not official HTML). Tag pages / RSS are not articles.
 
 | Folder | File | Source |
 |---|---|---|
@@ -32,6 +32,7 @@ Dated CATALOG posts **129/129** have Chinese + English study notes (section-comp
 | architecture | [torch-compile.md](architecture/torch-compile.md) | https://vllm.ai/blog/2025-08-20-torch-compile |
 | architecture | [transformers-backend.md](architecture/transformers-backend.md) | https://vllm.ai/blog/2025-04-11-transformers-backend |
 | architecture | [triton-attn.md](architecture/triton-attn.md) | https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive |
+| architecture | [tt-plugin.md](architecture/tt-plugin.md) | https://vllm.ai/blog/2026-09-07-vllm-tt-plugin |
 | architecture | [v1-alpha.md](architecture/v1-alpha.md) | https://vllm.ai/blog/2025-01-27-v1-alpha-release |
 | architecture | [vllm-2024-wrapped.md](architecture/vllm-2024-wrapped.md) | https://vllm.ai/blog/2025-01-10-vllm-2024-wrapped-2025-vision |
 | architecture | [vllm-tpu.md](architecture/vllm-tpu.md) | https://vllm.ai/blog/2025-10-16-vllm-tpu |
@@ -47,6 +48,7 @@ Dated CATALOG posts **129/129** have Chinese + English study notes (section-comp
 | performance | [gpt-oss-optimizations.md](performance/gpt-oss-optimizations.md) | https://vllm.ai/blog/2026-02-01-gpt-oss-optimizations |
 | performance | [hpc-ops.md](performance/hpc-ops.md) | https://vllm.ai/blog/2026-07-06-vllm-hpc-ops |
 | performance | [laguna-xs2.md](performance/laguna-xs2.md) | https://vllm.ai/blog/2026-05-28-laguna-xs2-dflash-llm-compressor |
+| performance | [minimax-m3-mi355x.md](performance/minimax-m3-mi355x.md) | https://vllm.ai/blog/2026-09-10-minimax-m3-mi355x |
 | performance | [p-eagle.md](performance/p-eagle.md) | https://vllm.ai/blog/2026-03-13-p-eagle |
 | performance | [parallel-drafting.md](performance/parallel-drafting.md) | https://vllm.ai/blog/2026-07-28-speculators-parallel-drafting |
 | performance | [production-quality.md](performance/production-quality.md) | https://vllm.ai/blog/2026-07-16-keeping-vllm-production-quality |
@@ -60,6 +62,7 @@ Dated CATALOG posts **129/129** have Chinese + English study notes (section-comp
 | performance | [v0.6-throughput.md](performance/v0.6-throughput.md) | https://vllm.ai/blog/2024-09-05-perf-update |
 | serving | [afd.md](serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin |
 | serving | [agent-lightning.md](serving/agent-lightning.md) | https://vllm.ai/blog/2025-10-22-agent-lightning |
+| serving | [agentx.md](serving/agentx.md) | https://vllm.ai/blog/2026-09-08-vllm-agentx |
 | serving | [aibrix.md](serving/aibrix.md) | https://vllm.ai/blog/2025-02-21-aibrix-release |
 | serving | [bitwise-rl.md](serving/bitwise-rl.md) | https://vllm.ai/blog/2025-11-10-bitwise-consistent-train-inference |
 | serving | [deeplearning-ai-course.md](serving/deeplearning-ai-course.md) | https://vllm.ai/blog/2026-06-03-deeplearning-ai-vllm-course |
@@ -72,6 +75,7 @@ Dated CATALOG posts **129/129** have Chinese + English study notes (section-comp
 | serving | [gemma4.md](serving/gemma4.md) | https://vllm.ai/blog/2026-04-02-gemma4 |
 | serving | [glm45.md](serving/glm45.md) | https://vllm.ai/blog/2025-08-19-glm45-vllm |
 | serving | [glm52-b300.md](serving/glm52-b300.md) | https://vllm.ai/blog/2026-07-23-glm-5.2-nvfp4-b300-pd |
+| serving | [glm53-hisparse.md](serving/glm53-hisparse.md) | https://vllm.ai/blog/2026-09-08-glm53-part1-hybrid-sparse-offloading |
 | serving | [gpt-oss.md](serving/gpt-oss.md) | https://vllm.ai/blog/2025-08-05-gpt-oss |
 | serving | [halugate.md](serving/halugate.md) | https://vllm.ai/blog/2025-12-14-halugate |
 | serving | [hybrid-ssm.md](serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg |
@@ -131,6 +135,7 @@ Dated CATALOG posts **129/129** have Chinese + English study notes (section-comp
 | serving | [semantic-router.md](serving/semantic-router.md) | https://vllm.ai/blog/2025-09-11-semantic-router |
 | serving | [shm-ipc.md](serving/shm-ipc.md) | https://vllm.ai/blog/2025-11-13-shm-ipc-cache |
 | serving | [streaming-realtime.md](serving/streaming-realtime.md) | https://vllm.ai/blog/2026-01-31-streaming-realtime |
+| serving | [tiered-kv-offload.md](serving/tiered-kv-offload.md) | https://vllm.ai/blog/2026-09-10-tiered-kv-offloading |
 | serving | [tilert.md](serving/tilert.md) | https://vllm.ai/blog/2026-07-14-vllm-tilert-pd |
 | serving | [verl-omni-v020.md](serving/verl-omni-v020.md) | https://vllm.ai/blog/2026-08-20-verl-omni-v0-2-0 |
 | serving | [verl-omni.md](serving/verl-omni.md) | https://vllm.ai/blog/2026-05-14-verl-omni |

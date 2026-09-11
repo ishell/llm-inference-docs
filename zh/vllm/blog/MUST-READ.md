@@ -49,7 +49,7 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 
 ## 第二波（机制，必读之后）
 
-主线走完再读。不是 day-0 模型文。顺序：torch.compile → Sleep Mode → structured decoding → DCP → KV offload → 单机 P/D（MORI-IO）→ Hybrid SSM → AFD。
+主线走完再读。不是 day-0 模型文。顺序：torch.compile → Sleep Mode → structured decoding → DCP → KV offload → 分层 KV → 单机 P/D（MORI-IO）→ Hybrid SSM → AFD。
 
 | 文 | 本地 | URL |
 |---|---|---|
@@ -58,18 +58,20 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 | Structured decoding | [struct-decode.md](performance/struct-decode.md) | https://vllm.ai/blog/2025-01-14-struct-decode-intro |
 | Decode Context Parallelism | [dcp.md](performance/dcp.md) | https://vllm.ai/blog/2026-08-07-decode-context-parallelism |
 | KV offloading connector | [kv-offload.md](serving/kv-offload.md) | https://vllm.ai/blog/2026-01-08-kv-offloading-connector |
+| 分层 KV offload | [tiered-kv-offload.md](serving/tiered-kv-offload.md) | https://vllm.ai/blog/2026-09-10-tiered-kv-offloading |
 | 单机 P/D（MORI-IO） | [moriio.md](serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector |
 | Hybrid SSM 分离 | [hybrid-ssm.md](serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg |
 | AFD Plugin | [afd.md](serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin |
 
 ## 第三波（插件 / KV 池 / 量化 / RL）
 
-第二波之后。仍不是 day-0。顺序：插件 → 硬件插件 → Triton attention → SHM IPC → PegaFlow → TurboQuant → Native RL → Ray symmetric-run。
+第二波之后。仍不是 day-0。顺序：插件 → 硬件插件 → Tenstorrent TT → Triton attention → SHM IPC → PegaFlow → TurboQuant → Native RL → Ray symmetric-run。
 
 | 文 | 本地 | URL |
 |---|---|---|
 | 插件系统 | [plugin-system.md](architecture/plugin-system.md) | https://vllm.ai/blog/2025-11-20-vllm-plugin-system |
 | Hardware plugin | [hardware-plugin.md](architecture/hardware-plugin.md) | https://vllm.ai/blog/2025-05-12-hardware-plugin |
+| Tenstorrent TT 插件 | [tt-plugin.md](architecture/tt-plugin.md) | https://vllm.ai/blog/2026-09-07-vllm-tt-plugin |
 | Triton attention | [triton-attn.md](architecture/triton-attn.md) | https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive |
 | SHM IPC cache | [shm-ipc.md](serving/shm-ipc.md) | https://vllm.ai/blog/2025-11-13-shm-ipc-cache |
 | PegaFlow | [pegaflow.md](serving/pegaflow.md) | https://vllm.ai/blog/2026-05-18-pegaflow |
@@ -120,11 +122,12 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口。EPD 那篇是 *
 
 ## 其余 CATALOG（已齐，按需）
 
-带日期的博客 **129/129** 都有按原文分节写完的学习译文。全表：[README.md](README.md)。不必按波次读完。下面几簇机制含量高，主线走完再抽：
+带日期的博客 **134/134** 都有按原文分节写完的学习译文。全表：[README.md](README.md)。不必按波次读完。下面几簇机制含量高，主线走完再抽：
 
 - Omni / TTS / 扩散 RL：`minimax-h3`、`omni-tts`、`omni-diffusion-cache`、`omni-autoround`、`qwen3-omni`、`omni-layerwise-offload`、`verl-omni`、`verl-omni-v020`
+- Agent serving：`agentx`、`glm53-hisparse`
 - RL 对齐：`vime`、`vime-rocm`、`openrlhf`（第四波已列）
-- Pareto / 硬件：`qwen35-25k-tps`、`glm52-b300`、`hpc-ops`、`gb300-deepseek`、`gpt-oss-optimizations`、`blackwell-inferencemax`、`artificial-analysis`、`eagle3-amd`
+- Pareto / 硬件：`qwen35-25k-tps`、`glm52-b300`、`minimax-m3-mi355x`、`hpc-ops`、`gb300-deepseek`、`gpt-oss-optimizations`、`blackwell-inferencemax`、`artificial-analysis`、`eagle3-amd`
 - Day-0 / 社区：Nemotron 3 系、Gemma 4、Llama 3.1/4、gpt-oss 上手、meetup、playground、vllm.ai 网站
 
 Semantic Router 后续（signal / HaluGate / Athena / Themis / MoM / Fusion / session）在 `serving/semantic-router-*.md`。

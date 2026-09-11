@@ -8,7 +8,7 @@ fetched: 2026-09-04
 
 Chinese: [zh/vllm/blog/architecture/hardware-plugin.md](../../../../zh/vllm/blog/architecture/hardware-plugin.md)
 
-2025-05-12. Author on the page: **The Ascend Team on vLLM**. No figures in the original (logo only — not copied). Hardware Pluggable RFC: [#11162](https://github.com/vllm-project/vllm/issues/11162), joint work with the Ascend team **since December 2024**. Proof in-tree of the idea: [vllm-ascend](https://github.com/vllm-project/vllm-ascend), [vllm-spyre](https://github.com/vllm-project/vllm-spyre). The later, broader plugin story is [plugin-system.md](plugin-system.md).
+2025-05-12. Author on the page: **The Ascend Team on vLLM**. No figures in the original (logo only — not copied). Hardware Pluggable RFC: [#11162](https://github.com/vllm-project/vllm/issues/11162), joint work with the Ascend team **since December 2024**. Proof in-tree of the idea: [vllm-ascend](https://github.com/vllm-project/vllm-ascend), [vllm-spyre](https://github.com/vllm-project/vllm-spyre). The later, broader plugin story is [plugin-system.md](plugin-system.md). Tenstorrent mesh case study: [tt-plugin.md](tt-plugin.md).
 
 The RFC's claim: hardware can join vLLM **decoupled** — rapid, modular support instead of patches in core.
 

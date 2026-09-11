@@ -23,18 +23,20 @@ The optimization page is the polite order of knobs. The blogs are how those knob
 | `--enable-elastic-ep` | (blog) | [Elastic EP](serving/elastic-ep.md) | Resize DP at runtime. Then: TP=1, no DBO, Ray only. |
 | Text P/D | deploy | [Router](serving/router.md), Wide-EP | One fat prefill can stall the EP combine. |
 | `mm_encoder_tp_mode="data"`, MM caches | encoder DP; multimodal cache | [EPD](serving/epd.md) | Single-node batch-split the ViT; cluster moves it to another building. |
-| KVConnector / external KV | (blog) | Mooncake, [KV offload](serving/kv-offload.md), [MORI-IO](serving/moriio.md), [PegaFlow](serving/pegaflow.md), production-stack | Same door: DRAM, cluster pool, in-node RDMA, standalone Rust daemon. |
+| KVConnector / external KV | (blog) | Mooncake, [KV offload](serving/kv-offload.md), [tiered KV](serving/tiered-kv-offload.md), [MORI-IO](serving/moriio.md), [PegaFlow](serving/pegaflow.md), production-stack | Same door: DRAM, tiered disk/object/P2P, cluster pool, in-node RDMA, standalone Rust daemon. |
 | `--api-server-count`, CPU cores | API scale-out; CPU | v0.6, Anatomy | V1 is multiprocess; starved CPU looks like idle GPU. |
 | Ship quality | CI | [production CI](performance/production-quality.md) | Nightly benches, many accelerators, two-week trains. |
 | `--enable-sleep-mode` | (blog) | [Sleep Mode](architecture/sleep-mode.md) | Swap models without killing the process; L1→CPU, L2 drop weights. |
 | guided / structured decoding | sampling | [structured decoding](performance/struct-decode.md) | Schema as logit masks; JSON / tool-call fence. |
 | `-dcp` / `--decode-context-parallel-size` | parallelism; serve CLI | [DCP](performance/dcp.md) | Shard decode KV by sequence; MLA vs GQA constraints. |
 | `--kv_offloading_*` | next layer after preemption | [KV offload](serving/kv-offload.md) | Async CPU offload instead of RECOMPUTE. |
+| `TieringOffloadingSpec` / `secondary_tiers` | (blog) | [tiered KV](serving/tiered-kv-offload.md) | Host primary; fs / obj / p2p secondary. Since v0.22. |
+| `hisparse_config.host_pool_gib` | (blog) | [GLM 5.3 HiSparse](serving/glm53-hisparse.md) | Pressure-driven sparse-MLA offload; planned v0.30, NVIDIA only. |
 | Hybrid SSM P/D | (blog) | [Hybrid SSM](serving/hybrid-ssm.md) | Two NIXL descriptor views on one tensor. |
 | AFD / Attention-FFN split | (plugin) | [AFD](serving/afd.md) | Split MoE layer services; experimental; ratio decides. |
 | Single-node P/D | (blog) | [MORI-IO](serving/moriio.md) | Split inside one 8-GPU box; write mode wins TTFT. |
 | `mm_processor_cache_type="shm"` | multimodal cache | [SHM IPC](serving/shm-ipc.md) | Big images in shared memory, not recopied over IPC. |
-| Hardware / platform plugins | (blog) | [plugins](architecture/plugin-system.md), [hardware plugin](architecture/hardware-plugin.md) | Custom scheduler or a new accelerator without a fork. |
+| Hardware / platform plugins | (blog) | [plugins](architecture/plugin-system.md), [hardware plugin](architecture/hardware-plugin.md), [TT plugin](architecture/tt-plugin.md) | Custom scheduler or a new accelerator without a fork. Tenstorrent uses `MESH_DEVICE` and rejects `-tp`/`-pp`. |
 | Attention backend | auto-select | [Triton attention](architecture/triton-attn.md) | ROCm default; portable fallback when FA is missing. |
 | `turboquant_*` | `--kv-cache-dtype` | [TurboQuant](performance/turboquant.md) | Read the bake-off; production default stays FP8. |
 | Weight sync / `pause keep` | (RL) | [Native RL](serving/native-rl.md) | Stop patching workers per framework; two-phase DPEP pause. |
@@ -56,6 +58,7 @@ The optimization page is the polite order of knobs. The blogs are how those knob
 | `--omni`, `cache_backend` | Omni | [Omni](serving/vllm-omni.md), [diffusion cache](serving/omni-diffusion-cache.md), [TTS](serving/omni-tts.md) | Text TTFT ≠ audio TTFP; cache eats timestep redundancy. |
 | `--attention-backend HPC_ATTN`, `--moe-backend hpc` | backend | [HPC-Ops](performance/hpc-ops.md) | Then Hy3 / FP8 / Hopper, not a universal default. |
 | `VLLM_USE_V2_MODEL_RUNNER=1` | MoE runtime | [GLM-5.2 SLA](serving/glm52-b300.md), [MRV2](architecture/mrv2.md) | Dense already defaults V2; MoE must opt in. |
-| `--block-size 128` (MSA) | long context | [MiniMax M3](serving/minimax-m3.md) | Matches sparse 128-token blocks; not an arbitrary cache size. |
+| `--block-size 128` (MSA) | long context | [MiniMax M3](serving/minimax-m3.md), [MI355X](performance/minimax-m3-mi355x.md) | Matches sparse 128-token blocks; not an arbitrary cache size. |
+| `--long-prefill-token-threshold`, `--prefill-schedule-interval` | (blog) | [AgentX](serving/agentx.md) | Break HOL blocking; coalesce prefills onto the same DEP steps. |
 
 NVIDIA sibling map: TensorRT-LLM sharding chapter. Official CLI once wrote `--tp_size` twice; PP is `--pp_size`.

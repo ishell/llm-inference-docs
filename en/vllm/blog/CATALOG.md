@@ -1,7 +1,7 @@
 ---
 source: https://vllm.ai/llms.txt
 lang: en
-fetched: 2026-09-05
+fetched: 2026-09-11
 ---
 
 # vLLM
@@ -18,6 +18,11 @@ fetched: 2026-09-05
 
 ## Blog posts
 
+- [Following the Bottleneck: Optimizing MiniMax M3 on AMD Instinct MI355X](https://vllm.ai/blog/2026-09-10-minimax-m3-mi355x): A performance model for LLM serving: inspect local shapes, remove repeated work, verify data movement and dispatch, then follow the queue.
+- [Tiered KV Cache Offloading in vLLM](https://vllm.ai/blog/2026-09-10-tiered-kv-offloading): A host-centric framework for scaling KV cache across host memory, filesystems, object stores, and remote peers — reducing recomputation and increasing serving capacity.
+- [GLM 5.3 Optimizations, Part 1: Hybrid HiSparse Offloading in vLLM](https://vllm.ai/blog/2026-09-08-glm53-part1-hybrid-sparse-offloading): vLLM integrates HiSparse as a pressure-driven memory tier that composes with the Hybrid Memory Allocator and KV offloading, letting GLM 5.3 requests keep decoding when their KV no longer fits in GPU memory, so concurrency stays high.
+- [vLLM x AgentX: Optimizing for Real-World Agentic Serving](https://vllm.ai/blog/2026-09-08-vllm-agentx): How vLLM optimizes KV cache management, parallelism, scheduling, and P/D disaggregation for agentic workloads, validated on SemiAnalysis AgentX with up to 130K tokens per GPU-second and a 14.6x-106x serving-cost advantage over Opus 5.
+- [Serving LLMs on Tenstorrent Hardware: Inside the vLLM TT Plugin](https://vllm.ai/blog/2026-09-07-vllm-tt-plugin): Tenstorrent accelerators join vLLM as an out-of-tree platform plugin, driven by mesh-architecture choices: phase-based scheduling, single-process data parallelism on Galaxy, on-device sampling with host fallback, and async decode overlap.
 - [MiniMax H3 on vLLM-Omni: From System-Wide Optimization to Real-Time Serving with FastVideo’s FastH3](https://vllm.ai/blog/2026-09-01-minimax-h3-production-serving): How vLLM-Omni optimizes and scales the complete MiniMax H3 stack, then integrates FastVideo’s four-step FastH3 for generation faster than playback.
 - [Exploring Speculative Decoding in vLLM on AMD GPUs](https://vllm.ai/blog/2026-08-23-speculative-decoding-amd-gpus): A practical guide to speculative decoding in vLLM on AMD GPUs, covering draft-and-verify mechanics, MTP, EAGLE-3, DFlash, DSpark, configuration, tuning, and benchmark results.
 - [Large-Scale Sharded Weight Transfer with Ray Direct Transport (RDT) in vLLM](https://vllm.ai/blog/2026-08-22-rdt-weight-transfer): We implement a native sharded weight transfer engine in vLLM utilizing Ray Direct Transport (RDT), achieving weight transfer for the Kimi K2 model in BF16 on 48 8xH100 nodes in 7.53s

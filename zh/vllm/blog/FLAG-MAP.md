@@ -27,18 +27,20 @@ fetched: 2026-09-06
 | `--enable-elastic-ep` | （博客） | [Elastic EP](serving/elastic-ep.md) | 运行时改 DP 个数；当时 TP=1、无 DBO、Ray only。 |
 | P/D 分离（文本） | 部署 | [Router](serving/router.md)、Wide-EP | 一条胖 prefill 能拖住整组 EP。 |
 | `mm_encoder_tp_mode="data"`、多模态 cache | Encoder DP；多模态缓存 | [EPD](serving/epd.md) | 单机按 batch 切编码器；集群把 ViT 拆到另一组节点。 |
-| KVConnector / 外置 KV | （博客） | Mooncake、[KV offload](serving/kv-offload.md)、[MORI-IO](serving/moriio.md)、[PegaFlow](serving/pegaflow.md)、production-stack | 同一套接口：本机 DRAM、集群池、单机 RDMA、独立 Rust 守护进程。 |
+| KVConnector / 外置 KV | （博客） | Mooncake、[KV offload](serving/kv-offload.md)、[分层 KV](serving/tiered-kv-offload.md)、[MORI-IO](serving/moriio.md)、[PegaFlow](serving/pegaflow.md)、production-stack | 同一套接口：本机 DRAM、分层盘/对象/P2P、集群池、单机 RDMA、独立 Rust 守护进程。 |
 | `--api-server-count`、CPU 核 | API 横向扩展；CPU 资源 | [v0.6](performance/v0.6-throughput.md)、Anatomy | V1 多进程；核不够时 GPU 在等 CPU。 |
 | 生产是否可发 | CI / 发布节奏 | [生产级 CI](performance/production-quality.md) | 夜测、多加速器、两周发布。 |
 | `--enable-sleep-mode` | （博客） | [Sleep Mode](architecture/sleep-mode.md) | 换模型不拆进程；L1 卸 CPU，L2 丢权重。 |
 | guided / structured decoding | sampling | [structured decoding](performance/struct-decode.md) | schema 当 logit mask；JSON / tool-call 的约束。 |
 | `-dcp` / `--decode-context-parallel-size` | 并行；serve CLI | [DCP](performance/dcp.md) | 按序列切 decode KV；MLA/GQA 约束不同。 |
 | `--kv_offloading_*` | Preemption 的下一层 | [KV offload](serving/kv-offload.md) | 异步卸到 CPU，避免 RECOMPUTE。 |
+| `TieringOffloadingSpec` / `secondary_tiers` | （博客） | [分层 KV](serving/tiered-kv-offload.md) | Host 主键；fs / obj / p2p 二级层。v0.22 起。 |
+| `hisparse_config.host_pool_gib` | （博客） | [GLM 5.3 HiSparse](serving/glm53-hisparse.md) | 稀疏 MLA 按压力卸冷 KV；当时计划 v0.30，NVIDIA only。 |
 | 混合 SSM 的 P/D | （博客） | [Hybrid SSM](serving/hybrid-ssm.md) | FA 与 Mamba 两套 NIXL 描述符。 |
 | AFD / Attention-FFN 分离 | （插件） | [AFD](serving/afd.md) | MoE 层内拆服务；实验性，配比决定输赢。 |
 | 单机 P/D | （博客） | [MORI-IO](serving/moriio.md) | 8 卡机器里也能拆；Write 默认更好 TTFT。 |
 | `mm_processor_cache_type="shm"` | 多模态缓存 | [SHM IPC](serving/shm-ipc.md) | 大图走共享内存，别在进程间复印。 |
-| 硬件 / 平台插件 | （博客） | [插件](architecture/plugin-system.md)、[hardware plugin](architecture/hardware-plugin.md) | 改调度或换卡，不必养 fork。 |
+| 硬件 / 平台插件 | （博客） | [插件](architecture/plugin-system.md)、[hardware plugin](architecture/hardware-plugin.md)、[TT 插件](architecture/tt-plugin.md) | 改调度或换卡，不必养 fork。Tenstorrent 用 `MESH_DEVICE`，拒绝 `-tp`/`-pp`。 |
 | Attention backend | 自动选择 | [Triton attention](architecture/triton-attn.md) | ROCm 默认；CUDA 上 FA 缺席时的便携路径。 |
 | `turboquant_*` | `--kv-cache-dtype` | [TurboQuant](performance/turboquant.md) | 先读对照；生产默认仍是 FP8。 |
 | 权重同步 / `pause keep` | （RL） | [Native RL](serving/native-rl.md) | 别再给每家框架补 worker；DPEP 两阶段 pause。 |
@@ -60,6 +62,7 @@ fetched: 2026-09-06
 | `--omni`、`cache_backend` | Omni | [Omni](serving/vllm-omni.md)、[扩散 cache](serving/omni-diffusion-cache.md)、[TTS](serving/omni-tts.md) | 文本 TTFT ≠ 音频 TTFP；cache 吃时间冗余。 |
 | `--attention-backend HPC_ATTN`、`--moe-backend hpc` | backend | [HPC-Ops](performance/hpc-ops.md) | 当时 Hy3 / FP8 / Hopper，不是通用默认。 |
 | `VLLM_USE_V2_MODEL_RUNNER=1` | MoE 运行时 | [GLM-5.2 SLA](serving/glm52-b300.md)、[MRV2](architecture/mrv2.md) | dense 已默认 V2；MoE 要显式开。 |
-| `--block-size 128`（MSA） | 长上下文 | [MiniMax M3](serving/minimax-m3.md) | 对齐稀疏 attention 的 128-token 块，不是随便选。 |
+| `--block-size 128`（MSA） | 长上下文 | [MiniMax M3](serving/minimax-m3.md)、[MI355X](performance/minimax-m3-mi355x.md) | 对齐稀疏 attention 的 128-token 块，不是随便选。 |
+| `--long-prefill-token-threshold`、`--prefill-schedule-interval` | （博客） | [AgentX](serving/agentx.md) | 拆头阻塞；DEP 上把 Prefill 收拢到同一批步。 |
 
 NVIDIA 侧同一张切卡地图：[trtllm-sharding](../../nvidia/performance-tuning/trtllm-sharding.md)。官方 sharding CLI 有一处把 `--tp_size` 写了两次、PP 应为 `--pp_size`，那章里注过。

@@ -48,7 +48,7 @@ Knob map: [FLAG-MAP.md](FLAG-MAP.md) (`optimization.md` flags → these posts).
 
 ## Second wave (mechanics, after the main line)
 
-Not day-0 model posts. Order: torch.compile → Sleep Mode → structured decoding → DCP → KV offload → single-node P/D (MORI-IO) → Hybrid SSM → AFD.
+Not day-0 model posts. Order: torch.compile → Sleep Mode → structured decoding → DCP → KV offload → tiered KV → single-node P/D (MORI-IO) → Hybrid SSM → AFD.
 
 | Post | Local | URL |
 |---|---|---|
@@ -57,18 +57,20 @@ Not day-0 model posts. Order: torch.compile → Sleep Mode → structured decodi
 | Structured decoding | [struct-decode.md](performance/struct-decode.md) | https://vllm.ai/blog/2025-01-14-struct-decode-intro |
 | Decode Context Parallelism | [dcp.md](performance/dcp.md) | https://vllm.ai/blog/2026-08-07-decode-context-parallelism |
 | KV offloading connector | [kv-offload.md](serving/kv-offload.md) | https://vllm.ai/blog/2026-01-08-kv-offloading-connector |
+| Tiered KV offload | [tiered-kv-offload.md](serving/tiered-kv-offload.md) | https://vllm.ai/blog/2026-09-10-tiered-kv-offloading |
 | Single-node P/D (MORI-IO) | [moriio.md](serving/moriio.md) | https://vllm.ai/blog/2026-04-07-moriio-kv-connector |
 | Hybrid SSM disagg | [hybrid-ssm.md](serving/hybrid-ssm.md) | https://vllm.ai/blog/2026-04-21-hybrid-ssm-disagg |
 | AFD Plugin | [afd.md](serving/afd.md) | https://vllm.ai/blog/2026-07-23-vllm-afd-plugin |
 
 ## Third wave (plugins / KV pool / quant / RL)
 
-After the second wave. Still not day-0. Order: plugins → hardware plugin → Triton attention → SHM IPC → PegaFlow → TurboQuant → Native RL → Ray symmetric-run.
+After the second wave. Still not day-0. Order: plugins → hardware plugin → Tenstorrent TT → Triton attention → SHM IPC → PegaFlow → TurboQuant → Native RL → Ray symmetric-run.
 
 | Post | Local | URL |
 |---|---|---|
 | Plugin system | [plugin-system.md](architecture/plugin-system.md) | https://vllm.ai/blog/2025-11-20-vllm-plugin-system |
 | Hardware plugin | [hardware-plugin.md](architecture/hardware-plugin.md) | https://vllm.ai/blog/2025-05-12-hardware-plugin |
+| Tenstorrent TT plugin | [tt-plugin.md](architecture/tt-plugin.md) | https://vllm.ai/blog/2026-09-07-vllm-tt-plugin |
 | Triton attention | [triton-attn.md](architecture/triton-attn.md) | https://vllm.ai/blog/2026-03-04-vllm-triton-backend-deep-dive |
 | SHM IPC cache | [shm-ipc.md](serving/shm-ipc.md) | https://vllm.ai/blog/2025-11-13-shm-ipc-cache |
 | PegaFlow | [pegaflow.md](serving/pegaflow.md) | https://vllm.ai/blog/2026-05-18-pegaflow |
@@ -119,11 +121,12 @@ After wave 4. Order: AMD spec → RDT weights → IsoExec → bitwise RL → tok
 
 ## Rest of CATALOG (complete; optional)
 
-Dated posts **129/129** have section-complete study notes. Full table: [README.md](README.md). Do not read them as another must-read wave. High-signal clusters after the main line:
+Dated posts **134/134** have section-complete study notes. Full table: [README.md](README.md). Do not read them as another must-read wave. High-signal clusters after the main line:
 
 - Omni / TTS / diffusion RL: `minimax-h3`, `omni-tts`, `omni-diffusion-cache`, `omni-autoround`, `qwen3-omni`, `omni-layerwise-offload`, `verl-omni`, `verl-omni-v020`
+- Agent serving: `agentx`, `glm53-hisparse`
 - RL alignment: `vime`, `vime-rocm`
-- Pareto / hardware: `qwen35-25k-tps`, `glm52-b300`, `hpc-ops`, `gb300-deepseek`, `gpt-oss-optimizations`, `blackwell-inferencemax`, `artificial-analysis`, `eagle3-amd`
+- Pareto / hardware: `qwen35-25k-tps`, `glm52-b300`, `minimax-m3-mi355x`, `hpc-ops`, `gb300-deepseek`, `gpt-oss-optimizations`, `blackwell-inferencemax`, `artificial-analysis`, `eagle3-amd`
 - Day-0 / community: Nemotron 3 family, Gemma 4, Llama 3.1/4, gpt-oss getting-started, meetups, playground, vllm.ai website
 
 Semantic Router follow-ons live under `serving/semantic-router-*.md`.

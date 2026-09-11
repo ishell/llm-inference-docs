@@ -100,7 +100,7 @@ NIM 手册可以插在 1 和 2 之间：[总览](nvidia/benchmarking/nim-01-over
 
 ## vLLM 博客（必读线）
 
-文档页给出调优顺序。博客说明这些选项是怎么长出来的。完整顺序在 [MUST-READ](vllm/blog/MUST-READ.md)。CATALOG 里 129 篇带日期的都有中英对照学习笔记（按原文分节写完），但 **不必按全表逐篇读**；day-0 和活动文不是这条线。
+文档页给出调优顺序。博客说明这些选项是怎么长出来的。完整顺序在 [MUST-READ](vllm/blog/MUST-READ.md)。CATALOG 里 134 篇带日期的都有中英对照学习笔记（按原文分节写完），但 **不必按全表逐篇读**；day-0 和活动文不是这条线。
 
 V1 / spec-decode 文中的「还不支持」是当时的缺口，不是今天的功能表。EPD 那篇是把 **视觉编码器**拆出去；文本 Prefill/Decode 分离在 Router 与大规模两篇。Mooncake 是跨实例 KV 池（agent 前缀）；Elastic EP 是运行时改 DP 宽度。
 
@@ -110,6 +110,6 @@ V1 / spec-decode 文中的「还不支持」是当时的缺口，不是今天的
 
 **Serving：** [分布式切分](vllm/blog/serving/distributed-inference.md) → [production-stack](vllm/blog/serving/production-stack.md) / [AIBrix](vllm/blog/serving/aibrix.md) → [Router](vllm/blog/serving/router.md) → [Encoder 分离](vllm/blog/serving/epd.md) → [Wide-EP](vllm/blog/serving/large-scale.md) → [Mooncake](vllm/blog/serving/mooncake.md) → [Elastic EP](vllm/blog/serving/elastic-ep.md)
 
-**第二波（机制）：** [torch.compile](vllm/blog/architecture/torch-compile.md) → [Sleep](vllm/blog/architecture/sleep-mode.md) → [structured decoding](vllm/blog/performance/struct-decode.md) → [DCP](vllm/blog/performance/dcp.md) → [KV offload](vllm/blog/serving/kv-offload.md) → [MORI-IO](vllm/blog/serving/moriio.md) → [Hybrid SSM](vllm/blog/serving/hybrid-ssm.md) → [AFD](vllm/blog/serving/afd.md)
+**第二波（机制）：** [torch.compile](vllm/blog/architecture/torch-compile.md) → [Sleep](vllm/blog/architecture/sleep-mode.md) → [structured decoding](vllm/blog/performance/struct-decode.md) → [DCP](vllm/blog/performance/dcp.md) → [KV offload](vllm/blog/serving/kv-offload.md) → [分层 KV](vllm/blog/serving/tiered-kv-offload.md) → [MORI-IO](vllm/blog/serving/moriio.md) → [Hybrid SSM](vllm/blog/serving/hybrid-ssm.md) → [AFD](vllm/blog/serving/afd.md)
 
-**第三波：** [插件](vllm/blog/architecture/plugin-system.md) → [硬件插件](vllm/blog/architecture/hardware-plugin.md) → [Triton attention](vllm/blog/architecture/triton-attn.md) → [SHM IPC](vllm/blog/serving/shm-ipc.md) → [PegaFlow](vllm/blog/serving/pegaflow.md) → [TurboQuant](vllm/blog/performance/turboquant.md) → [Native RL](vllm/blog/serving/native-rl.md) → [Ray symmetric-run](vllm/blog/serving/ray-symmetric.md)
+**第三波：** [插件](vllm/blog/architecture/plugin-system.md) → [硬件插件](vllm/blog/architecture/hardware-plugin.md) → [TT 插件](vllm/blog/architecture/tt-plugin.md) → [Triton attention](vllm/blog/architecture/triton-attn.md) → [SHM IPC](vllm/blog/serving/shm-ipc.md) → [PegaFlow](vllm/blog/serving/pegaflow.md) → [TurboQuant](vllm/blog/performance/turboquant.md) → [Native RL](vllm/blog/serving/native-rl.md) → [Ray symmetric-run](vllm/blog/serving/ray-symmetric.md)

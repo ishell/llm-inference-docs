@@ -10,7 +10,7 @@ fetched: 2026-09-06
 英文对照：[en/vllm/blog/serving/kv-offload.md](../../../../en/vllm/blog/serving/kv-offload.md)  
 原文：https://vllm.ai/blog/2026-01-08-kv-offloading-connector
 
-2026-01-08。Or Ozeri、Danny Harnik（IBM Research 的 vLLM 团队）。学习译文，不是官方译本。功能随 **vLLM 0.11.0** 进来；**0.12.0** 因物理块变大，性能跳了一档。和 [Mooncake](mooncake.md) 同一扇 **KVConnector** 门：一个寄存在本机 DRAM，一个放到集群池。这篇把笔墨放在 **CPU DRAM**，以及 host↔device 怎么搬。
+2026-01-08。Or Ozeri、Danny Harnik（IBM Research 的 vLLM 团队）。学习译文，不是官方译本。功能随 **vLLM 0.11.0** 进来；**0.12.0** 因物理块变大，性能跳了一档。和 [Mooncake](mooncake.md) 同一扇 **KVConnector** 门：一个寄存在本机 DRAM，一个放到集群池。后续分层（host 主键 + 盘 / 对象 / P2P）：[tiered-kv-offload.md](tiered-kv-offload.md)。这篇把笔墨放在 **CPU DRAM**，以及 host↔device 怎么搬。
 
 本地图（原文版权仍归原站；学习对照用）：
 

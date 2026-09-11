@@ -9,7 +9,7 @@ fetched: 2026-09-05
 Chinese: [zh/vllm/blog/serving/kv-offload.md](../../../../zh/vllm/blog/serving/kv-offload.md)  
 Source: https://vllm.ai/blog/2026-01-08-kv-offloading-connector
 
-2026-01-08. Or Ozeri, Danny Harnik (vLLM team at IBM Research). Study extract, not an official reprint. Landed in **vLLM 0.11.0**; **0.12.0** jumped after a contiguous physical-block layout. Same **KVConnector** door as [mooncake.md](mooncake.md): local DRAM vs cluster pool. Focus: **CPU DRAM** offload and host↔device copy.
+2026-01-08. Or Ozeri, Danny Harnik (vLLM team at IBM Research). Study extract, not an official reprint. Landed in **vLLM 0.11.0**; **0.12.0** jumped after a contiguous physical-block layout. Same **KVConnector** door as [mooncake.md](mooncake.md): local DRAM vs cluster pool. Later host-centric tiers (disk / object / P2P): [tiered-kv-offload.md](tiered-kv-offload.md). Focus: **CPU DRAM** offload and host↔device copy.
 
 Local figures (copyright remains with the original site; study copies):
 
